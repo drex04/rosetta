@@ -5,7 +5,7 @@ import { nodePolyfills } from 'vite-plugin-node-polyfills'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), nodePolyfills()],
+  plugins: [react(), nodePolyfills({ globals: { process: false, Buffer: false, global: false }, exclude: ['process'] })],
   base: './',
   server: { port: 3000 },
   resolve: {
