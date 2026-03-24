@@ -1,12 +1,12 @@
 import { create } from 'zustand'
-import type { Node, Edge } from '@xyflow/react'
+import type { OntologyNode, OntologyEdge } from '@/types/index'
 
 interface OntologyState {
-  nodes: Node[]
-  edges: Edge[]
+  nodes: OntologyNode[]
+  edges: OntologyEdge[]
   turtleSource: string
-  setNodes: (nodes: Node[]) => void
-  setEdges: (edges: Edge[]) => void
+  setNodes: (nodes: OntologyNode[]) => void
+  setEdges: (edges: OntologyEdge[]) => void
   setTurtleSource: (turtle: string) => void
 }
 
