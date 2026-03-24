@@ -1,0 +1,10 @@
+{
+  "version": "1.0",
+  "project": "rosetta",
+  "workflow": "gsd",
+  "phases": 7,
+  "currentPhase": 1,
+  "testCommand": "npm run test",
+  "devCommand": "npm run dev",
+  "buildCommand": "npm run build"
+}
