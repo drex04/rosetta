@@ -44,7 +44,7 @@ In coalition operations, allied nations contribute sensor data from different sy
 - **Editors:** CodeMirror 6 (Turtle/JSON), YASGUI (SPARQL)
 - **Persistence:** idb-keyval (IndexedDB)
 - **Onboarding:** react-joyride
-- **Deployment:** Vercel (static site)
+- **Deployment:** Static hosting (e.g. GitHub Pages)
 
 ## Success Criteria
 

@@ -4,7 +4,7 @@ Client-side web app for learning Semantic Web tech (OWL/RDF/SPARQL/SHACL) in the
 
 ## Tech Stack
 
-React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui (preset: bcivVKZU), Zustand, React Flow (@xyflow/react v12), N3.js, Comunica, jsonld, rdf-validate-shacl, CodeMirror 6, YASGUI, idb-keyval, react-joyride
+React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui (preset: bcivVKZU), Zustand, React Flow (@xyflow/react), N3.js, Comunica, jsonld, rdf-validate-shacl, CodeMirror 6, YASGUI, idb-keyval, react-joyride
 
 ## Commands
 

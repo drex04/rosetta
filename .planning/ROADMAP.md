@@ -1,9 +1,9 @@
 # Roadmap
 
 ## Phase 1: Scaffolding & Core Setup
-**Goal:** Working app shell deployed to Vercel — canvas, panels, routing, design system in place.
+**Goal:** Working app shell deployable as a static site — canvas, panels, routing, design system in place.
 **Requirements:** REQ-01 through REQ-08
-**Exit criteria:** `npm run dev` serves the app; shadcn/ui components render; React Flow canvas pans/zooms; deploys to Vercel.
+**Exit criteria:** `npm run dev` serves the app; shadcn/ui components render; React Flow canvas pans/zooms; `npm run build` produces a deployable static bundle.
 
 ## Phase 2: RDF Backbone
 **Goal:** Master ontology can be built visually and edited as Turtle — full bidirectional sync.
