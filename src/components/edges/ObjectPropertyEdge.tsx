@@ -1,11 +1,9 @@
-import { BaseEdge, EdgeLabelRenderer, getBezierPath } from '@xyflow/react'
-import type { EdgeProps } from '@xyflow/react'
-import type { Edge } from '@xyflow/react'
+import { BaseEdge, getBezierPath, type EdgeProps, type Edge } from '@xyflow/react'
 import type { ObjectPropertyEdgeData } from '@/types/index'
+import { MASTER_BLUE } from './shared'
+import { EdgeLabel } from './EdgeLabel'
 
 export type ObjectPropertyEdgeType = Edge<ObjectPropertyEdgeData & Record<string, unknown>, 'objectPropertyEdge'>
-
-const MASTER_BLUE = '#3b82f6' // matches --color-master hsl(221 83% 53%)
 
 export function ObjectPropertyEdge({
   id,
@@ -38,18 +36,7 @@ export function ObjectPropertyEdge({
           strokeWidth: 2,
         }}
       />
-      <EdgeLabelRenderer>
-        <div
-          style={{
-            position: 'absolute',
-            transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
-            pointerEvents: 'none',
-          }}
-          className="text-xs text-master font-mono bg-white/80 px-1 rounded border border-master/30"
-        >
-          {data?.label ?? ''}
-        </div>
-      </EdgeLabelRenderer>
+      <EdgeLabel labelX={labelX} labelY={labelY}>{data?.label ?? ''}</EdgeLabel>
     </>
   )
 }

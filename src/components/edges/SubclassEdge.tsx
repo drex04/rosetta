@@ -1,11 +1,9 @@
-import { BaseEdge, EdgeLabelRenderer, getBezierPath } from '@xyflow/react'
-import type { EdgeProps } from '@xyflow/react'
-import type { Edge } from '@xyflow/react'
+import { BaseEdge, getBezierPath, type EdgeProps, type Edge } from '@xyflow/react'
 import type { SubclassEdgeData } from '@/types/index'
+import { MASTER_BLUE } from './shared'
+import { EdgeLabel } from './EdgeLabel'
 
 export type SubclassEdgeType = Edge<SubclassEdgeData & Record<string, unknown>, 'subclassEdge'>
-
-const MASTER_BLUE = '#3b82f6' // matches --color-master hsl(221 83% 53%)
 
 export function SubclassEdge({
   id,
@@ -38,18 +36,7 @@ export function SubclassEdge({
           strokeDasharray: '6 3',
         }}
       />
-      <EdgeLabelRenderer>
-        <div
-          style={{
-            position: 'absolute',
-            transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
-            pointerEvents: 'none',
-          }}
-          className="text-xs text-master font-mono bg-white/80 px-1 rounded border border-master/30"
-        >
-          subClassOf
-        </div>
-      </EdgeLabelRenderer>
+      <EdgeLabel labelX={labelX} labelY={labelY}>subClassOf</EdgeLabel>
     </>
   )
 }
