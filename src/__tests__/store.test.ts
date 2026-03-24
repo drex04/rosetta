@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { useOntologyStore } from '../store/ontologyStore'
 import { useSourcesStore } from '../store/sourcesStore'
 import { useUiStore } from '../store/uiStore'
-import type { Node, Edge } from '@xyflow/react'
 import type { Source } from '../store/sourcesStore'
+import type { OntologyNode, OntologyEdge } from '../types/index'
 
 // Reset each store between tests
 beforeEach(() => {
@@ -21,13 +21,13 @@ describe('useOntologyStore', () => {
   })
 
   it('setNodes updates nodes', () => {
-    const nodes: Node[] = [{ id: 'n1', position: { x: 0, y: 0 }, data: {} }]
+    const nodes = [{ id: 'n1', position: { x: 0, y: 0 }, data: { uri: '', label: '', prefix: '', properties: [] }, type: 'classNode' }] as OntologyNode[]
     useOntologyStore.getState().setNodes(nodes)
     expect(useOntologyStore.getState().nodes).toEqual(nodes)
   })
 
   it('setEdges updates edges', () => {
-    const edges: Edge[] = [{ id: 'e1', source: 'n1', target: 'n2' }]
+    const edges = [{ id: 'e1', source: 'n1', target: 'n2', type: 'subclassEdge', data: { predicate: 'rdfs:subClassOf' as const } }] as OntologyEdge[]
     useOntologyStore.getState().setEdges(edges)
     expect(useOntologyStore.getState().edges).toEqual(edges)
   })
