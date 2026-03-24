@@ -3,7 +3,7 @@ import type { EdgeProps } from '@xyflow/react'
 import type { Edge } from '@xyflow/react'
 import type { SubclassEdgeData } from '@/types/index'
 
-export type SubclassEdgeType = Edge<SubclassEdgeData, 'subclassEdge'>
+export type SubclassEdgeType = Edge<SubclassEdgeData & Record<string, unknown>, 'subclassEdge'>
 
 const MASTER_BLUE = '#3b82f6' // matches --color-master hsl(221 83% 53%)
 

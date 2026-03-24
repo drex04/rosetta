@@ -3,7 +3,7 @@ import type { EdgeProps } from '@xyflow/react'
 import type { Edge } from '@xyflow/react'
 import type { ObjectPropertyEdgeData } from '@/types/index'
 
-export type ObjectPropertyEdgeType = Edge<ObjectPropertyEdgeData, 'objectPropertyEdge'>
+export type ObjectPropertyEdgeType = Edge<ObjectPropertyEdgeData & Record<string, unknown>, 'objectPropertyEdge'>
 
 const MASTER_BLUE = '#3b82f6' // matches --color-master hsl(221 83% 53%)
 

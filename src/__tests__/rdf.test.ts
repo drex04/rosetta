@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest'
 import { parseTurtle, canvasToTurtle, localName } from '@/lib/rdf'
-import type { OntologyNode, OntologyEdge } from '@/types/index'
 
 // ─── localName ────────────────────────────────────────────────────────────────
 

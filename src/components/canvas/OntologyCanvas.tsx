@@ -19,7 +19,8 @@ const edgeTypes = {
 } as const
 
 export function OntologyCanvas() {
-  const { nodes, edges } = useCanvasData()
+  const { nodes: rawNodes, edges } = useCanvasData()
+  const nodes = rawNodes as OntologyNode[]
   const setNodes = useOntologyStore((s) => s.setNodes)
   const masterNodes = useOntologyStore((s) => s.nodes)
 
