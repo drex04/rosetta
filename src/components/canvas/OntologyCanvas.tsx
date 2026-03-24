@@ -27,7 +27,7 @@ export function OntologyCanvas() {
     (changes: NodeChange<OntologyNode>[]) => {
       // Apply changes only to master ontology nodes; source nodes are managed
       // by the sources store (handled in a later phase).
-      const updated = applyNodeChanges(changes, masterNodes)
+      const updated = applyNodeChanges(changes, masterNodes) as OntologyNode[]
       setNodes(updated)
     },
     [masterNodes, setNodes],

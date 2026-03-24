@@ -3,8 +3,9 @@ import { renderHook } from '@testing-library/react'
 import { useCanvasData } from '../hooks/useCanvasData'
 import { useOntologyStore } from '../store/ontologyStore'
 import { useSourcesStore } from '../store/sourcesStore'
-import type { Node, Edge } from '@xyflow/react'
+import type { Edge, Node } from '@xyflow/react'
 import type { Source } from '../store/sourcesStore'
+import type { OntologyEdge, OntologyNode } from '../types/index'
 
 beforeEach(() => {
   useOntologyStore.setState({ nodes: [], edges: [], turtleSource: '' })
@@ -19,8 +20,8 @@ describe('useCanvasData', () => {
   })
 
   it('case 2: active source matching activeSourceId → merges master + source nodes/edges', () => {
-    const masterNode: Node = { id: 'master-n1', position: { x: 0, y: 0 }, data: { label: 'Master' } }
-    const masterEdge: Edge = { id: 'master-e1', source: 'master-n1', target: 'master-n2' }
+    const masterNode = { id: 'master-n1', type: 'classNode' as const, position: { x: 0, y: 0 }, data: { label: 'Master', uri: '', prefix: '', properties: [] } } as OntologyNode
+    const masterEdge = { id: 'master-e1', source: 'master-n1', target: 'master-n2', type: 'subclassEdge' as const, data: { predicate: 'rdfs:subClassOf' as const } } as OntologyEdge
     useOntologyStore.setState({ nodes: [masterNode], edges: [masterEdge], turtleSource: '' })
 
     const sourceNode: Node = { id: 'src-n1', position: { x: 100, y: 100 }, data: { label: 'Source' } }
@@ -45,8 +46,8 @@ describe('useCanvasData', () => {
   })
 
   it('case 3: activeSourceId set but source not found → returns master nodes only, no crash', () => {
-    const masterNode: Node = { id: 'master-n1', position: { x: 0, y: 0 }, data: { label: 'Master' } }
-    const masterEdge: Edge = { id: 'master-e1', source: 'master-n1', target: 'master-n2' }
+    const masterNode = { id: 'master-n1', type: 'classNode' as const, position: { x: 0, y: 0 }, data: { label: 'Master', uri: '', prefix: '', properties: [] } } as OntologyNode
+    const masterEdge = { id: 'master-e1', source: 'master-n1', target: 'master-n2', type: 'subclassEdge' as const, data: { predicate: 'rdfs:subClassOf' as const } } as OntologyEdge
     useOntologyStore.setState({ nodes: [masterNode], edges: [masterEdge], turtleSource: '' })
 
     // activeSourceId points to a source that doesn't exist (e.g. after deletion)

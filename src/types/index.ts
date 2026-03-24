@@ -13,7 +13,7 @@ export interface ClassData {
   properties: PropertyData[]
 }
 
-export type OntologyNode = import('@xyflow/react').Node<ClassData, 'classNode'>
+export type OntologyNode = import('@xyflow/react').Node<ClassData & Record<string, unknown>, 'classNode'>
 
 export interface SubclassEdgeData {
   predicate: 'rdfs:subClassOf'
@@ -26,5 +26,5 @@ export interface ObjectPropertyEdgeData {
 }
 
 export type OntologyEdge =
-  | import('@xyflow/react').Edge<SubclassEdgeData, 'subclassEdge'>
-  | import('@xyflow/react').Edge<ObjectPropertyEdgeData, 'objectPropertyEdge'>
+  | import('@xyflow/react').Edge<SubclassEdgeData & Record<string, unknown>, 'subclassEdge'>
+  | import('@xyflow/react').Edge<ObjectPropertyEdgeData & Record<string, unknown>, 'objectPropertyEdge'>
