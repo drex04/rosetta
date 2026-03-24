@@ -1,4 +1,5 @@
 import * as N3 from 'n3'
+import { MarkerType } from '@xyflow/react'
 import type { OntologyNode, OntologyEdge, ClassData, PropertyData } from '@/types/index'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -172,6 +173,7 @@ export async function parseTurtle(
       type: 'objectPropertyEdge' as const,
       source: sourceId,
       target: targetId,
+      markerEnd: { type: MarkerType.ArrowClosed },
       data: {
         uri: propUri,
         label,
@@ -199,6 +201,7 @@ export async function parseTurtle(
       type: 'subclassEdge' as const,
       source: sourceId,
       target: targetId,
+      markerEnd: { type: MarkerType.ArrowClosed },
       data: {
         predicate: 'rdfs:subClassOf' as const,
       },
