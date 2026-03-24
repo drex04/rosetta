@@ -77,8 +77,8 @@ describe('useSourcesStore', () => {
     useSourcesStore.getState().addSource(s2)
     const { sources } = useSourcesStore.getState()
     expect(sources).toHaveLength(2)
-    expect(sources[0]?.id).toBe('src-1')
-    expect(sources[1]?.id).toBe('src-2')
+    expect(sources[0]!.id).toBe('src-1')
+    expect(sources[1]!.id).toBe('src-2')
   })
 
   it('removeSource removes by id', () => {
@@ -89,7 +89,7 @@ describe('useSourcesStore', () => {
     useSourcesStore.getState().removeSource('src-1')
     const { sources } = useSourcesStore.getState()
     expect(sources).toHaveLength(1)
-    expect(sources[0]?.id).toBe('src-2')
+    expect(sources[0]!.id).toBe('src-2')
   })
 
   it('removeSource on unknown id is a no-op', () => {

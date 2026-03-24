@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button'
-import { Question, Info } from '@phosphor-icons/react'
+import { QuestionIcon, InfoIcon } from '@phosphor-icons/react'
 
 export function Header() {
   return (
@@ -17,7 +17,7 @@ export function Header() {
           className="h-8 gap-1.5 text-muted-foreground hover:text-foreground"
           aria-label="Start help tour"
         >
-          <Question size={16} />
+          <QuestionIcon size={16} />
           <span className="text-xs">Help Tour</span>
         </Button>
         <Button
@@ -26,7 +26,7 @@ export function Header() {
           className="h-8 gap-1.5 text-muted-foreground hover:text-foreground"
           aria-label="About Rosetta"
         >
-          <Info size={16} />
+          <InfoIcon size={16} />
           <span className="text-xs">About</span>
         </Button>
       </div>

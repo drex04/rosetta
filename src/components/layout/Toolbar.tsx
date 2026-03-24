@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button'
-import { Plus } from '@phosphor-icons/react'
+import { PlusIcon } from '@phosphor-icons/react'
 
 export function Toolbar() {
   return (
@@ -14,7 +14,7 @@ export function Toolbar() {
         className="h-7 gap-1.5 text-xs"
         aria-label="Add a new data source"
       >
-        <Plus size={14} />
+        <PlusIcon size={14} />
         Add Source
       </Button>
     </div>
