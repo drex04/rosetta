@@ -37,12 +37,24 @@ export function localName(uri: string): string {
 
 // ─── Helper: prefix from URI ──────────────────────────────────────────────────
 
-function prefixFromUri(uri: string): string {
+export function prefixFromUri(uri: string): string {
   const hashIdx = uri.lastIndexOf('#')
   if (hashIdx !== -1) return uri.slice(0, hashIdx + 1)
   const slashIdx = uri.lastIndexOf('/')
   if (slashIdx !== -1) return uri.slice(0, slashIdx + 1)
   return uri
+}
+
+// ─── Store query helpers ──────────────────────────────────────────────────────
+
+function firstLiteral(store: N3.Store, subject: N3.Term, predicate: string, nn: (uri: string) => N3.Term): string | undefined {
+  const q = store.match(subject, nn(predicate), null, null)[Symbol.iterator]().next().value
+  return q?.object.termType === 'Literal' ? q.object.value : undefined
+}
+
+function firstNamedNode(store: N3.Store, subject: N3.Term, predicate: string, nn: (uri: string) => N3.Term): string | undefined {
+  const q = store.match(subject, nn(predicate), null, null)[Symbol.iterator]().next().value
+  return q?.object.termType === 'NamedNode' ? q.object.value : undefined
 }
 
 // ─── parseTurtle ─────────────────────────────────────────────────────────────
@@ -58,7 +70,7 @@ export async function parseTurtle(
 
   await new Promise<void>((resolve, reject) => {
     const parser = new N3.Parser({ format: 'Turtle' })
-    parser.parse(text, (error, quad, prefixes) => {
+    parser.parse(text, (error, quad, _prefixes) => {
       if (error) {
         reject(error)
         return
@@ -66,33 +78,22 @@ export async function parseTurtle(
       if (quad) {
         store.addQuad(quad)
       } else {
-        // quad is null when parsing is complete
-        void prefixes
         resolve()
       }
     })
   })
 
-  // Map from class URI → ClassData
   const classMap = new Map<string, ClassData>()
 
   const nn = (uri: string) => N3.DataFactory.namedNode(uri) as unknown as N3.Term
 
-  // 1. Collect owl:Class subjects
   for (const quad of store.match(null, nn(RDF_TYPE), nn(OWL_CLASS), null)) {
     const subject = quad.subject
     if (subject.termType !== 'NamedNode') continue
     const uri = subject.value
 
-    const labelQuad = store.match(subject as unknown as N3.Term, nn(RDFS_LABEL), null, null)[Symbol.iterator]().next().value
-    const label = labelQuad?.object.termType === 'Literal'
-      ? labelQuad.object.value
-      : localName(uri)
-
-    const commentQuad = store.match(subject as unknown as N3.Term, nn(RDFS_COMMENT), null, null)[Symbol.iterator]().next().value
-    const comment = commentQuad?.object.termType === 'Literal'
-      ? commentQuad.object.value
-      : undefined
+    const label = firstLiteral(store, subject as unknown as N3.Term, RDFS_LABEL, nn) ?? localName(uri)
+    const comment = firstLiteral(store, subject as unknown as N3.Term, RDFS_COMMENT, nn)
 
     classMap.set(uri, {
       uri,
@@ -103,28 +104,19 @@ export async function parseTurtle(
     })
   }
 
-  // 2. Collect owl:DatatypeProperty → embed in domain class
   for (const quad of store.match(null, nn(RDF_TYPE), nn(OWL_DATATYPE_PROPERTY), null)) {
     const subject = quad.subject
     if (subject.termType !== 'NamedNode') continue
     const propUri = subject.value
 
-    const domainQuad = store.match(subject as unknown as N3.Term, nn(RDFS_DOMAIN), null, null)[Symbol.iterator]().next().value
-    if (!domainQuad || domainQuad.object.termType !== 'NamedNode') continue
-    const domainUri = domainQuad.object.value
+    const domainUri = firstNamedNode(store, subject as unknown as N3.Term, RDFS_DOMAIN, nn)
+    if (!domainUri) continue
 
     const classData = classMap.get(domainUri)
     if (!classData) continue
 
-    const rangeQuad = store.match(subject as unknown as N3.Term, nn(RDFS_RANGE), null, null)[Symbol.iterator]().next().value
-    const range = rangeQuad?.object.termType === 'NamedNode'
-      ? rangeQuad.object.value
-      : 'xsd:string'
-
-    const labelQuad = store.match(subject as unknown as N3.Term, nn(RDFS_LABEL), null, null)[Symbol.iterator]().next().value
-    const label = labelQuad?.object.termType === 'Literal'
-      ? labelQuad.object.value
-      : localName(propUri)
+    const range = firstNamedNode(store, subject as unknown as N3.Term, RDFS_RANGE, nn) ?? 'xsd:string'
+    const label = firstLiteral(store, subject as unknown as N3.Term, RDFS_LABEL, nn) ?? localName(propUri)
 
     const prop: PropertyData = {
       uri: propUri,
@@ -135,7 +127,6 @@ export async function parseTurtle(
     classData.properties.push(prop)
   }
 
-  // Build nodes
   const nodes: OntologyNode[] = Array.from(classMap.entries()).map(([uri, data]) => ({
     id: `node_${localName(uri)}`,
     type: 'classNode' as const,
@@ -145,19 +136,16 @@ export async function parseTurtle(
 
   const edges: OntologyEdge[] = []
 
-  // 3. Collect owl:ObjectProperty → create edges
   for (const quad of store.match(null, nn(RDF_TYPE), nn(OWL_OBJECT_PROPERTY), null)) {
     const subject = quad.subject
     if (subject.termType !== 'NamedNode') continue
     const propUri = subject.value
 
-    const domainQuad = store.match(subject as unknown as N3.Term, nn(RDFS_DOMAIN), null, null)[Symbol.iterator]().next().value
-    if (!domainQuad || domainQuad.object.termType !== 'NamedNode') continue
-    const domainUri = domainQuad.object.value
+    const domainUri = firstNamedNode(store, subject as unknown as N3.Term, RDFS_DOMAIN, nn)
+    if (!domainUri) continue
 
-    const rangeQuad = store.match(subject as unknown as N3.Term, nn(RDFS_RANGE), null, null)[Symbol.iterator]().next().value
-    if (!rangeQuad || rangeQuad.object.termType !== 'NamedNode') continue
-    const rangeUri = rangeQuad.object.value
+    const rangeUri = firstNamedNode(store, subject as unknown as N3.Term, RDFS_RANGE, nn)
+    if (!rangeUri) continue
 
     // Both domain and range must be known classes
     if (!classMap.has(domainUri) || !classMap.has(rangeUri)) continue
@@ -165,10 +153,7 @@ export async function parseTurtle(
     const sourceId = `node_${localName(domainUri)}`
     const targetId = `node_${localName(rangeUri)}`
 
-    const labelQuad = store.match(subject as unknown as N3.Term, nn(RDFS_LABEL), null, null)[Symbol.iterator]().next().value
-    const label = labelQuad?.object.termType === 'Literal'
-      ? labelQuad.object.value
-      : localName(propUri)
+    const label = firstLiteral(store, subject as unknown as N3.Term, RDFS_LABEL, nn) ?? localName(propUri)
 
     edges.push({
       id: `e_${sourceId}_objectPropertyEdge_${targetId}`,
@@ -184,8 +169,7 @@ export async function parseTurtle(
     })
   }
 
-  // 4. Collect rdfs:subClassOf → create subclassEdges
-  for (const quad of store.match(null, N3.DataFactory.namedNode(RDFS_SUBCLASS_OF), null, null)) {
+  for (const quad of store.match(null, nn(RDFS_SUBCLASS_OF), null, null)) {
     const subject = quad.subject
     const object  = quad.object
     if (subject.termType !== 'NamedNode' || object.termType !== 'NamedNode') continue
@@ -220,14 +204,12 @@ export async function canvasToTurtle(
   edges: OntologyEdge[],
 ): Promise<string> {
   return new Promise<string>((resolve, reject) => {
-    // Collect unique prefixes from node URIs
     const prefixMap = new Map<string, string>()
     prefixMap.set('rdf',  'http://www.w3.org/1999/02/22-rdf-syntax-ns#')
     prefixMap.set('rdfs', 'http://www.w3.org/2000/01/rdf-schema#')
     prefixMap.set('owl',  'http://www.w3.org/2002/07/owl#')
     prefixMap.set('xsd',  'http://www.w3.org/2001/XMLSchema#')
 
-    // Assign short prefixes to ontology namespaces
     const nsPrefixMap = new Map<string, string>() // namespace → prefix alias
     let nsPrefixCounter = 0
 
@@ -245,7 +227,6 @@ export async function canvasToTurtle(
       return alias
     }
 
-    // Pre-scan all URIs to build prefix map
     for (const node of nodes) {
       getOrAssignPrefix(node.data.uri)
       for (const prop of node.data.properties) {
@@ -258,7 +239,6 @@ export async function canvasToTurtle(
       }
     }
 
-    // Build prefix object for N3.Writer (Record<string, string>)
     const prefixesObj: Record<string, string> = {}
     for (const [alias, iri] of prefixMap) {
       prefixesObj[alias] = iri
@@ -270,7 +250,8 @@ export async function canvasToTurtle(
     const nn = (uri: string) => df.namedNode(uri)
     const lit = (value: string) => df.literal(value)
 
-    // Emit classes
+    const nodeById = new Map(nodes.map((n) => [n.id, n]))
+
     for (const node of nodes) {
       const classUri = node.data.uri
       const s = nn(classUri)
@@ -288,18 +269,16 @@ export async function canvasToTurtle(
       }
     }
 
-    // Emit edges
     for (const edge of edges) {
       if (edge.type === 'subclassEdge') {
-        // Resolve URIs from nodes
-        const srcNode = nodes.find((n) => n.id === edge.source)
-        const tgtNode = nodes.find((n) => n.id === edge.target)
+        const srcNode = nodeById.get(edge.source)
+        const tgtNode = nodeById.get(edge.target)
         if (srcNode && tgtNode) {
           writer.addQuad(nn(srcNode.data.uri), nn(RDFS_SUBCLASS_OF), nn(tgtNode.data.uri))
         }
       } else if (edge.type === 'objectPropertyEdge') {
-        const srcNode = nodes.find((n) => n.id === edge.source)
-        const tgtNode = nodes.find((n) => n.id === edge.target)
+        const srcNode = nodeById.get(edge.source)
+        const tgtNode = nodeById.get(edge.target)
         if (srcNode && tgtNode) {
           const p = nn(edge.data!.uri)
           writer.addQuad(p, nn(RDF_TYPE), nn(OWL_OBJECT_PROPERTY))

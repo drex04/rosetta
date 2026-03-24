@@ -19,19 +19,18 @@ const edgeTypes = {
 } as const
 
 export function OntologyCanvas() {
-  const { nodes: rawNodes, edges } = useCanvasData()
-  const nodes = rawNodes as OntologyNode[]
+  const { nodes, edges } = useCanvasData()
   const setNodes = useOntologyStore((s) => s.setNodes)
-  const masterNodes = useOntologyStore((s) => s.nodes)
 
   const onNodesChange = useCallback(
     (changes: NodeChange<OntologyNode>[]) => {
       // Apply changes only to master ontology nodes; source nodes are managed
       // by the sources store (handled in a later phase).
+      const masterNodes = useOntologyStore.getState().nodes
       const updated = applyNodeChanges(changes, masterNodes) as OntologyNode[]
       setNodes(updated)
     },
-    [masterNodes, setNodes],
+    [setNodes],
   )
 
   return (

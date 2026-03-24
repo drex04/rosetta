@@ -4,8 +4,7 @@ import { Toolbar } from './components/layout/Toolbar'
 import { SourceSelector } from './components/layout/SourceSelector'
 import { RightPanel } from './components/layout/RightPanel'
 import { OntologyCanvas } from './components/canvas/OntologyCanvas'
-import { useOntologyStore } from './store/ontologyStore'
-import { SEED_TURTLE } from './store/ontologyStore'
+import { useOntologyStore, SEED_TURTLE } from './store/ontologyStore'
 
 function App() {
   const loadTurtle = useOntologyStore((s) => s.loadTurtle)
