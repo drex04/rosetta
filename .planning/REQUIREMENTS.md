@@ -11,7 +11,7 @@ REQ-04: Set up Zustand store skeleton (ontology, sources, ui slices)
 REQ-05: Set up React Flow with basic canvas (pan/zoom, minimap)
 REQ-06: Implement app shell: header (logo, About placeholder, Help Tour button), toolbar, source selector stub, right panel tab shell
 REQ-07: Configure Vitest for testing
-REQ-08: Deploy to Vercel (static export)
+REQ-08: Configure Vite for static export (`npm run build` → `dist/`); verify build succeeds and bundle is self-contained
 
 ## Phase 2: RDF Backbone
 
