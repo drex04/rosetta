@@ -91,11 +91,11 @@ describe('parseTurtle with sample ontology', () => {
     expect(ids).toContain('node_FighterJet')
   })
 
-  it('assigns default position { x: 0, y: 0 }', async () => {
+  it('assigns column layout positions', async () => {
     const { nodes } = await parseTurtle(SAMPLE_TURTLE)
-    for (const node of nodes) {
-      expect(node.position).toEqual({ x: 0, y: 0 })
-    }
+    nodes.forEach((node, index) => {
+      expect(node.position).toEqual({ x: 0, y: index * 180 })
+    })
   })
 
   it('embeds datatype properties in the correct class node', async () => {

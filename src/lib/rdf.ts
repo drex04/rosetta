@@ -136,6 +136,7 @@ export async function parseTurtle(
   const nodes: OntologyNode[] = Array.from(classMap.entries()).map(([uri, data], index) => ({
     id: `node_${localName(uri)}`,
     type: 'classNode' as const,
+    // Caller is responsible for merging saved positions after parse
     position: { x: COLUMN_X_MASTER, y: index * COLUMN_SPACING },
     data: data as ClassData & Record<string, unknown>,
   }))
