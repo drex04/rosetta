@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, useRef } from 'react'
 import { ReactFlow, MiniMap, Controls, Background, applyNodeChanges } from '@xyflow/react'
 import type { NodeChange } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
@@ -7,7 +7,7 @@ import { useOntologyStore } from '../../store/ontologyStore'
 import { ClassNode } from '../nodes/ClassNode'
 import { SubclassEdge } from '../edges/SubclassEdge'
 import { ObjectPropertyEdge } from '../edges/ObjectPropertyEdge'
-import type { OntologyNode } from '@/types/index'
+import type { OntologyNode, OntologyEdge } from '@/types/index'
 
 const nodeTypes = {
   classNode: ClassNode,
@@ -18,9 +18,14 @@ const edgeTypes = {
   objectPropertyEdge: ObjectPropertyEdge,
 } as const
 
-export function OntologyCanvas() {
+interface OntologyCanvasProps {
+  onCanvasChange?: (nodes: OntologyNode[], edges: OntologyEdge[]) => void
+}
+
+export function OntologyCanvas({ onCanvasChange }: OntologyCanvasProps) {
   const { nodes, edges } = useCanvasData()
   const setNodes = useOntologyStore((s) => s.setNodes)
+  const canvasDebounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const onNodesChange = useCallback(
     (changes: NodeChange<OntologyNode>[]) => {
@@ -29,8 +34,19 @@ export function OntologyCanvas() {
       const masterNodes = useOntologyStore.getState().nodes
       const updated = applyNodeChanges(changes, masterNodes) as OntologyNode[]
       setNodes(updated)
+
+      // Notify parent after a short debounce to batch rapid drag frames
+      if (onCanvasChange !== undefined) {
+        if (canvasDebounceTimer.current !== null) {
+          clearTimeout(canvasDebounceTimer.current)
+        }
+        canvasDebounceTimer.current = setTimeout(() => {
+          const currentEdges = useOntologyStore.getState().edges
+          onCanvasChange(updated, currentEdges)
+        }, 100)
+      }
     },
-    [setNodes],
+    [setNodes, onCanvasChange],
   )
 
   return (
