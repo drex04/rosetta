@@ -70,7 +70,7 @@ export function OntologyCanvas({ onCanvasChange }: OntologyCanvasProps) {
       if (sourceChanges.length > 0 && activeSource !== undefined && sourceNodeIds.size > 0) {
         const updatedSourceNodes = applyNodeChanges(
           sourceChanges as NodeChange<SourceNode>[],
-          activeSource.schemaNodes as SourceNode[],
+          activeSource.schemaNodes,
         ) as SourceNode[]
         updateSource(activeSource.id, { schemaNodes: updatedSourceNodes })
       }

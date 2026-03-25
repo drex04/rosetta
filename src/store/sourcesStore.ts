@@ -1,13 +1,13 @@
 import { create } from 'zustand'
-import type { Node, Edge } from '@xyflow/react'
+import type { SourceNode, OntologyEdge } from '@/types/index'
 
 export interface Source {
   id: string
   name: string
   order: number
   json: string
-  schemaNodes: Node[]
-  schemaEdges: Edge[]
+  schemaNodes: SourceNode[]
+  schemaEdges: OntologyEdge[]
 }
 
 interface SourcesState {

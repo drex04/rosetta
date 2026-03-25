@@ -1,7 +1,6 @@
 import * as N3 from 'n3'
 import { MarkerType } from '@xyflow/react'
-import type { Node, Edge } from '@xyflow/react'
-import type { ClassData, PropertyData, ObjectPropertyEdgeData } from '@/types/index'
+import type { ClassData, PropertyData, ObjectPropertyEdgeData, SourceNode, OntologyEdge } from '@/types/index'
 import { COLUMN_X_SOURCE, COLUMN_SPACING } from '@/lib/rdf'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -18,14 +17,11 @@ const XSD                  = 'http://www.w3.org/2001/XMLSchema#'
 // ─── Public types ─────────────────────────────────────────────────────────────
 
 export interface SchemaResult {
-  nodes: Node[]
-  edges: Edge[]
+  nodes: SourceNode[]
+  edges: OntologyEdge[]
   turtle: string
   warnings: string[]
 }
-
-// Internal node type alias for source nodes
-type SourceNode = Node<ClassData & Record<string, unknown>, 'sourceNode'>
 
 // ─── URI helpers ──────────────────────────────────────────────────────────────
 
@@ -69,7 +65,7 @@ interface WalkContext {
   uriBase: string          // e.g. 'http://src_norwayradar_#'
   visited: WeakSet<object>
   nodes: SourceNode[]
-  edges: Edge[]
+  edges: OntologyEdge[]
   warnings: string[]
   classIndex: { value: number }
 }
@@ -174,7 +170,7 @@ function walkObject(
       predicate: 'owl:ObjectProperty',
     }
 
-    const edge: Edge<ObjectPropertyEdgeData & Record<string, unknown>, 'objectPropertyEdge'> = {
+    const edge: OntologyEdge = {
       id: edgeId,
       type: 'objectPropertyEdge',
       source: nodeId,
@@ -194,7 +190,7 @@ function walkObject(
 
 function serializeToTurtle(
   nodes: SourceNode[],
-  edges: Edge[],
+  edges: OntologyEdge[],
   uriBase: string,
   prefixAlias: string,
   warnings: string[],
