@@ -2,6 +2,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { useUiStore } from '@/store/uiStore'
 import { useOntologyStore } from '@/store/ontologyStore'
 import { TurtleEditorPanel } from '@/components/panels/TurtleEditorPanel'
+import { SourcePanel } from '@/components/panels/SourcePanel'
 
 interface RightPanelProps {
   onEditorChange: (value: string) => void
@@ -56,7 +57,7 @@ export function RightPanel({ onEditorChange }: RightPanelProps) {
         </div>
         <div className="flex-1 overflow-hidden">
           <TabsContent value="SRC" className="h-full m-0">
-            <div className="p-4 text-muted-foreground text-sm">Coming soon</div>
+            <SourcePanel />
           </TabsContent>
           <TabsContent value="ONTO" className="h-full m-0">
             <TurtleEditorPanel turtleSource={turtleSource} onEditorChange={onEditorChange} parseError={parseError} />
