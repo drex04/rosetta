@@ -55,11 +55,13 @@ export function useOntologySync() {
           }))
           useOntologyStore.getState().setNodes(positioned)
           useOntologyStore.getState().setEdges(edges)
+          useOntologyStore.getState().setParseError(null)
           // Clear only on successful parse — on failure the editor still has
           // content that hasn't synced to the canvas, so the guard must hold.
           hasPendingEdits.current = false
-        } catch {
+        } catch (e) {
           // Invalid Turtle — leave canvas unchanged (D-05)
+          useOntologyStore.getState().setParseError((e as Error).message ?? 'Invalid Turtle syntax')
         } finally {
           isUpdatingFromEditor.current = false
         }
@@ -76,6 +78,7 @@ export function useOntologySync() {
       isUpdatingFromCanvas.current = true
       const turtle = await canvasToTurtle(nodes, edges)
       useOntologyStore.getState().setTurtleSource(turtle)
+      useOntologyStore.getState().setParseError(null)
     } catch {
       // Serialization failed — leave editor unchanged
     } finally {
