@@ -5,9 +5,11 @@ import { SourceSelector } from './components/layout/SourceSelector'
 import { RightPanel } from './components/layout/RightPanel'
 import { OntologyCanvas } from './components/canvas/OntologyCanvas'
 import { useOntologyStore, SEED_TURTLE } from './store/ontologyStore'
+import { useOntologySync } from './hooks/useOntologySync'
 
 function App() {
   const loadTurtle = useOntologyStore((s) => s.loadTurtle)
+  const { onEditorChange, onCanvasChange } = useOntologySync()
 
   useEffect(() => {
     void loadTurtle(SEED_TURTLE)
@@ -20,9 +22,9 @@ function App() {
       <SourceSelector />
       <div className="flex flex-1 overflow-hidden">
         <div className="flex-1 relative">
-          <OntologyCanvas />
+          <OntologyCanvas onCanvasChange={onCanvasChange} />
         </div>
-        <RightPanel />
+        <RightPanel onEditorChange={onEditorChange} />
       </div>
     </div>
   )

@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-type RightTab = 'SRC' | 'MAP' | 'OUT'
+type RightTab = 'SRC' | 'ONTO' | 'MAP' | 'OUT'
 
 interface UiState {
   activeRightTab: RightTab
