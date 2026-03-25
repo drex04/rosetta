@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { EditorView } from '@codemirror/view'
 import { EditorState } from '@codemirror/state'
 import { lineNumbers, highlightActiveLine } from '@codemirror/view'
@@ -42,9 +43,10 @@ const lightTheme = EditorView.theme({
 interface TurtleEditorPanelProps {
   turtleSource: string
   onEditorChange: (value: string) => void
+  parseError?: string | null
 }
 
-export function TurtleEditorPanel({ turtleSource, onEditorChange }: TurtleEditorPanelProps) {
+export function TurtleEditorPanel({ turtleSource, onEditorChange, parseError }: TurtleEditorPanelProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const viewRef = useRef<EditorView | null>(null)
   // Track whether a programmatic update is in flight so we don't echo it back
@@ -105,10 +107,17 @@ export function TurtleEditorPanel({ turtleSource, onEditorChange }: TurtleEditor
   }, [turtleSource])
 
   return (
-    <div
-      ref={containerRef}
-      className="h-full w-full overflow-hidden"
-      aria-label="Turtle ontology editor"
-    />
+    <div className="flex flex-col h-full">
+      <div
+        ref={containerRef}
+        className="flex-1 overflow-hidden"
+        aria-label="Turtle ontology editor"
+      />
+      {parseError && (
+        <Alert variant="destructive" className="shrink-0 rounded-none border-x-0 border-b-0 text-xs font-mono">
+          <AlertDescription>{parseError}</AlertDescription>
+        </Alert>
+      )}
+    </div>
   )
 }
