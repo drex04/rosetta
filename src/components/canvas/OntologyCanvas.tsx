@@ -4,13 +4,16 @@ import type { NodeChange } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { useCanvasData } from '../../hooks/useCanvasData'
 import { useOntologyStore } from '../../store/ontologyStore'
+import { useSourcesStore } from '../../store/sourcesStore'
 import { ClassNode } from '../nodes/ClassNode'
+import { SourceNode } from '../nodes/SourceNode'
 import { SubclassEdge } from '../edges/SubclassEdge'
 import { ObjectPropertyEdge } from '../edges/ObjectPropertyEdge'
 import type { OntologyNode, OntologyEdge } from '@/types/index'
 
 const nodeTypes = {
   classNode: ClassNode,
+  sourceNode: SourceNode,
 } as const
 
 const edgeTypes = {
@@ -28,30 +31,48 @@ const STRUCTURAL_CHANGE_TYPES = new Set(['add', 'remove', 'reset'])
 export function OntologyCanvas({ onCanvasChange }: OntologyCanvasProps) {
   const { nodes, edges } = useCanvasData()
   const setNodes = useOntologyStore((s) => s.setNodes)
+  const updateSource = useSourcesStore((s) => s.updateSource)
   const canvasDebounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const onNodesChange = useCallback(
     (changes: NodeChange<OntologyNode>[]) => {
-      // Apply changes only to master ontology nodes; source nodes are managed
-      // by the sources store (handled in a later phase).
-      const masterNodes = useOntologyStore.getState().nodes
-      const updated = applyNodeChanges(changes, masterNodes) as OntologyNode[]
-      setNodes(updated)
+      // RD-02: Split changes by node ID membership.
+      // Master-node changes → ontologyStore; source-node changes → updateSource.
+      const masterNodeIds = new Set(useOntologyStore.getState().nodes.map((n) => n.id))
+      const { activeSourceId, sources } = useSourcesStore.getState()
 
-      // Only notify parent for structural changes — position/select/dimensions
-      // do not alter the RDF graph and must not clobber pending editor edits.
-      const hasStructural = changes.some((c) => STRUCTURAL_CHANGE_TYPES.has(c.type))
-      if (hasStructural && onCanvasChange !== undefined) {
-        if (canvasDebounceTimer.current !== null) {
-          clearTimeout(canvasDebounceTimer.current)
+      const masterChanges = changes.filter((c) => !('id' in c) || masterNodeIds.has(c.id))
+      const sourceChanges = changes.filter((c) => 'id' in c && !masterNodeIds.has(c.id))
+
+      // Apply master changes
+      if (masterChanges.length > 0) {
+        const masterNodes = useOntologyStore.getState().nodes
+        const updated = applyNodeChanges(masterChanges, masterNodes) as OntologyNode[]
+        setNodes(updated)
+
+        // Only notify parent for structural changes
+        const hasStructural = masterChanges.some((c) => STRUCTURAL_CHANGE_TYPES.has(c.type))
+        if (hasStructural && onCanvasChange !== undefined) {
+          if (canvasDebounceTimer.current !== null) {
+            clearTimeout(canvasDebounceTimer.current)
+          }
+          canvasDebounceTimer.current = setTimeout(() => {
+            const currentEdges = useOntologyStore.getState().edges
+            onCanvasChange(updated, currentEdges)
+          }, 100)
         }
-        canvasDebounceTimer.current = setTimeout(() => {
-          const currentEdges = useOntologyStore.getState().edges
-          onCanvasChange(updated, currentEdges)
-        }, 100)
+      }
+
+      // Apply source changes — if activeSource exists
+      if (sourceChanges.length > 0 && activeSourceId !== null) {
+        const activeSource = sources.find((s) => s.id === activeSourceId)
+        if (activeSource !== undefined) {
+          const updatedSourceNodes = applyNodeChanges(sourceChanges, activeSource.schemaNodes)
+          updateSource(activeSourceId, { schemaNodes: updatedSourceNodes })
+        }
       }
     },
-    [setNodes, onCanvasChange],
+    [setNodes, updateSource, onCanvasChange],
   )
 
   return (
