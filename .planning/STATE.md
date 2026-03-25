@@ -3,8 +3,8 @@
 ## Current Position
 
 - **Phase:** 3
-- **Plan:** 1/3 complete
-- **Status:** In progress — Plan 01 done, Plans 02 and 03 remaining
+- **Plan:** 2/3 complete
+- **Status:** In progress — Plans 01 and 02 done, Plan 03 remaining
 
 ## Phase Status
 
@@ -24,4 +24,5 @@ Phase 2 Plan 01 completed 2026-03-24: N3.js RDF layer, ClassNode/Edge components
 Phase 2 Plan 02 completed 2026-03-25: CodeMirror 6 Turtle editor, useOntologySync bidirectional hook, ONTO tab.
 Phase 2 Plan 03 completed 2026-03-25: IndexedDB auto-save (useAutoSave), Export Turtle/JSON-LD/Project, Import with validation, Header save-status indicator.
 Phase 3 Plan 01 completed 2026-03-25: sourcesStore hardened (updateSource, generateSourceId, atomic removeSource), SourceSelector pill bar (add/rename/delete inline), column layout in rdf.ts, IDB persistence extended to sources.
-Next: run `/fh:build` to execute Phase 3 Plan 02.
+Phase 3 Plan 02 completed 2026-03-25: jsonToSchema converter (recursive, circular-ref, URI sanitization, N3 rescue), SourcePanel with debounced JSON editor, Turtle preview, banners, prefix collision detection.
+Next: run `/fh:build` to execute Phase 3 Plan 03.
