@@ -2,6 +2,12 @@ import * as N3 from 'n3'
 import { MarkerType } from '@xyflow/react'
 import type { OntologyNode, OntologyEdge, ClassData, PropertyData } from '@/types/index'
 
+// ─── Layout Constants ─────────────────────────────────────────────────────────
+
+export const COLUMN_X_MASTER = 0
+export const COLUMN_X_SOURCE = -520
+export const COLUMN_SPACING  = 180
+
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const RDF_TYPE   = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'
@@ -127,10 +133,10 @@ export async function parseTurtle(
     classData.properties.push(prop)
   }
 
-  const nodes: OntologyNode[] = Array.from(classMap.entries()).map(([uri, data]) => ({
+  const nodes: OntologyNode[] = Array.from(classMap.entries()).map(([uri, data], index) => ({
     id: `node_${localName(uri)}`,
     type: 'classNode' as const,
-    position: { x: 0, y: 0 },
+    position: { x: COLUMN_X_MASTER, y: index * COLUMN_SPACING },
     data: data as ClassData & Record<string, unknown>,
   }))
 
