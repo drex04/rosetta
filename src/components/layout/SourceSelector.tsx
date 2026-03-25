@@ -20,6 +20,7 @@ export function SourceSelector() {
   const [editValue, setEditValue] = useState('')
   const isEscaping = useRef(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  const pendingFocusId = useRef<string | null>(null)
 
   // Delete confirmation state
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null)
@@ -104,11 +105,15 @@ export function SourceSelector() {
     addSource(newSource)
     setActiveSourceId(newSource.id)
     // Immediately enter inline-edit mode (DD-03)
+    pendingFocusId.current = newSource.id
     startEditing(newSource.id, name)
-    // Focus the input after render
+    // Focus the input after render; guard checks ref so rapid interactions don't focus wrong pill
     requestAnimationFrame(() => {
-      inputRef.current?.focus()
-      inputRef.current?.select()
+      if (pendingFocusId.current === newSource.id) {
+        inputRef.current?.focus()
+        inputRef.current?.select()
+        pendingFocusId.current = null
+      }
     })
   }
 

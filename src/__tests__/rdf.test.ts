@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseTurtle, canvasToTurtle, localName } from '@/lib/rdf'
+import { parseTurtle, canvasToTurtle, localName, COLUMN_X_MASTER, COLUMN_SPACING } from '@/lib/rdf'
 import type { OntologyNode } from '../types/index'
 
 // ─── localName ────────────────────────────────────────────────────────────────
@@ -95,7 +95,7 @@ describe('parseTurtle with sample ontology', () => {
   it('assigns column layout positions', async () => {
     const { nodes } = await parseTurtle(SAMPLE_TURTLE)
     nodes.forEach((node: OntologyNode, index: number) => {
-      expect(node.position).toEqual({ x: 0, y: index * 180 })
+      expect(node.position).toEqual({ x: COLUMN_X_MASTER, y: index * COLUMN_SPACING })
     })
   })
 
