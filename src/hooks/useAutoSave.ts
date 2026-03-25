@@ -41,6 +41,15 @@ export function useAutoSave() {
     })
   }, [])
 
+  // Block tab close while save is pending ─────────────────────────────────────
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (saveStatus === 'saving') e.preventDefault()
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [saveStatus])
+
   // Subscribe and auto-save on change (500ms debounce) ────────────────────────
   useEffect(() => {
     const unsub = useOntologyStore.subscribe(state => {
