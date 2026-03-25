@@ -37,7 +37,8 @@ export interface ProjectFile {
     turtleSource: string
     nodePositions: Record<string, { x: number; y: number }>
   }
-  sources: unknown[]   // populated in Phase 3
+  sources: import('@/store/sourcesStore').Source[]
+  activeSourceId?: string | null
   mappings: unknown[]  // populated in Phase 4
   timestamp: string
 }
