@@ -17,6 +17,7 @@ export function useOntologySync() {
   const isUpdatingFromCanvas = useRef(false)
   const isUpdatingFromEditor = useRef(false)
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const hasPendingEdits = useRef(false)
 
   // Cleanup on unmount (R-02)
   useEffect(() => {
@@ -32,6 +33,7 @@ export function useOntologySync() {
   // Write the raw text to turtleSource immediately on every keystroke,
   // then debounce the parse step by 600 ms (D-05).
   const onEditorChange = useCallback((newTurtle: string) => {
+    hasPendingEdits.current = true
     useOntologyStore.getState().setTurtleSource(newTurtle)
 
     if (debounceTimer.current !== null) {
@@ -53,6 +55,9 @@ export function useOntologySync() {
           }))
           useOntologyStore.getState().setNodes(positioned)
           useOntologyStore.getState().setEdges(edges)
+          // Clear only on successful parse — on failure the editor still has
+          // content that hasn't synced to the canvas, so the guard must hold.
+          hasPendingEdits.current = false
         } catch {
           // Invalid Turtle — leave canvas unchanged (D-05)
         } finally {
@@ -78,5 +83,5 @@ export function useOntologySync() {
     }
   }, [])
 
-  return { onEditorChange, onCanvasChange }
+  return { onEditorChange, onCanvasChange, hasPendingEdits }
 }
