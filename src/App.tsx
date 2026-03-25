@@ -7,11 +7,13 @@ import { OntologyCanvas } from './components/canvas/OntologyCanvas'
 import { ConfirmDialog } from './components/ui/confirm-dialog'
 import { useOntologyStore, SEED_TURTLE } from './store/ontologyStore'
 import { useOntologySync } from './hooks/useOntologySync'
+import { useAutoSave } from './hooks/useAutoSave'
 import type { OntologyNode, OntologyEdge } from './types/index'
 
 function App() {
   const loadTurtle = useOntologyStore((s) => s.loadTurtle)
   const { onEditorChange, onCanvasChange, hasPendingEdits } = useOntologySync()
+  const { saveStatus } = useAutoSave()
   const [pendingSync, setPendingSync] = useState<{ nodes: OntologyNode[]; edges: OntologyEdge[] } | null>(null)
 
   useEffect(() => {
@@ -33,7 +35,7 @@ function App() {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden">
-      <Header />
+      <Header saveStatus={saveStatus} />
       <Toolbar />
       <SourceSelector />
       <div className="flex flex-1 overflow-hidden">
