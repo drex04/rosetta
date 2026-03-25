@@ -115,7 +115,7 @@ describe('useAutoSave', () => {
     expect(trackNode?.position).toEqual({ x: 200, y: 150 })
   })
 
-  it('corrupt IDB: logs warning and leaves store unchanged when data is invalid', async () => {
+  it('corrupt IDB: restores raw turtle, sets parseError, and logs warning when parse fails', async () => {
     // Return something that will cause parseTurtle to throw
     mockGet.mockResolvedValue(VALID_PROJECT_FILE)
     mockSet.mockResolvedValue(undefined)
@@ -130,13 +130,15 @@ describe('useAutoSave', () => {
       await vi.runAllTimersAsync()
     })
 
-    // Store should remain unchanged (empty)
+    // Nodes/edges remain empty (parse failed), but raw text is restored
     const state = useOntologyStore.getState()
     expect(state.nodes).toEqual([])
     expect(state.edges).toEqual([])
+    expect(state.turtleSource).toBe(MOCK_TURTLE)
+    expect(state.parseError).toBe('Invalid Turtle')
 
     expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining('rosetta: failed to restore project from IDB'),
+      expect.stringContaining('rosetta: restored invalid Turtle from IDB'),
     )
 
     warnSpy.mockRestore()
