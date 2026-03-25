@@ -40,9 +40,17 @@ export function ClassNode({ data }: NodeProps<OntologyNode>) {
   return (
     <div className="bg-white border-2 border-master rounded-md shadow-md min-w-[200px] text-sm font-sans overflow-visible">
       <Handle
-        id="top"
-        type="target"
+        id="class-top"
+        type="source"
         position={Position.Top}
+        className="!w-2.5 !h-2.5 !bg-master !border-master"
+        isConnectable={false}
+      />
+      <Handle
+        id="class-left"
+        type="target"
+        position={Position.Left}
+        style={{ top: 14 }}
         className="!w-2.5 !h-2.5 !bg-master !border-master"
         isConnectable={false}
       />
@@ -85,8 +93,16 @@ export function ClassNode({ data }: NodeProps<OntologyNode>) {
       )}
 
       <Handle
-        id="bottom"
+        id="class-right"
         type="source"
+        position={Position.Right}
+        style={{ top: 14 }}
+        className="!w-2.5 !h-2.5 !bg-master !border-master"
+        isConnectable={false}
+      />
+      <Handle
+        id="class-bottom"
+        type="target"
         position={Position.Bottom}
         className="!w-2.5 !h-2.5 !bg-master !border-master"
         isConnectable={false}

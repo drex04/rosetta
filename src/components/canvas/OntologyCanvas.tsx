@@ -22,6 +22,9 @@ interface OntologyCanvasProps {
   onCanvasChange?: (nodes: OntologyNode[], edges: OntologyEdge[]) => void
 }
 
+// Only these change types modify the RDF graph — position/select/dimensions do not
+const STRUCTURAL_CHANGE_TYPES = new Set(['add', 'remove', 'reset'])
+
 export function OntologyCanvas({ onCanvasChange }: OntologyCanvasProps) {
   const { nodes, edges } = useCanvasData()
   const setNodes = useOntologyStore((s) => s.setNodes)
@@ -35,8 +38,10 @@ export function OntologyCanvas({ onCanvasChange }: OntologyCanvasProps) {
       const updated = applyNodeChanges(changes, masterNodes) as OntologyNode[]
       setNodes(updated)
 
-      // Notify parent after a short debounce to batch rapid drag frames
-      if (onCanvasChange !== undefined) {
+      // Only notify parent for structural changes — position/select/dimensions
+      // do not alter the RDF graph and must not clobber pending editor edits.
+      const hasStructural = changes.some((c) => STRUCTURAL_CHANGE_TYPES.has(c.type))
+      if (hasStructural && onCanvasChange !== undefined) {
         if (canvasDebounceTimer.current !== null) {
           clearTimeout(canvasDebounceTimer.current)
         }

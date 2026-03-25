@@ -160,6 +160,8 @@ export async function parseTurtle(
       type: 'objectPropertyEdge' as const,
       source: sourceId,
       target: targetId,
+      sourceHandle: 'class-right',
+      targetHandle: 'class-left',
       markerEnd: { type: MarkerType.ArrowClosed },
       data: {
         uri: propUri,
@@ -187,6 +189,8 @@ export async function parseTurtle(
       type: 'subclassEdge' as const,
       source: sourceId,
       target: targetId,
+      sourceHandle: 'class-top',
+      targetHandle: 'class-bottom',
       markerEnd: { type: MarkerType.ArrowClosed },
       data: {
         predicate: 'rdfs:subClassOf' as const,
