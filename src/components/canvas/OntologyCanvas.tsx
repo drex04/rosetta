@@ -6,14 +6,14 @@ import { useCanvasData } from '../../hooks/useCanvasData'
 import { useOntologyStore } from '../../store/ontologyStore'
 import { useSourcesStore } from '../../store/sourcesStore'
 import { ClassNode } from '../nodes/ClassNode'
-import { SourceNode } from '../nodes/SourceNode'
+import { SourceNode as SourceNodeComponent } from '../nodes/SourceNode'
 import { SubclassEdge } from '../edges/SubclassEdge'
 import { ObjectPropertyEdge } from '../edges/ObjectPropertyEdge'
-import type { OntologyNode, OntologyEdge } from '@/types/index'
+import type { OntologyNode, OntologyEdge, SourceNode } from '@/types/index'
 
 const nodeTypes = {
   classNode: ClassNode,
-  sourceNode: SourceNode,
+  sourceNode: SourceNodeComponent,
 } as const
 
 const edgeTypes = {
@@ -35,19 +35,22 @@ export function OntologyCanvas({ onCanvasChange }: OntologyCanvasProps) {
   const canvasDebounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const onNodesChange = useCallback(
-    (changes: NodeChange<OntologyNode>[]) => {
-      // RD-02: Split changes by node ID membership.
-      // Master-node changes → ontologyStore; source-node changes → updateSource.
-      const masterNodeIds = new Set(useOntologyStore.getState().nodes.map((n) => n.id))
+    (changes: NodeChange<OntologyNode | SourceNode>[]) => {
+      // RD-02: Split changes by source node ID membership.
+      // Source-node changes → updateSource; master-node changes → ontologyStore.
       const { activeSourceId, sources } = useSourcesStore.getState()
+      const activeSource = activeSourceId !== null
+        ? sources.find((s) => s.id === activeSourceId)
+        : undefined
+      const sourceNodeIds = new Set(activeSource?.schemaNodes.map((n) => n.id) ?? [])
 
-      const masterChanges = changes.filter((c) => !('id' in c) || masterNodeIds.has(c.id))
-      const sourceChanges = changes.filter((c) => 'id' in c && !masterNodeIds.has(c.id))
+      const masterChanges = changes.filter((c) => !('id' in c) || !sourceNodeIds.has(c.id))
+      const sourceChanges = changes.filter((c) => 'id' in c && sourceNodeIds.has(c.id))
 
-      // Apply master changes
+      // Apply master changes (existing path — unchanged)
       if (masterChanges.length > 0) {
         const masterNodes = useOntologyStore.getState().nodes
-        const updated = applyNodeChanges(masterChanges, masterNodes) as OntologyNode[]
+        const updated = applyNodeChanges(masterChanges as NodeChange<OntologyNode>[], masterNodes) as OntologyNode[]
         setNodes(updated)
 
         // Only notify parent for structural changes
@@ -63,13 +66,13 @@ export function OntologyCanvas({ onCanvasChange }: OntologyCanvasProps) {
         }
       }
 
-      // Apply source changes — if activeSource exists
-      if (sourceChanges.length > 0 && activeSourceId !== null) {
-        const activeSource = sources.find((s) => s.id === activeSourceId)
-        if (activeSource !== undefined) {
-          const updatedSourceNodes = applyNodeChanges(sourceChanges, activeSource.schemaNodes)
-          updateSource(activeSourceId, { schemaNodes: updatedSourceNodes })
-        }
+      // Apply source changes — only when activeSource exists and Set is non-empty
+      if (sourceChanges.length > 0 && activeSource !== undefined && sourceNodeIds.size > 0) {
+        const updatedSourceNodes = applyNodeChanges(
+          sourceChanges as NodeChange<SourceNode>[],
+          activeSource.schemaNodes as SourceNode[],
+        ) as SourceNode[]
+        updateSource(activeSource.id, { schemaNodes: updatedSourceNodes })
       }
     },
     [setNodes, updateSource, onCanvasChange],
