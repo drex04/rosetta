@@ -28,3 +28,16 @@ export interface ObjectPropertyEdgeData {
 export type OntologyEdge =
   | import('@xyflow/react').Edge<SubclassEdgeData & Record<string, unknown>, 'subclassEdge'>
   | import('@xyflow/react').Edge<ObjectPropertyEdgeData & Record<string, unknown>, 'objectPropertyEdge'>
+
+// ─── ProjectFile ──────────────────────────────────────────────────────────────
+
+export interface ProjectFile {
+  version: 1
+  ontology: {
+    turtleSource: string
+    nodePositions: Record<string, { x: number; y: number }>
+  }
+  sources: unknown[]   // populated in Phase 3
+  mappings: unknown[]  // populated in Phase 4
+  timestamp: string
+}
