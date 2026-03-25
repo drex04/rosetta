@@ -15,6 +15,8 @@ export interface ClassData {
 
 export type OntologyNode = import('@xyflow/react').Node<ClassData & Record<string, unknown>, 'classNode'>
 
+export type SourceNode = import('@xyflow/react').Node<ClassData & Record<string, unknown>, 'sourceNode'>
+
 export interface SubclassEdgeData {
   predicate: 'rdfs:subClassOf'
 }

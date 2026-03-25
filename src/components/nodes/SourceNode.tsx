@@ -1,10 +1,8 @@
 import { Handle, Position } from '@xyflow/react'
-import type { NodeProps, Node } from '@xyflow/react'
+import type { NodeProps } from '@xyflow/react'
 import { CirclesThreeIcon } from '@phosphor-icons/react'
-import type { ClassData } from '@/types/index'
+import type { SourceNode as SourceNodeType } from '@/types/index'
 import { localName, prefixFromUri } from '@/lib/rdf'
-
-type SourceNodeType = Node<ClassData & Record<string, unknown>, 'sourceNode'>
 
 const STANDARD_NAMESPACES: ReadonlyArray<readonly [string, string]> = [
   ['http://www.w3.org/2001/XMLSchema#', 'xsd'],

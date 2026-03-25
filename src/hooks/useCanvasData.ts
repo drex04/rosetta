@@ -14,12 +14,12 @@ export function useCanvasData(): { nodes: (OntologyNode | SourceNode)[]; edges: 
   )
 
   const nodes = useMemo(
-    () => [...masterNodes, ...(active?.schemaNodes as SourceNode[] ?? [])],
+    () => [...masterNodes, ...(active?.schemaNodes ?? [])],
     [masterNodes, active?.schemaNodes],
   )
 
   const edges = useMemo(
-    () => [...masterEdges, ...(active?.schemaEdges ?? [])] as OntologyEdge[],
+    () => [...masterEdges, ...(active?.schemaEdges ?? [])],
     [masterEdges, active?.schemaEdges],
   )
 
