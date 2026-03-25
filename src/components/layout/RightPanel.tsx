@@ -10,6 +10,7 @@ interface RightPanelProps {
 export function RightPanel({ onEditorChange }: RightPanelProps) {
   const { activeRightTab, setActiveRightTab } = useUiStore()
   const turtleSource = useOntologyStore((s) => s.turtleSource)
+  const parseError = useOntologyStore((s) => s.parseError)
 
   return (
     <aside
@@ -58,7 +59,7 @@ export function RightPanel({ onEditorChange }: RightPanelProps) {
             <div className="p-4 text-muted-foreground text-sm">Coming soon</div>
           </TabsContent>
           <TabsContent value="ONTO" className="h-full m-0">
-            <TurtleEditorPanel turtleSource={turtleSource} onEditorChange={onEditorChange} />
+            <TurtleEditorPanel turtleSource={turtleSource} onEditorChange={onEditorChange} parseError={parseError} />
           </TabsContent>
           <TabsContent value="MAP" className="h-full m-0">
             <div className="p-4 text-muted-foreground text-sm">Coming soon</div>
