@@ -32,8 +32,11 @@ export function useAutoSave() {
           store.setTurtleSource(saved.ontology.turtleSource)
           store.setNodes(positioned)
           store.setEdges(edges)
-        }).catch(() => {
-          console.warn('rosetta: failed to restore project from IDB')
+        }).catch((e: unknown) => {
+          // Restore raw text so the editor shows user's work after reload
+          store.setTurtleSource(saved.ontology.turtleSource)
+          store.setParseError((e as Error)?.message ?? 'Invalid Turtle syntax')
+          console.warn('rosetta: restored invalid Turtle from IDB')
         })
       } catch {
         console.warn('rosetta: failed to restore project from IDB')
