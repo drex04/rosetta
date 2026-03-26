@@ -47,7 +47,7 @@ export function useCanvasData(): { nodes: (OntologyNode | SourceNode)[]; edges: 
           target: targetNode.id,
           targetHandle: mapping.targetHandle,
           type: 'mappingEdge',
-          data: {},
+          data: { mappingId: mapping.id },
         })
       }
     }
