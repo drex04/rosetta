@@ -1,6 +1,6 @@
 import { useCallback, useRef } from 'react'
 import { ReactFlow, MiniMap, Controls, Background, applyNodeChanges } from '@xyflow/react'
-import type { NodeChange, Connection, Edge, IsValidConnection } from '@xyflow/react'
+import type { NodeChange, Connection, Edge } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { useCanvasData } from '../../hooks/useCanvasData'
 import { useOntologyStore } from '../../store/ontologyStore'
@@ -83,7 +83,7 @@ export function OntologyCanvas({ onCanvasChange }: OntologyCanvasProps) {
     [setNodes, updateSource, onCanvasChange],
   )
 
-  const isValidConnection = useCallback<IsValidConnection>((connection) => {
+  const isValidConnection = useCallback((connection: Connection | Edge) => {
     const { sourceHandle, targetHandle } = connection
     return (
       (sourceHandle ?? '').startsWith('prop_') &&
