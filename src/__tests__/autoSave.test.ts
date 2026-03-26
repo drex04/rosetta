@@ -46,7 +46,7 @@ const VALID_PROJECT_FILE: ProjectFile = {
     nodePositions: { node_Track: { x: 200, y: 150 } },
   },
   sources: [],
-  mappings: [],
+  mappings: {},
   timestamp: '2026-01-01T00:00:00.000Z',
 }
 
@@ -91,7 +91,7 @@ describe('useAutoSave', () => {
     expect(value.version).toBe(1)
     expect(value.ontology.turtleSource).toBe(MOCK_TURTLE)
     expect(value.sources).toEqual([])
-    expect(value.mappings).toEqual([])
+    expect(value.mappings).toEqual({})
     expect(typeof value.timestamp).toBe('string')
   })
 

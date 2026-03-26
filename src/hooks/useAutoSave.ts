@@ -2,8 +2,9 @@ import { useState, useEffect, useRef } from 'react'
 import { get, set } from 'idb-keyval'
 import { useOntologyStore } from '@/store/ontologyStore'
 import { useSourcesStore } from '@/store/sourcesStore'
+import { useMappingStore } from '@/store/mappingStore'
 import { parseTurtle } from '@/lib/rdf'
-import type { ProjectFile } from '@/types/index'
+import type { Mapping, ProjectFile } from '@/types/index'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -12,6 +13,17 @@ const IDB_KEY = 'rosetta-project'
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
+
+// ─── Type guards ──────────────────────────────────────────────────────────────
+
+function isValidMappings(v: unknown): v is Record<string, Mapping[]> {
+  return (
+    typeof v === 'object' &&
+    v !== null &&
+    !Array.isArray(v) &&
+    Object.values(v as object).every(Array.isArray)
+  )
+}
 
 // ─── useAutoSave ──────────────────────────────────────────────────────────────
 
@@ -54,6 +66,15 @@ export function useAutoSave() {
       } catch {
         console.warn('rosetta: failed to restore sources from IDB')
       }
+
+      // Restore mappings ───────────────────────────────────────────────────────
+      if (saved.mappings) {
+        if (isValidMappings(saved.mappings)) {
+          useMappingStore.getState().hydrate(saved.mappings)
+        } else {
+          console.warn('[useAutoSave] Skipping malformed mappings from IDB')
+        }
+      }
     })
   }, [])
 
@@ -75,6 +96,7 @@ export function useAutoSave() {
         try {
           const ontologyState = useOntologyStore.getState()
           const sourcesState = useSourcesStore.getState()
+          const mappings = useMappingStore.getState().mappings
           const snapshot: ProjectFile = {
             version: 1,
             ontology: {
@@ -85,12 +107,13 @@ export function useAutoSave() {
             },
             sources: sourcesState.sources,
             activeSourceId: sourcesState.activeSourceId,
-            mappings: {},
+            mappings,
             timestamp: new Date().toISOString(),
           }
           await set(IDB_KEY, snapshot)
           setSaveStatus('saved')
-        } catch {
+        } catch (err) {
+          console.error('[useAutoSave] IDB write failed', err)
           setSaveStatus('error')
         }
       })()
@@ -107,10 +130,15 @@ export function useAutoSave() {
       scheduleSave()
     })
 
+    const unsubMapping = useMappingStore.subscribe(() => {
+      scheduleSave()
+    })
+
     // Cleanup on unmount (R-02)
     return () => {
       unsubOntology()
       unsubSources()
+      unsubMapping()
       if (debounceTimer.current !== null) {
         clearTimeout(debounceTimer.current)
         debounceTimer.current = null
