@@ -83,7 +83,7 @@ export function SourceNode({ data }: NodeProps<SourceNodeType>) {
                 type="source"
                 position={Position.Right}
                 className="!w-2.5 !h-2.5 !bg-source !border-source"
-                isConnectable={false}
+                isConnectable={true}
               />
             </div>
           ))}

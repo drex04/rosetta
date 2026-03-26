@@ -74,6 +74,13 @@ export function ClassNode({ data }: NodeProps<OntologyNode>) {
               key={prop.uri}
               className="relative flex items-center justify-between px-3 pr-5 py-1.5 bg-white hover:bg-slate-50"
             >
+              <Handle
+                id={`target_prop_${prop.label}`}
+                type="target"
+                position={Position.Left}
+                className="!w-2.5 !h-2.5 !bg-blue-500 !border-blue-700"
+                isConnectable={true}
+              />
               <span className="text-foreground font-medium truncate max-w-[55%]">
                 {prop.label}
               </span>
