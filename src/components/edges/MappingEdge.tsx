@@ -1,8 +1,8 @@
-import { BaseEdge, getStraightPath } from '@xyflow/react'
+import { BaseEdge, getBezierPath } from '@xyflow/react'
 import type { EdgeProps } from '@xyflow/react'
 
 export function MappingEdge({ sourceX, sourceY, targetX, targetY, selected }: EdgeProps) {
-  const [edgePath] = getStraightPath({ sourceX, sourceY, targetX, targetY })
+  const [edgePath] = getBezierPath({ sourceX, sourceY, targetX, targetY })
   return (
     <BaseEdge
       path={edgePath}

@@ -50,7 +50,7 @@ export function ClassNode({ data }: NodeProps<OntologyNode>) {
         id="class-left"
         type="target"
         position={Position.Left}
-        style={{ top: 14 }}
+        style={{ top: 26 }}
         className="!w-2.5 !h-2.5 !bg-master !border-master"
         isConnectable={false}
       />
@@ -103,13 +103,13 @@ export function ClassNode({ data }: NodeProps<OntologyNode>) {
         id="class-right"
         type="source"
         position={Position.Right}
-        style={{ top: 14 }}
+        style={{ top: 26 }}
         className="!w-2.5 !h-2.5 !bg-master !border-master"
         isConnectable={false}
       />
       <Handle
         id="class-bottom"
-        type="target"
+        type="source"
         position={Position.Bottom}
         className="!w-2.5 !h-2.5 !bg-master !border-master"
         isConnectable={false}

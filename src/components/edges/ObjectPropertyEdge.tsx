@@ -1,4 +1,4 @@
-import { BaseEdge, getBezierPath, type EdgeProps, type Edge } from '@xyflow/react'
+import { BaseEdge, getSmoothStepPath, type EdgeProps, type Edge } from '@xyflow/react'
 import type { ObjectPropertyEdgeData } from '@/types/index'
 import { MASTER_BLUE } from './shared'
 import { EdgeLabel } from './EdgeLabel'
@@ -16,7 +16,7 @@ export function ObjectPropertyEdge({
   data,
   markerEnd,
 }: EdgeProps<ObjectPropertyEdgeType>) {
-  const [edgePath, labelX, labelY] = getBezierPath({
+  const [edgePath, labelX, labelY] = getSmoothStepPath({
     sourceX,
     sourceY,
     sourcePosition,

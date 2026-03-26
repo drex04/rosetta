@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { parseTurtle, canvasToTurtle, localName, COLUMN_X_MASTER, COLUMN_SPACING } from '@/lib/rdf'
+import { parseTurtle, canvasToTurtle, localName, COLUMN_X_MASTER } from '@/lib/rdf'
+import { TREE_BASE_Y, TREE_INDENT_X } from '@/lib/layout'
 import type { OntologyNode } from '../types/index'
 
 // ─── localName ────────────────────────────────────────────────────────────────
@@ -92,11 +93,20 @@ describe('parseTurtle with sample ontology', () => {
     expect(ids).toContain('node_FighterJet')
   })
 
-  it('assigns column layout positions', async () => {
+  it('assigns tree layout positions (root at base x, children indented)', async () => {
     const { nodes } = await parseTurtle(SAMPLE_TURTLE)
-    nodes.forEach((node: OntologyNode, index: number) => {
-      expect(node.position).toEqual({ x: COLUMN_X_MASTER, y: index * COLUMN_SPACING })
-    })
+    // Aircraft is the root (parent of FighterJet and Weapon), should be at base x
+    const aircraft = nodes.find((n) => n.id === 'node_Aircraft')!
+    const weapon   = nodes.find((n) => n.id === 'node_Weapon')!
+    const fighter  = nodes.find((n) => n.id === 'node_FighterJet')!
+    expect(aircraft.position.x).toBe(COLUMN_X_MASTER)
+    expect(aircraft.position.y).toBe(TREE_BASE_Y)
+    // Children are indented one level
+    expect(weapon.position.x).toBe(COLUMN_X_MASTER + TREE_INDENT_X)
+    expect(fighter.position.x).toBe(COLUMN_X_MASTER + TREE_INDENT_X)
+    // All y positions are distinct (height-aware layout ensures no overlap)
+    const ys = [aircraft, weapon, fighter].map((n) => n.position.y)
+    expect(new Set(ys).size).toBe(3)
   })
 
   it('embeds datatype properties in the correct class node', async () => {
@@ -121,13 +131,16 @@ describe('parseTurtle with sample ontology', () => {
     expect(edge.target).toBe('node_Weapon')
   })
 
-  it('creates subclassEdge for rdfs:subClassOf', async () => {
+  it('creates subclassEdge for rdfs:subClassOf (parent→child direction)', async () => {
     const { edges } = await parseTurtle(SAMPLE_TURTLE)
     const subEdges = edges.filter((e) => e.type === 'subclassEdge')
     expect(subEdges).toHaveLength(1)
     const edge = subEdges[0]!
-    expect(edge.source).toBe('node_FighterJet')
-    expect(edge.target).toBe('node_Aircraft')
+    // Edge flows parent→child (directory-tree style)
+    expect(edge.source).toBe('node_Aircraft')   // parent
+    expect(edge.target).toBe('node_FighterJet') // child
+    expect(edge.sourceHandle).toBe('class-bottom')
+    expect(edge.targetHandle).toBe('class-left')
   })
 
   it('sets node type to classNode', async () => {

@@ -200,11 +200,11 @@ export function SourceSelector() {
         })}
 
         <button
-          className="flex items-center justify-center w-6 h-6 rounded-full bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground text-sm font-medium border-none cursor-pointer transition-colors shrink-0"
+          className="flex items-center gap-1 h-6 px-2 rounded-full bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground text-xs font-medium border-none cursor-pointer transition-colors shrink-0"
           onClick={handleAddSource}
-          aria-label="Add source"
+          aria-label="Add new source"
         >
-          +
+          + Add Source
         </button>
       </div>
 

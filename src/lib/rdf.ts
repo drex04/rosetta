@@ -1,6 +1,7 @@
 import * as N3 from 'n3'
 import { MarkerType } from '@xyflow/react'
 import type { OntologyNode, OntologyEdge, ClassData, PropertyData } from '@/types/index'
+import { applyTreeLayout } from '@/lib/layout'
 
 // ─── Layout Constants ─────────────────────────────────────────────────────────
 
@@ -133,11 +134,10 @@ export async function parseTurtle(
     classData.properties.push(prop)
   }
 
-  const nodes: OntologyNode[] = Array.from(classMap.entries()).map(([uri, data], index) => ({
+  const nodes: OntologyNode[] = Array.from(classMap.entries()).map(([uri, data]) => ({
     id: `node_${localName(uri)}`,
     type: 'classNode' as const,
-    // Caller is responsible for merging saved positions after parse
-    position: { x: COLUMN_X_MASTER, y: index * COLUMN_SPACING },
+    position: { x: COLUMN_X_MASTER, y: 0 }, // overwritten by tree layout below
     data: data as ClassData & Record<string, unknown>,
   }))
 
@@ -191,13 +191,15 @@ export async function parseTurtle(
     const sourceId = `node_${localName(subUri)}`
     const targetId = `node_${localName(superUri)}`
 
+    // Edge flows parent→child (directory-tree style): parent bottom → child left.
+    // Note: sourceId=child, targetId=parent in RDF terms, so we swap for the edge.
     edges.push({
       id: `e_${sourceId}_subclassEdge_${targetId}`,
       type: 'subclassEdge' as const,
-      source: sourceId,
-      target: targetId,
-      sourceHandle: 'class-top',
-      targetHandle: 'class-bottom',
+      source: targetId,       // parent
+      target: sourceId,       // child
+      sourceHandle: 'class-bottom',
+      targetHandle: 'class-left',
       markerEnd: { type: MarkerType.ArrowClosed },
       data: {
         predicate: 'rdfs:subClassOf' as const,
@@ -205,7 +207,14 @@ export async function parseTurtle(
     })
   }
 
-  return { nodes, edges }
+  // Apply directory-tree layout
+  const treePositions = applyTreeLayout(nodes, edges, COLUMN_X_MASTER)
+  const positionedNodes = nodes.map((n) => ({
+    ...n,
+    position: treePositions.get(n.id) ?? n.position,
+  }))
+
+  return { nodes: positionedNodes, edges }
 }
 
 // ─── canvasToTurtle ───────────────────────────────────────────────────────────
@@ -282,10 +291,11 @@ export async function canvasToTurtle(
 
     for (const edge of edges) {
       if (edge.type === 'subclassEdge') {
-        const srcNode = nodeById.get(edge.source)
-        const tgtNode = nodeById.get(edge.target)
+        const srcNode = nodeById.get(edge.source) // parent
+        const tgtNode = nodeById.get(edge.target) // child
         if (srcNode && tgtNode) {
-          writer.addQuad(nn(srcNode.data.uri), nn(RDFS_SUBCLASS_OF), nn(tgtNode.data.uri))
+          // Edge is parent→child, but RDF reads child rdfs:subClassOf parent
+          writer.addQuad(nn(tgtNode.data.uri), nn(RDFS_SUBCLASS_OF), nn(srcNode.data.uri))
         }
       } else if (edge.type === 'objectPropertyEdge') {
         const srcNode = nodeById.get(edge.source)

@@ -35,6 +35,8 @@ interface OntologyState {
   setParseError: (error: string | null) => void
   /** Parse turtle text, update turtleSource, nodes, and edges atomically. */
   loadTurtle: (text: string) => Promise<void>
+  /** Reset all ontology state to empty. */
+  reset: () => void
 }
 
 // ─── Store ────────────────────────────────────────────────────────────────────
@@ -50,11 +52,7 @@ export const useOntologyStore = create<OntologyState>((set) => ({
   setParseError: (parseError) => set({ parseError }),
   loadTurtle: async (text: string) => {
     const { nodes, edges } = await parseTurtle(text)
-    // Apply a simple horizontal layout so nodes don't all overlap at (0,0)
-    const laidOut = nodes.map((node, i) => ({
-      ...node,
-      position: { x: 80 + i * 260, y: 80 },
-    }))
-    set({ turtleSource: text, nodes: laidOut, edges })
+    set({ turtleSource: text, nodes, edges })
   },
+  reset: () => set({ nodes: [], edges: [], turtleSource: '', parseError: null }),
 }))

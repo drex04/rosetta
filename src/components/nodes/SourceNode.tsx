@@ -48,7 +48,7 @@ export function SourceNode({ data }: NodeProps<SourceNodeType>) {
         id="class-left"
         type="target"
         position={Position.Left}
-        style={{ top: 14 }}
+        style={{ top: 26 }}
         className="!w-2.5 !h-2.5 !bg-source !border-source"
         isConnectable={false}
       />
@@ -94,13 +94,13 @@ export function SourceNode({ data }: NodeProps<SourceNodeType>) {
         id="class-right"
         type="source"
         position={Position.Right}
-        style={{ top: 14 }}
+        style={{ top: 26 }}
         className="!w-2.5 !h-2.5 !bg-source !border-source"
         isConnectable={false}
       />
       <Handle
         id="class-bottom"
-        type="target"
+        type="source"
         position={Position.Bottom}
         className="!w-2.5 !h-2.5 !bg-source !border-source"
         isConnectable={false}

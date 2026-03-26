@@ -2,6 +2,7 @@ import * as N3 from 'n3'
 import { MarkerType } from '@xyflow/react'
 import type { ClassData, PropertyData, ObjectPropertyEdgeData, SourceNode, OntologyEdge } from '@/types/index'
 import { COLUMN_X_SOURCE, COLUMN_SPACING } from '@/lib/rdf'
+import { applyTreeLayout } from '@/lib/layout'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -175,7 +176,7 @@ function walkObject(
       type: 'objectPropertyEdge',
       source: nodeId,
       target: rangeNode.id,
-      sourceHandle: 'class-right',
+      sourceHandle: 'class-bottom',
       targetHandle: 'class-left',
       markerEnd: { type: MarkerType.ArrowClosed },
       data: edgeData,
@@ -379,6 +380,13 @@ export function jsonToSchema(json: string, sourceName: string): SchemaResult {
   if (ctx.nodes.length === 0 && ctx.warnings.length === 0) {
     return empty
   }
+
+  // Apply directory-tree layout
+  const treePositions = applyTreeLayout(ctx.nodes, ctx.edges, COLUMN_X_SOURCE)
+  ctx.nodes = ctx.nodes.map((n) => ({
+    ...n,
+    position: treePositions.get(n.id) ?? n.position,
+  }))
 
   // Step 4: Serialize to Turtle
   const turtle = serializeToTurtle(ctx.nodes, ctx.edges, uriBase, prefixAlias, ctx.warnings)

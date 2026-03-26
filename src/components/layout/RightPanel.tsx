@@ -4,6 +4,7 @@ import { useOntologyStore } from '@/store/ontologyStore'
 import { TurtleEditorPanel } from '@/components/panels/TurtleEditorPanel'
 import { SourcePanel } from '@/components/panels/SourcePanel'
 import { MappingPanel } from '@/components/panels/MappingPanel'
+import { OutputPanel } from '@/components/panels/OutputPanel'
 
 interface RightPanelProps {
   onEditorChange: (value: string) => void
@@ -67,7 +68,7 @@ export function RightPanel({ onEditorChange }: RightPanelProps) {
             <MappingPanel />
           </TabsContent>
           <TabsContent value="OUT" className="h-full m-0">
-            <div className="p-4 text-muted-foreground text-sm">Coming soon</div>
+            <OutputPanel />
           </TabsContent>
         </div>
       </Tabs>
