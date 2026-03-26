@@ -28,6 +28,8 @@ interface MappingState {
 
   /** Replace the entire mappings map — used on mount for IDB restore. */
   hydrate: (mappings: Record<string, Mapping[]>) => void
+  /** Reset all mapping state to empty. */
+  reset: () => void
 }
 
 // ─── Store ────────────────────────────────────────────────────────────────────
@@ -88,4 +90,5 @@ export const useMappingStore = create<MappingState>((set, get) => ({
   setSelectedMappingId: (id) => set({ selectedMappingId: id }),
 
   hydrate: (mappings) => set({ mappings, selectedMappingId: null }),
+  reset: () => set({ mappings: {}, selectedMappingId: null }),
 }))

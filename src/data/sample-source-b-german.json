@@ -1,0 +1,55 @@
+{
+  "erkannte_ziele": [
+    {
+      "ziel_id": "TRK-0091",
+      "position": {
+        "breite": 52.5200,
+        "laenge": 13.4050,
+        "hoehe_m": 9750
+      },
+      "geschwindigkeit_kmh": 833,
+      "kurs_grad": 90,
+      "identifikation": {
+        "typ": "FEINDLICH",
+        "sicherheit": 0.88
+      },
+      "radar": "ADLER-2000",
+      "land": "DEU",
+      "zeitstempel": "2026-03-24T14:23:05Z"
+    },
+    {
+      "ziel_id": "TRK-0104",
+      "position": {
+        "breite": 48.1351,
+        "laenge": 11.5820,
+        "hoehe_m": 3200
+      },
+      "geschwindigkeit_kmh": 555,
+      "kurs_grad": 315,
+      "identifikation": {
+        "typ": "FREUNDLICH",
+        "sicherheit": 0.97
+      },
+      "radar": "ADLER-2000",
+      "land": "DEU",
+      "zeitstempel": "2026-03-24T14:23:08Z"
+    },
+    {
+      "ziel_id": "TRK-0117",
+      "position": {
+        "breite": 53.5753,
+        "laenge": 10.0153,
+        "hoehe_m": 610
+      },
+      "geschwindigkeit_kmh": 222,
+      "kurs_grad": 200,
+      "identifikation": {
+        "typ": "NEUTRAL",
+        "sicherheit": 0.65
+      },
+      "radar": "ADLER-2000",
+      "land": "DEU",
+      "zeitstempel": "2026-03-24T14:23:19Z"
+    }
+  ]
+}

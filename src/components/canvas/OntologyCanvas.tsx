@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { ReactFlow, MiniMap, Controls, Background, applyNodeChanges } from '@xyflow/react'
 import type { NodeChange, Connection, Edge } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
@@ -39,6 +39,16 @@ export function OntologyCanvas({ onCanvasChange }: OntologyCanvasProps) {
   const addMapping = useMappingStore((s) => s.addMapping)
   const removeMapping = useMappingStore((s) => s.removeMapping)
   const canvasDebounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const rfInstance = useRef<{ fitView: (opts?: { padding?: number; duration?: number }) => void } | null>(null)
+  const prevHadNodes = useRef(false)
+
+  useEffect(() => {
+    const hasNodes = nodes.length > 0
+    if (hasNodes && !prevHadNodes.current && rfInstance.current) {
+      rfInstance.current.fitView({ padding: 0.15, duration: 400 })
+    }
+    prevHadNodes.current = hasNodes
+  }, [nodes.length])
 
   const onNodesChange = useCallback(
     (changes: NodeChange<OntologyNode | SourceNode>[]) => {
@@ -164,6 +174,7 @@ export function OntologyCanvas({ onCanvasChange }: OntologyCanvasProps) {
       isValidConnection={isValidConnection}
       nodesDraggable={true}
       fitView
+      onInit={(instance) => { rfInstance.current = instance }}
       aria-label="Ontology mapping canvas"
     >
       <MiniMap />

@@ -17,6 +17,7 @@ interface SourcesState {
   addSource: (source: Source) => void
   removeSource: (id: string) => void
   updateSource: (id: string, patch: Partial<Source>) => void
+  reset: () => void
 }
 
 export function generateSourceId(): string {
@@ -41,4 +42,5 @@ export const useSourcesStore = create<SourcesState>((set) => ({
     set((s) => ({
       sources: s.sources.map((src) => (src.id === id ? { ...src, ...patch } : src)),
     })),
+  reset: () => set({ sources: [], activeSourceId: null }),
 }))

@@ -1,0 +1,43 @@
+{
+  "radarTracks": [
+    {
+      "trkNo": "A-0042",
+      "lat": 59.9139,
+      "lon": 10.7522,
+      "alt_ft": 32000,
+      "spd_kts": 450,
+      "hdg": 270,
+      "iff": "FRI",
+      "iff_conf": 0.95,
+      "sensor": "NORSE-3D",
+      "country": "NOR",
+      "time": "2026-03-24T14:23:00Z"
+    },
+    {
+      "trkNo": "A-0057",
+      "lat": 60.3913,
+      "lon": 5.3221,
+      "alt_ft": 18500,
+      "spd_kts": 380,
+      "hdg": 135,
+      "iff": "HOS",
+      "iff_conf": 0.88,
+      "sensor": "NORSE-3D",
+      "country": "NOR",
+      "time": "2026-03-24T14:23:12Z"
+    },
+    {
+      "trkNo": "A-0061",
+      "lat": 58.1467,
+      "lon": 7.9956,
+      "alt_ft": 500,
+      "spd_kts": 120,
+      "hdg": 10,
+      "iff": "NEU",
+      "iff_conf": 0.72,
+      "sensor": "NORSE-3D",
+      "country": "NOR",
+      "time": "2026-03-24T14:23:31Z"
+    }
+  ]
+}

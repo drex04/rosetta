@@ -105,7 +105,24 @@ export function SourcePanel() {
   const isUpdatingTurtleFromStore = useRef(false)
 
   // ── Turtle preview open state ─────────────────────────────────────────────────
-  const [showTurtle, setShowTurtle] = useState(false)
+  const [showTurtle, setShowTurtle] = useState(true)
+
+  // ── Initialize lastTurtle from stored source data on mount/source-switch ──────
+  // After IDB restore, lastTurtle starts empty even though source.json is populated.
+  // Re-derive the turtle so the preview is available without requiring a keystroke.
+  useEffect(() => {
+    if (!source?.json) {
+      setLastTurtle('')
+      return
+    }
+    try {
+      JSON.parse(source.json) // only proceed if JSON is valid
+      const result = jsonToSchema(source.json, source.name)
+      setLastTurtle(result.turtle)
+    } catch {
+      setLastTurtle('')
+    }
+  }, [source?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Debounced update (per source.id) ─────────────────────────────────────────
   const debouncedUpdate = useMemo(() => {
