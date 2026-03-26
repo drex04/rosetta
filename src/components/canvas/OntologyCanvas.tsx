@@ -3,6 +3,7 @@ import { ReactFlow, MiniMap, Controls, Background, applyNodeChanges } from '@xyf
 import type { NodeChange, Connection, Edge } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { useCanvasData } from '../../hooks/useCanvasData'
+import { generateConstruct } from '@/lib/sparql'
 import { useOntologyStore } from '../../store/ontologyStore'
 import { useSourcesStore } from '../../store/sourcesStore'
 import { useMappingStore } from '../../store/mappingStore'
@@ -120,6 +121,16 @@ export function OntologyCanvas({ onCanvasChange }: OntologyCanvasProps) {
     const targetProp = targetNode.data.properties.find((p) => p.label === targetPropLabel)
     if (!sourceProp || !targetProp) return
 
+    const sparqlConstruct = generateConstruct({
+      sourceId: activeSourceId,
+      sourceClassUri: sourceNode.data.uri,
+      sourcePropUri: sourceProp.uri,
+      sourceHandle,
+      targetClassUri: targetNode.data.uri,
+      targetPropUri: targetProp.uri,
+      targetHandle,
+    })
+
     addMapping({
       sourceId: activeSourceId,
       sourceClassUri: sourceNode.data.uri,
@@ -129,7 +140,7 @@ export function OntologyCanvas({ onCanvasChange }: OntologyCanvasProps) {
       sourceHandle,
       targetHandle,
       kind: 'direct',
-      sparqlConstruct: '',
+      sparqlConstruct,
     })
   }, [addMapping])
 
