@@ -38,6 +38,7 @@ src/
 
 - Vitest in `src/__tests__/`
 - Test RDF round-trips, SPARQL CONSTRUCT outputs, and JSON→RDFS conversion logic
+- Run `npm run build` (not just `npm run test`) to catch TypeScript errors — LSP diagnostics lag after file changes
 
 ## Planning
 
@@ -50,3 +51,7 @@ Design tokens and aesthetic direction in `.planning/DESIGN.md`.
 - Comunica runs in-browser against N3.Store — no server needed, but large datasets are slow
 - Each source gets its own URI prefix (derived from source name) — never share prefixes between sources
 - shadcn/ui init must use `--preset bcivVKZU`; icon library must be Phosphor (override any preset default)
+- IDB persistence pattern for each store: subscribe → snapshot in `useAutoSave` → mount restore with type guard → `setSaveStatus('error')` on failure
+- Type guards for IDB data must validate element shape (e.g. `typeof m.id === 'string'`), not just `Array.isArray`
+- `hydrate` actions must reset related selection state (e.g. `selectedMappingId: null`) to prevent stale pointers after reload
+- Always import `localName` from `src/lib/rdf.ts` — never re-implement; divergence silently breaks handle matching
