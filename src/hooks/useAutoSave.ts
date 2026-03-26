@@ -21,7 +21,11 @@ function isValidMappings(v: unknown): v is Record<string, Mapping[]> {
     typeof v === 'object' &&
     v !== null &&
     !Array.isArray(v) &&
-    Object.values(v as object).every(Array.isArray)
+    Object.values(v as object).every(
+      (arr) =>
+        Array.isArray(arr) &&
+        arr.every((m) => typeof m === 'object' && m !== null && typeof (m as Mapping).id === 'string'),
+    )
   )
 }
 
@@ -68,12 +72,10 @@ export function useAutoSave() {
       }
 
       // Restore mappings ───────────────────────────────────────────────────────
-      if (saved.mappings) {
-        if (isValidMappings(saved.mappings)) {
-          useMappingStore.getState().hydrate(saved.mappings)
-        } else {
-          console.warn('[useAutoSave] Skipping malformed mappings from IDB')
-        }
+      if (isValidMappings(saved.mappings)) {
+        useMappingStore.getState().hydrate(saved.mappings)
+      } else {
+        console.warn('[useAutoSave] Skipping malformed mappings from IDB')
       }
     })
   }, [])
