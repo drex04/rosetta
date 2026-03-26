@@ -85,7 +85,7 @@ export function useAutoSave() {
             },
             sources: sourcesState.sources,
             activeSourceId: sourcesState.activeSourceId,
-            mappings: [],
+            mappings: {},
             timestamp: new Date().toISOString(),
           }
           await set(IDB_KEY, snapshot)

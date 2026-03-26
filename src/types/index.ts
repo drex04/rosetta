@@ -56,6 +56,6 @@ export interface ProjectFile {
   }
   sources: import('@/store/sourcesStore').Source[]
   activeSourceId?: string | null
-  mappings: unknown[]  // populated in Phase 4
+  mappings: Record<string, Mapping[]>
   timestamp: string
 }

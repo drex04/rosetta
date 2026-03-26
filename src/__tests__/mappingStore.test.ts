@@ -154,3 +154,42 @@ describe('useMappingStore — setSelectedMappingId', () => {
     expect(useMappingStore.getState().selectedMappingId).toBeNull()
   })
 })
+
+describe('useMappingStore — hydrate', () => {
+  it('replaces all existing mappings', () => {
+    // Add a mapping first so there is pre-existing state
+    useMappingStore.getState().addMapping(makeBase({ sourceId: 'src-old' }))
+
+    const hydratedMapping: Mapping = {
+      id: 'hydrated-id-1',
+      sourceId: 'src-new',
+      sourceClassUri: 'http://example.org/NewClass',
+      sourcePropUri: 'http://example.org/newProp',
+      targetClassUri: 'http://nato.int/onto#TargetClass',
+      targetPropUri: 'http://nato.int/onto#targetProp',
+      sourceHandle: 'prop_newProp',
+      targetHandle: 'target_prop_targetProp',
+      kind: 'direct',
+      sparqlConstruct: '',
+    }
+
+    useMappingStore.getState().hydrate({ 'src-new': [hydratedMapping] })
+
+    const state = useMappingStore.getState().mappings
+    expect(state['src-old']).toBeUndefined()
+    expect(state['src-new']).toHaveLength(1)
+    expect(state['src-new']![0]!.id).toBe('hydrated-id-1')
+  })
+
+  it('hydrate with empty object clears all mappings', () => {
+    // Add some mappings first
+    useMappingStore.getState().addMapping(makeBase({ sourceId: 'src-1' }))
+    useMappingStore.getState().addMapping(makeBase({ sourceId: 'src-2' }))
+
+    expect(Object.keys(useMappingStore.getState().mappings)).toHaveLength(2)
+
+    useMappingStore.getState().hydrate({})
+
+    expect(useMappingStore.getState().mappings).toEqual({})
+  })
+})
