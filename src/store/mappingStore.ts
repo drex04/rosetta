@@ -87,5 +87,5 @@ export const useMappingStore = create<MappingState>((set, get) => ({
 
   setSelectedMappingId: (id) => set({ selectedMappingId: id }),
 
-  hydrate: (mappings) => set({ mappings }),
+  hydrate: (mappings) => set({ mappings, selectedMappingId: null }),
 }))
