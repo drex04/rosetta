@@ -1,14 +1,16 @@
 import { useCallback, useRef } from 'react'
 import { ReactFlow, MiniMap, Controls, Background, applyNodeChanges } from '@xyflow/react'
-import type { NodeChange } from '@xyflow/react'
+import type { NodeChange, Connection, Edge, IsValidConnection } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { useCanvasData } from '../../hooks/useCanvasData'
 import { useOntologyStore } from '../../store/ontologyStore'
 import { useSourcesStore } from '../../store/sourcesStore'
+import { useMappingStore } from '../../store/mappingStore'
 import { ClassNode } from '../nodes/ClassNode'
 import { SourceNode as SourceNodeComponent } from '../nodes/SourceNode'
 import { SubclassEdge } from '../edges/SubclassEdge'
 import { ObjectPropertyEdge } from '../edges/ObjectPropertyEdge'
+import { MappingEdge } from '../edges/MappingEdge'
 import type { OntologyNode, OntologyEdge, SourceNode } from '@/types/index'
 
 const nodeTypes = {
@@ -19,6 +21,7 @@ const nodeTypes = {
 const edgeTypes = {
   subclassEdge: SubclassEdge,
   objectPropertyEdge: ObjectPropertyEdge,
+  mappingEdge: MappingEdge,
 } as const
 
 interface OntologyCanvasProps {
@@ -32,6 +35,8 @@ export function OntologyCanvas({ onCanvasChange }: OntologyCanvasProps) {
   const { nodes, edges } = useCanvasData()
   const setNodes = useOntologyStore((s) => s.setNodes)
   const updateSource = useSourcesStore((s) => s.updateSource)
+  const addMapping = useMappingStore((s) => s.addMapping)
+  const removeMapping = useMappingStore((s) => s.removeMapping)
   const canvasDebounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const onNodesChange = useCallback(
@@ -78,6 +83,64 @@ export function OntologyCanvas({ onCanvasChange }: OntologyCanvasProps) {
     [setNodes, updateSource, onCanvasChange],
   )
 
+  const isValidConnection = useCallback<IsValidConnection>((connection) => {
+    const { sourceHandle, targetHandle } = connection
+    return (
+      (sourceHandle ?? '').startsWith('prop_') &&
+      (targetHandle ?? '').startsWith('target_prop_')
+    )
+  }, [])
+
+  const onConnect = useCallback((connection: Connection) => {
+    const { source, sourceHandle, target, targetHandle } = connection
+    if (!source || !sourceHandle || !target || !targetHandle) return
+
+    // Find the source node across all sources
+    const { sources } = useSourcesStore.getState()
+    let sourceNode: SourceNode | undefined
+    let activeSourceId: string | undefined
+    for (const src of sources) {
+      const found = src.schemaNodes.find((n) => n.id === source)
+      if (found) {
+        sourceNode = found
+        activeSourceId = src.id
+        break
+      }
+    }
+
+    // Find the target node from the ontology store
+    const { nodes: allNodes } = useOntologyStore.getState()
+    const targetNode = allNodes.find((n) => n.id === target)
+
+    if (!sourceNode || !targetNode || !activeSourceId) return
+
+    const propLabel = sourceHandle.replace('prop_', '')
+    const targetPropLabel = targetHandle.replace('target_prop_', '')
+    const sourceProp = sourceNode.data.properties.find((p) => p.label === propLabel)
+    const targetProp = targetNode.data.properties.find((p) => p.label === targetPropLabel)
+    if (!sourceProp || !targetProp) return
+
+    addMapping({
+      sourceId: activeSourceId,
+      sourceClassUri: sourceNode.data.uri,
+      sourcePropUri: sourceProp.uri,
+      targetClassUri: targetNode.data.uri,
+      targetPropUri: targetProp.uri,
+      sourceHandle,
+      targetHandle,
+      kind: 'direct',
+      sparqlConstruct: '',
+    })
+  }, [addMapping])
+
+  const onEdgesDelete = useCallback((deletedEdges: Edge[]) => {
+    for (const edge of deletedEdges) {
+      if (edge.id.startsWith('mapping_')) {
+        removeMapping(edge.id)
+      }
+    }
+  }, [removeMapping])
+
   return (
     <ReactFlow
       nodes={nodes}
@@ -85,6 +148,9 @@ export function OntologyCanvas({ onCanvasChange }: OntologyCanvasProps) {
       nodeTypes={nodeTypes}
       edgeTypes={edgeTypes}
       onNodesChange={onNodesChange}
+      onConnect={onConnect}
+      onEdgesDelete={onEdgesDelete}
+      isValidConnection={isValidConnection}
       nodesDraggable={true}
       fitView
       aria-label="Ontology mapping canvas"
