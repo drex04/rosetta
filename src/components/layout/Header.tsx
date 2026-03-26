@@ -26,6 +26,7 @@ import { useSourcesStore, generateSourceId } from '@/store/sourcesStore'
 import { useMappingStore } from '@/store/mappingStore'
 import { parseTurtle } from '@/lib/rdf'
 import { jsonToSchema } from '@/lib/jsonToSchema'
+import { generateConstruct } from '@/lib/sparql'
 import type { ProjectFile } from '@/types/index'
 import type { SaveStatus } from '@/hooks/useAutoSave'
 import sampleNorwegianRaw from '@/data/sample-source-a-norwegian.json?raw'
@@ -100,18 +101,51 @@ export function Header({ saveStatus }: HeaderProps) {
       { id: idB, name: 'Germany', order: 1, json: sampleGermanRaw, schemaNodes: resultB.nodes, schemaEdges: resultB.edges },
     ]
     useSourcesStore.setState({ sources, activeSourceId: idA })
+
+    // Add a seed mapping: Norway spd_kts → AirTrack speed
+    const radarTracksNode = resultA.nodes.find((n) => n.data.uri === 'http://src_norway_#RadarTracks')
+    const airTrackNode = useOntologyStore.getState().nodes.find((n) => n.data.uri === 'http://nato.int/onto#AirTrack')
+    if (radarTracksNode && airTrackNode) {
+      const srcProp = radarTracksNode.data.properties.find((p) => p.label === 'spd_kts')
+      const tgtProp = airTrackNode.data.properties.find((p) => p.label === 'speed')
+      if (srcProp && tgtProp) {
+        const sparqlConstruct = generateConstruct({
+          sourceId: idA,
+          sourceClassUri: radarTracksNode.data.uri,
+          sourcePropUri: srcProp.uri,
+          sourceHandle: 'prop_spd_kts',
+          targetClassUri: airTrackNode.data.uri,
+          targetPropUri: tgtProp.uri,
+          targetHandle: 'target_prop_speed',
+        })
+        useMappingStore.getState().addMapping({
+          sourceId: idA,
+          sourceClassUri: radarTracksNode.data.uri,
+          sourcePropUri: srcProp.uri,
+          targetClassUri: airTrackNode.data.uri,
+          targetPropUri: tgtProp.uri,
+          sourceHandle: 'prop_spd_kts',
+          targetHandle: 'target_prop_speed',
+          kind: 'direct',
+          sparqlConstruct,
+        })
+      }
+    }
   }
 
   // ── Export Project ─────────────────────────────────────────────────────────
   function handleExportProject(): void {
+    const sourcesState = useSourcesStore.getState()
+    const mappings = useMappingStore.getState().mappings
     const snapshot: ProjectFile = {
       version: 1,
       ontology: {
         turtleSource,
         nodePositions: Object.fromEntries(nodes.map((n) => [n.id, n.position])),
       },
-      sources: [],
-      mappings: {},
+      sources: sourcesState.sources,
+      activeSourceId: sourcesState.activeSourceId,
+      mappings,
       timestamp: new Date().toISOString(),
     }
     downloadBlob('project.onto-mapper.json', JSON.stringify(snapshot, null, 2), 'application/json')
@@ -147,6 +181,15 @@ export function Header({ saveStatus }: HeaderProps) {
           setTurtleSource(turtle)
           setNodes(positioned)
           setEdges(parsedEdges)
+          if (Array.isArray(parsed.sources) && parsed.sources.length > 0) {
+            useSourcesStore.setState({
+              sources: parsed.sources,
+              activeSourceId: parsed.activeSourceId ?? null,
+            })
+          }
+          if (parsed.mappings && typeof parsed.mappings === 'object') {
+            useMappingStore.getState().hydrate(parsed.mappings)
+          }
           setImportError(null)
         }).catch(() => {
           setImportError('Failed to parse Turtle in project file.')
