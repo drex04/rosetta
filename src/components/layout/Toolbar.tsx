@@ -97,7 +97,7 @@ export function Toolbar() {
         nodePositions: Object.fromEntries(nodes.map((n) => [n.id, n.position])),
       },
       sources: [],
-      mappings: [],
+      mappings: {},
       timestamp: new Date().toISOString(),
     }
     downloadBlob('project.onto-mapper.json', JSON.stringify(snapshot, null, 2), 'application/json')
