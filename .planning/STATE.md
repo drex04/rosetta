@@ -3,8 +3,8 @@
 ## Current Position
 
 - **Phase:** 4
-- **Plan:** 2/3 complete
-- **Status:** In progress — Plan 02 done, Plan 03 remaining
+- **Plan:** 3/3 complete
+- **Status:** Phase complete — ready for Phase 5 (SHACL Validation)
 
 ## Phase Status
 
@@ -13,7 +13,7 @@
 | 1 | Scaffolding & Core Setup | complete |
 | 2 | RDF Backbone | complete |
 | 3 | JSON Import (Multi-Source) | complete |
-| 4 | Mapping (Per-Source) | in progress |
+| 4 | Mapping (Per-Source) | complete |
 | 5 | SHACL Validation | not started |
 | 6 | Transform & Fuse | not started |
 | 7 | Onboarding & Polish | not started |
@@ -28,4 +28,5 @@ Phase 3 Plan 02 completed 2026-03-25: jsonToSchema converter (recursive, circula
 Phase 3 Plan 03 completed 2026-03-25: SourceNode component (amber), canvas registration, two-filter onNodesChange (RD-02), useCanvasData merge, store type safety (SourceNode[]/OntologyEdge[]).
 Phase 4 Plan 01 completed 2026-03-26: Mapping type + mappingStore, MappingEdge, handle connectivity, onConnect/onEdgesDelete wiring.
 Phase 4 Plan 02 completed 2026-03-26: sparql.ts generateConstruct (TDD, 11 tests), MappingPanel with list+CodeMirror editor+lint badge, MAP tab wired.
-Next: run `/fh:build` to execute Plan 03 — IDB persistence for mappings + useAutoSave extension.
+Phase 4 Plan 03 completed 2026-03-26: ProjectFile.mappings typed as Record<string, Mapping[]>, mappingStore hydrate action, useAutoSave extended (subscribe + snapshot + mount restore + IDB error banner).
+Next: run `/fh:plan-work` for Phase 5 — SHACL Validation.
