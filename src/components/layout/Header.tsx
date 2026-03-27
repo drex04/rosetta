@@ -10,10 +10,6 @@ import {
 import {
   QuestionIcon,
   InfoIcon,
-  GithubLogoIcon,
-  CircleNotchIcon,
-  CheckCircleIcon,
-  WarningIcon,
   FolderSimpleIcon,
   TrashIcon,
   ArrowCounterClockwiseIcon,
@@ -28,7 +24,6 @@ import { parseTurtle } from '@/lib/rdf'
 import { jsonToSchema } from '@/lib/jsonToSchema'
 import { generateConstruct } from '@/lib/sparql'
 import type { ProjectFile } from '@/types/index'
-import type { SaveStatus } from '@/hooks/useAutoSave'
 import sampleNorwegianRaw from '@/data/sample-source-a-norwegian.json?raw'
 import sampleGermanRaw from '@/data/sample-source-b-german.json?raw'
 
@@ -65,11 +60,7 @@ function resetAllStores(): void {
 
 // ─── Header ───────────────────────────────────────────────────────────────────
 
-interface HeaderProps {
-  saveStatus: SaveStatus
-}
-
-export function Header({ saveStatus }: HeaderProps) {
+export function Header() {
   const turtleSource = useOntologyStore((s) => s.turtleSource)
   const nodes = useOntologyStore((s) => s.nodes)
   const setTurtleSource = useOntologyStore((s) => s.setTurtleSource)
@@ -214,27 +205,8 @@ export function Header({ saveStatus }: HeaderProps) {
         </span>
       </div>
 
-      {/* Right: save status + project menu + auxiliary buttons */}
+      {/* Right: project menu + auxiliary buttons */}
       <div className="flex items-center gap-2">
-        {saveStatus === 'saving' && (
-          <span className="flex items-center gap-1 text-xs text-foreground px-2 py-0.5 rounded-full bg-muted" aria-live="polite">
-            <CircleNotchIcon size={14} className="animate-spin" />
-            Saving…
-          </span>
-        )}
-        {saveStatus === 'saved' && (
-          <span className="flex items-center gap-1 text-xs text-foreground px-2 py-0.5 rounded-full bg-muted" aria-live="polite">
-            <CheckCircleIcon size={14} className="text-green-500" />
-            Saved
-          </span>
-        )}
-        {saveStatus === 'error' && (
-          <span className="flex items-center gap-1 text-xs text-amber-500 px-2 py-0.5 rounded-full bg-muted" aria-live="polite">
-            <WarningIcon size={14} />
-            Save failed
-          </span>
-        )}
-
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -295,16 +267,6 @@ export function Header({ saveStatus }: HeaderProps) {
         />
 
         <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 gap-1.5 text-muted-foreground hover:text-foreground"
-            aria-label="View source on GitHub"
-            onClick={() => window.open('https://github.com/drex04/rosetta', '_blank', 'noopener,noreferrer')}
-          >
-            <GithubLogoIcon size={16} />
-            <span className="text-xs">GitHub</span>
-          </Button>
           <Button
             variant="ghost"
             size="sm"
