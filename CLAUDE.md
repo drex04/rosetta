@@ -39,6 +39,8 @@ src/
 - Vitest in `src/__tests__/`
 - Test RDF round-trips, SPARQL CONSTRUCT outputs, and JSON→RDFS conversion logic
 - Run `npm run build` (not just `npm run test`) to catch TypeScript errors — LSP diagnostics lag after file changes
+- E2E tests live in `e2e/` — run with `npx playwright test`, NOT via `npm run test` (vitest picks them up but fails without dev server)
+- Playwright fixture `freshPage` in `e2e/fixtures.ts` handles IDB clear + page load; use it for all layout/interaction tests
 
 ## Planning
 
@@ -47,6 +49,8 @@ Design tokens and aesthetic direction in `.planning/DESIGN.md`.
 
 ## Gotchas
 
+- Root layout uses `h-dvh` (not `h-screen`) for iOS Safari address-bar compatibility (Tailwind 3.4+)
+- RightPanel has three layout modes: collapsed strip (`w-10`), mobile full-width overlay (`z-20`), desktop resizable (`shrink-0` + inline width); breakpoint is `window.innerWidth < 640`
 - Bidirectional canvas↔code sync needs an `isUpdatingFrom*` flag to prevent circular updates
 - Comunica runs in-browser against N3.Store — no server needed, but large datasets are slow
 - Each source gets its own URI prefix (derived from source name) — never share prefixes between sources
