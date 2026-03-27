@@ -3,7 +3,6 @@ import { CaretLeftIcon, CaretRightIcon } from '@phosphor-icons/react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { useUiStore } from '@/store/uiStore'
 import { useOntologyStore } from '@/store/ontologyStore'
-import { useSourcesStore } from '@/store/sourcesStore'
 import { TurtleEditorPanel } from '@/components/panels/TurtleEditorPanel'
 import { SourcePanel } from '@/components/panels/SourcePanel'
 import { MappingPanel } from '@/components/panels/MappingPanel'
@@ -17,8 +16,6 @@ export function RightPanel({ onEditorChange }: RightPanelProps) {
   const { activeRightTab, setActiveRightTab } = useUiStore()
   const turtleSource = useOntologyStore((s) => s.turtleSource)
   const parseError = useOntologyStore((s) => s.parseError)
-  const activeSourceId = useSourcesStore((s) => s.activeSourceId)
-
   const [collapsed, setCollapsed] = useState(false)
   const [width, setWidth] = useState(() => Math.round(window.innerWidth * 0.3))
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 640)
@@ -132,7 +129,7 @@ export function RightPanel({ onEditorChange }: RightPanelProps) {
             </div>
             <div className="flex-1 overflow-hidden">
               <TabsContent value="SRC" className="h-full m-0">
-                <SourcePanel key={activeSourceId ?? 'none'} />
+                <SourcePanel />
               </TabsContent>
               <TabsContent value="ONTO" className="h-full m-0">
                 <TurtleEditorPanel turtleSource={turtleSource} onEditorChange={onEditorChange} parseError={parseError} />
