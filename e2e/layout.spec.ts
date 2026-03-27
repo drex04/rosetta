@@ -55,17 +55,16 @@ test.describe('Layout', () => {
   })
 
   test('right panel expands to full width on mobile', async ({ freshPage: page }) => {
-    await page.setViewportSize({ width: 375, height: 667 })
-    await page.goto('/')
-
-    // Clear persisted state
+    // Clear persisted state before loading at mobile viewport
     await page.evaluate(() => {
       const deleteRequest = indexedDB.deleteDatabase('keyval-store')
       deleteRequest.onerror = () => { /* ignore */ }
       localStorage.removeItem('rosetta-ui')
     })
 
-    await page.reload({ waitUntil: 'networkidle' })
+    await page.setViewportSize({ width: 375, height: 667 })
+    await page.goto('/')
+    await page.waitForLoadState('networkidle')
 
     const aside = page.locator('aside[aria-label="Right panel"]')
 
