@@ -7,6 +7,7 @@ import { generateConstruct } from '@/lib/sparql'
 import { useOntologyStore } from '../../store/ontologyStore'
 import { useSourcesStore } from '../../store/sourcesStore'
 import { useMappingStore } from '../../store/mappingStore'
+import { useValidationStore } from '../../store/validationStore'
 import { ClassNode } from '../nodes/ClassNode'
 import { SourceNode as SourceNodeComponent } from '../nodes/SourceNode'
 import { SubclassEdge } from '../edges/SubclassEdge'
@@ -41,6 +42,7 @@ export function OntologyCanvas({ onCanvasChange }: OntologyCanvasProps) {
   const canvasDebounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const rfInstance = useRef<{ fitView: (opts?: { padding?: number; duration?: number }) => void } | null>(null)
   const prevHadNodes = useRef(false)
+  const highlightedCanvasNodeId = useValidationStore((s) => s.highlightedCanvasNodeId)
 
   useEffect(() => {
     const hasNodes = nodes.length > 0
@@ -49,6 +51,11 @@ export function OntologyCanvas({ onCanvasChange }: OntologyCanvasProps) {
     }
     prevHadNodes.current = hasNodes
   }, [nodes.length])
+
+  useEffect(() => {
+    if (!highlightedCanvasNodeId || !rfInstance.current) return
+    rfInstance.current.fitView({ padding: 0.4, duration: 400 })
+  }, [highlightedCanvasNodeId])
 
   const onNodesChange = useCallback(
     (changes: NodeChange<OntologyNode | SourceNode>[]) => {

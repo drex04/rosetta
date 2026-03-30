@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-type RightTab = 'SRC' | 'ONTO' | 'MAP' | 'OUT'
+type RightTab = 'SRC' | 'ONTO' | 'MAP' | 'OUT' | 'VAL'
 
 interface UiState {
   activeRightTab: RightTab

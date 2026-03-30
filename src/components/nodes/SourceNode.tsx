@@ -2,41 +2,20 @@ import { Handle, Position } from '@xyflow/react'
 import type { NodeProps } from '@xyflow/react'
 import { CirclesThreeIcon } from '@phosphor-icons/react'
 import type { SourceNode as SourceNodeType } from '@/types/index'
-import { localName, prefixFromUri } from '@/lib/rdf'
+import { prefixFromUri, shortenUri, shortenRange } from '@/lib/rdf'
+import { useValidationStore } from '@/store/validationStore'
 
-const STANDARD_NAMESPACES: ReadonlyArray<readonly [string, string]> = [
-  ['http://www.w3.org/2001/XMLSchema#', 'xsd'],
-  ['http://www.w3.org/2002/07/owl#', 'owl'],
-  ['http://www.w3.org/2000/01/rdf-schema#', 'rdfs'],
-  ['http://www.w3.org/1999/02/22-rdf-syntax-ns#', 'rdf'],
-]
-
-function shortenUri(uri: string, prefix: string): string {
-  if (prefix.length > 0 && uri.startsWith(prefix)) {
-    const local = uri.slice(prefix.length)
-    if (local.length > 0) {
-      const withoutTrailing = prefix.replace(/[#/]$/, '')
-      const alias = localName(withoutTrailing)
-      return `${alias}:${local}`
-    }
-  }
-  return uri
-}
-
-function shortenRange(range: string): string {
-  for (const [ns, alias] of STANDARD_NAMESPACES) {
-    if (range.startsWith(ns)) {
-      return `${alias}:${range.slice(ns.length)}`
-    }
-  }
-  return localName(range)
-}
-
-export function SourceNode({ data }: NodeProps<SourceNodeType>) {
+export function SourceNode({ id, data }: NodeProps<SourceNodeType>) {
   const shortUri = shortenUri(data.uri, data.prefix || prefixFromUri(data.uri))
 
+  // Boolean selector: only this node re-renders when its own highlighted state changes
+  const isHighlighted = useValidationStore((s) => s.highlightedCanvasNodeId === id)
+
   return (
-    <div className="bg-white border-2 border-source rounded-md shadow-md min-w-[200px] text-sm font-sans overflow-visible">
+    <div className={[
+      'bg-white border-2 border-source rounded-md shadow-md min-w-[200px] text-sm font-sans overflow-visible',
+      isHighlighted ? 'ring-2 ring-destructive ring-offset-2' : '',
+    ].join(' ')}>
       <Handle
         id="class-top"
         type="source"
