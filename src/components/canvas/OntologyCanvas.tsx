@@ -146,6 +146,7 @@ export function OntologyCanvas({ onCanvasChange }: OntologyCanvasProps) {
       targetClassUri: targetNode.data.uri,
       targetPropUri: targetProp.uri,
       targetHandle,
+      kind: 'direct',
     })
 
     addMapping({
