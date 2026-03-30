@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { useSourcesStore, generateSourceId } from '@/store/sourcesStore'
+import { useValidationStore } from '@/store/validationStore'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 
 interface DeleteTarget {
@@ -14,6 +15,9 @@ export function SourceSelector() {
   const removeSource = useSourcesStore((s) => s.removeSource)
   const setActiveSourceId = useSourcesStore((s) => s.setActiveSourceId)
   const updateSource = useSourcesStore((s) => s.updateSource)
+
+  const validationResults = useValidationStore((s) => s.results)
+  const validationLastRun = useValidationStore((s) => s.lastRun)
 
   // Inline edit state
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -166,6 +170,23 @@ export function SourceSelector() {
                   {source.name}
                 </button>
               )}
+
+              {(() => {
+                const sourceValidation = validationResults[source.id]
+                if (validationLastRun === null || sourceValidation === undefined) {
+                  return (
+                    <span className="text-[10px] text-muted-foreground/50" aria-hidden="true">○</span>
+                  )
+                }
+                if (sourceValidation.length === 0) {
+                  return (
+                    <span className="text-[10px] text-green-500" aria-hidden="true">✓</span>
+                  )
+                }
+                return (
+                  <span className="text-[10px] text-amber-500" aria-hidden="true">⚠</span>
+                )
+              })()}
 
               <button
                 className={[

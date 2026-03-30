@@ -7,6 +7,7 @@ import { TurtleEditorPanel } from '@/components/panels/TurtleEditorPanel'
 import { SourcePanel } from '@/components/panels/SourcePanel'
 import { MappingPanel } from '@/components/panels/MappingPanel'
 import { OutputPanel } from '@/components/panels/OutputPanel'
+import { ValidationPanel } from '@/components/panels/ValidationPanel'
 
 interface RightPanelProps {
   onEditorChange: (value: string) => void
@@ -85,7 +86,7 @@ export function RightPanel({ onEditorChange }: RightPanelProps) {
           )}
           <Tabs
             value={activeRightTab}
-            onValueChange={(v) => setActiveRightTab(v as 'SRC' | 'ONTO' | 'MAP' | 'OUT')}
+            onValueChange={(v) => setActiveRightTab(v as 'SRC' | 'ONTO' | 'MAP' | 'OUT' | 'VAL')}
             className="flex flex-col h-full gap-0"
           >
             <div className="border-b border-border px-3 py-2 shrink-0 flex items-center gap-1">
@@ -118,6 +119,13 @@ export function RightPanel({ onEditorChange }: RightPanelProps) {
                 >
                   OUT
                 </TabsTrigger>
+                <TabsTrigger
+                  value="VAL"
+                  className="flex-1 text-xs h-7 data-[state=active]:bg-muted"
+                  aria-label="Validation tab"
+                >
+                  VAL
+                </TabsTrigger>
               </TabsList>
               <button
                 onClick={() => setCollapsed(true)}
@@ -139,6 +147,9 @@ export function RightPanel({ onEditorChange }: RightPanelProps) {
               </TabsContent>
               <TabsContent value="OUT" className="h-full m-0">
                 <OutputPanel />
+              </TabsContent>
+              <TabsContent value="VAL" className="h-full m-0">
+                <ValidationPanel />
               </TabsContent>
             </div>
           </Tabs>
