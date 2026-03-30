@@ -20,10 +20,6 @@ test.describe('Validation panel', () => {
   })
 
   test('VAL-3 - Validate button exists in header', async ({ freshPage: page }) => {
-    // NOTE: A dedicated "Validate" button (aria-label="Validate") in the header has not been
-    // implemented yet — validation is triggered from a future UI element.
-    // This test will be enabled once that button is added to the Header component.
-    test.skip(true, 'Validate button not yet implemented in header (aria-label="Validate" missing)')
     await expect(page.getByRole('button', { name: 'Validate' })).toBeVisible()
   })
 
@@ -67,16 +63,6 @@ test.describe('Validation panel', () => {
   })
 
   test('VAL-7 - Clicking a violation with canvasNodeId applies ring to SourceNode', async ({ freshPage: page }) => {
-    // NOTE: Requires a known violation to be produced by runValidation with a canvasNodeId.
-    // The current runValidation stub does not produce violations. Skip until the full
-    // SHACL validation pipeline is wired up and a fixture with a known violation exists.
-    test.skip(
-      true,
-      'Requires full runValidation implementation that produces ViolationRecord with canvasNodeId. ' +
-      'When implemented: load example project, click Validate, click violation in VAL tab, ' +
-      'assert page.locator(\'[data-id="{nodeId}"] > div\').first() has class ring-destructive.',
-    )
-
     await loadExampleProject(page)
     await page.getByRole('button', { name: 'Validate' }).click()
     await clickTab(page, 'Validation tab')

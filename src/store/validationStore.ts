@@ -1,18 +1,10 @@
 import { create } from 'zustand'
-import { validateSource } from '../lib/shacl/index'
+import { validateSource, type ViolationRecord } from '../lib/shacl/index'
 import { useSourcesStore } from './sourcesStore'
 import { useOntologyStore } from './ontologyStore'
 import { useMappingStore } from './mappingStore'
 
-export interface ViolationRecord {
-  id: string
-  sourceId: string
-  targetClassUri: string
-  targetPropUri: string | null
-  message: string
-  severity: string
-  canvasNodeId: string | null
-}
+export type { ViolationRecord }
 
 interface ValidationState {
   results: Record<string, ViolationRecord[]>
@@ -56,7 +48,7 @@ export const useValidationStore = create<ValidationState>()((set, get) => ({
         results[source.id] = violations as ViolationRecord[]
       } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Validation failed'
-        set({ loading: false, error: message, stale: false })
+        set({ loading: false, error: message })
         return
       }
     }

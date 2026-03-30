@@ -221,7 +221,7 @@ export function Header() {
           className={cn("h-7 gap-1.5 text-xs", stale && !loading ? "ring-1 ring-amber-400" : "")}
           onClick={() => { void runValidation() }}
           disabled={loading}
-          aria-label="Run validation"
+          aria-label="Validate"
         >
           {loading ? (
             <SpinnerGapIcon size={13} className="animate-spin" />
