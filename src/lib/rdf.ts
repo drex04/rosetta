@@ -52,6 +52,38 @@ export function prefixFromUri(uri: string): string {
   return uri
 }
 
+// ─── Node display helpers ─────────────────────────────────────────────────────
+
+export const STANDARD_NAMESPACES: ReadonlyArray<readonly [string, string]> = [
+  ['http://www.w3.org/2001/XMLSchema#', 'xsd'],
+  ['http://www.w3.org/2002/07/owl#', 'owl'],
+  ['http://www.w3.org/2000/01/rdf-schema#', 'rdfs'],
+  ['http://www.w3.org/1999/02/22-rdf-syntax-ns#', 'rdf'],
+]
+
+/** Derives a short "prefix:LocalName" form from a full URI and its namespace prefix. */
+export function shortenUri(uri: string, prefix: string): string {
+  if (prefix.length > 0 && uri.startsWith(prefix)) {
+    const local = uri.slice(prefix.length)
+    if (local.length > 0) {
+      const withoutTrailing = prefix.replace(/[#/]$/, '')
+      const alias = localName(withoutTrailing)
+      return `${alias}:${local}`
+    }
+  }
+  return uri
+}
+
+/** Best-effort shorten for a range URI that may use standard namespaces. */
+export function shortenRange(range: string): string {
+  for (const [ns, alias] of STANDARD_NAMESPACES) {
+    if (range.startsWith(ns)) {
+      return `${alias}:${range.slice(ns.length)}`
+    }
+  }
+  return localName(range)
+}
+
 // ─── Store query helpers ──────────────────────────────────────────────────────
 
 function firstLiteral(store: N3.Store, subject: N3.Term, predicate: string, nn: (uri: string) => N3.Term): string | undefined {
@@ -77,7 +109,7 @@ export async function parseTurtle(
 
   await new Promise<void>((resolve, reject) => {
     const parser = new N3.Parser({ format: 'Turtle' })
-    parser.parse(text, (error, quad, _prefixes) => {
+    parser.parse(text, (error, quad) => {
       if (error) {
         reject(error)
         return
