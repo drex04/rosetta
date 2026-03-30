@@ -6,6 +6,7 @@ import { RightPanel } from './components/layout/RightPanel'
 import { OntologyCanvas } from './components/canvas/OntologyCanvas'
 import { ConfirmDialog } from './components/ui/confirm-dialog'
 import { useOntologyStore, SEED_TURTLE } from './store/ontologyStore'
+import { subscribeValidationToMappings } from './store/validationStore'
 import { useOntologySync } from './hooks/useOntologySync'
 import { useAutoSave } from './hooks/useAutoSave'
 import type { OntologyNode, OntologyEdge } from './types/index'
@@ -19,6 +20,11 @@ function App() {
   useEffect(() => {
     void loadTurtle(SEED_TURTLE)
   }, [loadTurtle])
+
+  useEffect(() => {
+    const unsub = subscribeValidationToMappings()
+    return unsub
+  }, [])
 
   const handleCanvasChange = useCallback(
     (nodes: OntologyNode[], edges: OntologyEdge[]) => {

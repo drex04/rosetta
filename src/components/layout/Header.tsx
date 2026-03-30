@@ -15,14 +15,18 @@ import {
   ArrowCounterClockwiseIcon,
   UploadSimpleIcon,
   DownloadSimpleIcon,
+  SpinnerGapIcon,
+  CheckCircleIcon,
 } from '@phosphor-icons/react'
 import { del } from 'idb-keyval'
 import { useOntologyStore, SEED_TURTLE } from '@/store/ontologyStore'
 import { useSourcesStore, generateSourceId } from '@/store/sourcesStore'
 import { useMappingStore } from '@/store/mappingStore'
+import { cn } from '@/lib/utils'
 import { parseTurtle } from '@/lib/rdf'
 import { jsonToSchema } from '@/lib/jsonToSchema'
 import { generateConstruct } from '@/lib/sparql'
+import { useValidationStore } from '@/store/validationStore'
 import type { ProjectFile } from '@/types/index'
 import sampleNorwegianRaw from '@/data/sample-source-a-norwegian.json?raw'
 import sampleGermanRaw from '@/data/sample-source-b-german.json?raw'
@@ -66,6 +70,10 @@ export function Header() {
   const setTurtleSource = useOntologyStore((s) => s.setTurtleSource)
   const setNodes = useOntologyStore((s) => s.setNodes)
   const setEdges = useOntologyStore((s) => s.setEdges)
+
+  const runValidation = useValidationStore((s) => s.runValidation)
+  const loading = useValidationStore((s) => s.loading)
+  const stale = useValidationStore((s) => s.stale)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [importError, setImportError] = useState<string | null>(null)
@@ -207,6 +215,21 @@ export function Header() {
 
       {/* Right: project menu + auxiliary buttons */}
       <div className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          className={cn("h-7 gap-1.5 text-xs", stale && !loading ? "ring-1 ring-amber-400" : "")}
+          onClick={() => { void runValidation() }}
+          disabled={loading}
+          aria-label="Run validation"
+        >
+          {loading ? (
+            <SpinnerGapIcon size={13} className="animate-spin" />
+          ) : (
+            <CheckCircleIcon size={13} />
+          )}
+          Validate
+        </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button

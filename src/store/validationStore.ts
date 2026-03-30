@@ -1,4 +1,8 @@
 import { create } from 'zustand'
+import { validateSource } from '../lib/shacl/index'
+import { useSourcesStore } from './sourcesStore'
+import { useOntologyStore } from './ontologyStore'
+import { useMappingStore } from './mappingStore'
 
 export interface ViolationRecord {
   id: string
@@ -35,8 +39,29 @@ export const useValidationStore = create<ValidationState>()((set, get) => ({
   runValidation: async () => {
     if (get().loading) return
     set({ loading: true, error: null })
-    // Full implementation added in validationStore task (wave 2)
-    set({ loading: false, stale: false, lastRun: Date.now(), highlightedCanvasNodeId: null })
+
+    const sources = useSourcesStore.getState().sources
+    const ontologyNodes = useOntologyStore.getState().nodes
+    const getMappingsForSource = useMappingStore.getState().getMappingsForSource
+
+    const results: Record<string, ViolationRecord[]> = {}
+
+    for (const source of sources) {
+      try {
+        const violations = await validateSource(
+          source,
+          ontologyNodes,
+          getMappingsForSource(source.id),
+        )
+        results[source.id] = violations as ViolationRecord[]
+      } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Validation failed'
+        set({ loading: false, error: message, stale: false })
+        return
+      }
+    }
+
+    set({ results, loading: false, stale: false, lastRun: Date.now(), highlightedCanvasNodeId: null })
   },
 
   setStale: (stale) => set({ stale }),
@@ -52,3 +77,7 @@ export const useValidationStore = create<ValidationState>()((set, get) => ({
 
   setHighlightedCanvasNodeId: (id) => set({ highlightedCanvasNodeId: id }),
 }))
+
+export function subscribeValidationToMappings(): () => void {
+  return useMappingStore.subscribe(() => useValidationStore.getState().setStale(true))
+}
