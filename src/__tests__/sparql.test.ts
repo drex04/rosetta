@@ -11,6 +11,12 @@ const baseMapping = {
   targetHandle: 'target_prop_identifier',
 }
 
+// Shared base for new-kind tests (includes kind: 'direct' as default)
+const base: Omit<import('@/types').Mapping, 'id' | 'sparqlConstruct'> = {
+  ...baseMapping,
+  kind: 'direct',
+}
+
 describe('generateConstruct', () => {
   it('output contains CONSTRUCT keyword', () => {
     const result = generateConstruct(baseMapping)
@@ -82,5 +88,78 @@ describe('generateConstruct', () => {
     }
     const result = generateConstruct(mapping)
     expect(result).toContain('tgt:val')
+  })
+})
+
+describe('generateConstruct — new kinds', () => {
+  it('join kind: includes FILTER(false) and JOIN placeholder comment', () => {
+    const m: Omit<import('@/types').Mapping, 'id' | 'sparqlConstruct'> = {
+      sourceId: 's1',
+      sourceClassUri: 'http://example.org/Track',
+      sourcePropUri: 'http://example.org/trackId',
+      targetClassUri: 'http://nato.org/Target',
+      targetPropUri: 'http://nato.org/id',
+      sourceHandle: 'prop_trackId',
+      targetHandle: 'target_prop_id',
+      kind: 'join',
+      parentSourceId: 's2',
+      parentRef: 'http://example.org/parentRef',
+      childRef: 'http://example.org/childRef',
+    }
+    const result = generateConstruct(m)
+    expect(result).toContain('FILTER(false)')
+    expect(result).toContain('JOIN placeholder')
+  })
+
+  it('constant kind: includes BIND with typed literal', () => {
+    const m = {
+      ...base,
+      kind: 'constant' as const,
+      constantValue: 'FRIEND',
+      constantType: 'http://www.w3.org/2001/XMLSchema#string',
+    }
+    const result = generateConstruct(m)
+    expect(result).toContain('BIND("FRIEND"^^<http://www.w3.org/2001/XMLSchema#string> AS ?val)')
+  })
+
+  it('typecast kind: includes STRDT and target datatype', () => {
+    const m = {
+      ...base,
+      kind: 'typecast' as const,
+      targetDatatype: 'http://www.w3.org/2001/XMLSchema#integer',
+    }
+    const result = generateConstruct(m)
+    expect(result).toContain('STRDT(')
+    expect(result).toContain('http://www.w3.org/2001/XMLSchema#integer')
+  })
+
+  it('language kind: includes STRLANG and language tag', () => {
+    const m = {
+      ...base,
+      kind: 'language' as const,
+      languageTag: 'fr',
+    }
+    const result = generateConstruct(m)
+    expect(result).toContain('STRLANG(')
+    expect(result).toContain('"fr"')
+  })
+
+  it('template kind: includes template comment and BIND with STR', () => {
+    const m = {
+      ...base,
+      kind: 'template' as const,
+      templatePattern: '{first} {last}',
+    }
+    const result = generateConstruct(m)
+    expect(result).toContain('# template:')
+    expect(result).toContain('BIND(STR(?raw) AS ?val)')
+  })
+
+  it('direct kind regression: contains CONSTRUCT and WHERE, no FILTER(false)', () => {
+    const m = { ...base, kind: 'direct' as const }
+    const result = generateConstruct(m)
+    expect(result).toContain('CONSTRUCT')
+    expect(result).toContain('WHERE')
+    expect(result).not.toContain('FILTER(false)')
   })
 })

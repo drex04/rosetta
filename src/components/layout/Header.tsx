@@ -116,6 +116,7 @@ export function Header() {
           targetClassUri: airTrackNode.data.uri,
           targetPropUri: tgtProp.uri,
           targetHandle: 'target_prop_speed',
+          kind: 'direct',
         })
         useMappingStore.getState().addMapping({
           sourceId: idA,

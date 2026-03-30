@@ -6,42 +6,8 @@ import { useMappingStore } from '@/store/mappingStore'
 import { useSourcesStore } from '@/store/sourcesStore'
 import { localName } from '@/lib/rdf'
 import { generateConstruct } from '@/lib/sparql'
+import { lightTheme } from '@/lib/codemirror-theme'
 import type { Mapping } from '@/types/index'
-
-// ─── CodeMirror light theme (matches TurtleEditorPanel) ───────────────────────
-
-const lightTheme = EditorView.theme({
-  '&': {
-    height: '100%',
-    fontSize: '12px',
-    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
-    backgroundColor: '#ffffff',
-  },
-  '.cm-content': {
-    padding: '8px 0',
-    caretColor: '#000000',
-  },
-  '.cm-line': {
-    padding: '0 8px',
-  },
-  '.cm-gutters': {
-    backgroundColor: '#f8f9fa',
-    borderRight: '1px solid #e5e7eb',
-    color: '#9ca3af',
-  },
-  '.cm-activeLineGutter': {
-    backgroundColor: '#f1f5f9',
-  },
-  '.cm-activeLine': {
-    backgroundColor: '#f8fafc',
-  },
-  '.cm-focused': {
-    outline: 'none',
-  },
-  '.cm-scroller': {
-    overflow: 'auto',
-  },
-})
 
 // ─── Lint badge helper (RD-05) ────────────────────────────────────────────────
 
@@ -146,7 +112,7 @@ export function MappingPanel() {
     updateMapping(selectedMappingId, { sparqlConstruct: newValue })
   }
 
-  function handleRegenerate() {
+  function handleRegenerate(overrideKind?: Mapping['kind']) {
     if (selectedMapping === null) return
     const freshQuery = generateConstruct({
       sourceId: selectedMapping.sourceId,
@@ -156,6 +122,7 @@ export function MappingPanel() {
       targetPropUri: selectedMapping.targetPropUri,
       sourceHandle: selectedMapping.sourceHandle,
       targetHandle: selectedMapping.targetHandle,
+      kind: overrideKind ?? selectedMapping.kind,
     })
     updateMapping(selectedMapping.id, { sparqlConstruct: freshQuery })
   }
@@ -248,12 +215,132 @@ export function MappingPanel() {
             </div>
             <button
               type="button"
-              onClick={handleRegenerate}
+              onClick={() => handleRegenerate()}
               className="text-xs text-muted-foreground hover:text-foreground transition-colors border border-border rounded px-2 py-0.5"
             >
               Regenerate
             </button>
           </div>
+
+          {/* Kind picker */}
+          <div
+            data-testid="kind-picker"
+            className="shrink-0 flex items-center gap-2 px-3 py-1.5 border-b border-border bg-muted/10"
+          >
+            <label className="text-xs text-muted-foreground shrink-0" htmlFor="kind-picker">Kind</label>
+            <select
+              id="kind-picker"
+              aria-label="Mapping kind"
+              value={selectedMapping.kind}
+              onChange={(e) => {
+                const newKind = e.target.value as Mapping['kind']
+                updateMapping(selectedMapping.id, { kind: newKind })
+                // auto-regenerate with the new kind (state update is async so pass directly)
+                handleRegenerate(newKind)
+              }}
+              className="text-xs border border-border rounded px-1.5 py-0.5 bg-background"
+            >
+              <option value="direct">direct</option>
+              <option value="template">template</option>
+              <option value="constant">constant</option>
+              <option value="typecast">typecast</option>
+              <option value="language">language</option>
+              <option value="join">join</option>
+              <option value="sparql">sparql (custom)</option>
+            </select>
+          </div>
+
+          {/* Kind-specific inline fields */}
+          {['template', 'constant', 'typecast', 'language', 'join'].includes(selectedMapping.kind) && (
+            <div className="shrink-0 flex flex-col gap-1.5 px-3 py-2 border-b border-border bg-muted/5">
+              {selectedMapping.kind === 'template' && (
+                <div className="flex items-center gap-2">
+                  <label className="text-xs text-muted-foreground w-20 shrink-0">Pattern</label>
+                  <input
+                    className="text-xs border border-border rounded px-1.5 py-0.5 bg-background flex-1 min-w-0"
+                    value={selectedMapping.templatePattern ?? ''}
+                    onChange={(e) => updateMapping(selectedMapping.id, { templatePattern: e.target.value })}
+                    placeholder='"{prop1} {prop2}"'
+                  />
+                </div>
+              )}
+              {selectedMapping.kind === 'constant' && (
+                <>
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs text-muted-foreground w-20 shrink-0">Value</label>
+                    <input
+                      className="text-xs border border-border rounded px-1.5 py-0.5 bg-background flex-1 min-w-0"
+                      value={selectedMapping.constantValue ?? ''}
+                      onChange={(e) => updateMapping(selectedMapping.id, { constantValue: e.target.value })}
+                      placeholder="literal value"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs text-muted-foreground w-20 shrink-0">Datatype</label>
+                    <input
+                      className="text-xs border border-border rounded px-1.5 py-0.5 bg-background flex-1 min-w-0"
+                      value={selectedMapping.constantType ?? ''}
+                      onChange={(e) => updateMapping(selectedMapping.id, { constantType: e.target.value })}
+                      placeholder="xsd:string"
+                    />
+                  </div>
+                </>
+              )}
+              {selectedMapping.kind === 'typecast' && (
+                <div className="flex items-center gap-2">
+                  <label className="text-xs text-muted-foreground w-20 shrink-0">Datatype</label>
+                  <input
+                    className="text-xs border border-border rounded px-1.5 py-0.5 bg-background flex-1 min-w-0"
+                    value={selectedMapping.targetDatatype ?? ''}
+                    onChange={(e) => updateMapping(selectedMapping.id, { targetDatatype: e.target.value })}
+                    placeholder="xsd:integer"
+                  />
+                </div>
+              )}
+              {selectedMapping.kind === 'language' && (
+                <div className="flex items-center gap-2">
+                  <label className="text-xs text-muted-foreground w-20 shrink-0">Language Tag</label>
+                  <input
+                    className="text-xs border border-border rounded px-1.5 py-0.5 bg-background flex-1 min-w-0"
+                    value={selectedMapping.languageTag ?? ''}
+                    onChange={(e) => updateMapping(selectedMapping.id, { languageTag: e.target.value })}
+                    placeholder="en"
+                  />
+                </div>
+              )}
+              {selectedMapping.kind === 'join' && (
+                <>
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs text-muted-foreground w-20 shrink-0">Parent Source</label>
+                    <input
+                      className="text-xs border border-border rounded px-1.5 py-0.5 bg-background flex-1 min-w-0"
+                      value={selectedMapping.parentSourceId ?? ''}
+                      onChange={(e) => updateMapping(selectedMapping.id, { parentSourceId: e.target.value })}
+                      placeholder="source id"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs text-muted-foreground w-20 shrink-0">Parent Ref URI</label>
+                    <input
+                      className="text-xs border border-border rounded px-1.5 py-0.5 bg-background flex-1 min-w-0"
+                      value={selectedMapping.parentRef ?? ''}
+                      onChange={(e) => updateMapping(selectedMapping.id, { parentRef: e.target.value })}
+                      placeholder="property URI"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs text-muted-foreground w-20 shrink-0">Child Ref URI</label>
+                    <input
+                      className="text-xs border border-border rounded px-1.5 py-0.5 bg-background flex-1 min-w-0"
+                      value={selectedMapping.childRef ?? ''}
+                      onChange={(e) => updateMapping(selectedMapping.id, { childRef: e.target.value })}
+                      placeholder="property URI"
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+          )}
 
           {/* CodeMirror editor (DD-02) */}
           <SparqlEditor
