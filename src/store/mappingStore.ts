@@ -27,6 +27,9 @@ interface MappingState {
 
   setSelectedMappingId: (id: string | null) => void
 
+  /** Remove all mappings for a given sourceId (e.g. when format changes). */
+  clearMappingsForSource: (sourceId: string) => void
+
   /** Replace the entire mappings map — used on mount for IDB restore. */
   hydrate: (mappings: Record<string, Mapping[]>) => void
   /** Reset all mapping state to empty. */
@@ -91,6 +94,18 @@ export const useMappingStore = create<MappingState>((set, get) => ({
   },
 
   setSelectedMappingId: (id) => set({ selectedMappingId: id }),
+
+  clearMappingsForSource: (sourceId) => {
+    set((s) => {
+      const updated = { ...s.mappings }
+      delete updated[sourceId]
+      return {
+        mappings: updated,
+        selectedMappingId: null,
+      }
+    })
+    useValidationStore.getState().setStale(true)
+  },
 
   hydrate: (mappings) => set({ mappings, selectedMappingId: null }),
   reset: () => set({ mappings: {}, selectedMappingId: null }),

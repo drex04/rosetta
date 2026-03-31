@@ -4,10 +4,16 @@ import { EditorState } from '@codemirror/state'
 import { lineNumbers, highlightActiveLine } from '@codemirror/view'
 import { basicSetup } from 'codemirror'
 import { json } from '@codemirror/lang-json'
+import { xml } from '@codemirror/lang-xml'
 import { turtle } from 'codemirror-lang-turtle'
+import { UploadSimpleIcon } from '@phosphor-icons/react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
 import { useSourcesStore } from '@/store/sourcesStore'
+import { useMappingStore } from '@/store/mappingStore'
 import { jsonToSchema } from '@/lib/jsonToSchema'
+import { xmlToSchema } from '@/lib/xmlToSchema'
+import { detectFormatFromContent, detectFormatFromFile } from '@/lib/detectFormat'
 import { lightTheme } from '@/lib/codemirror-theme'
 
 // ─── Debounce helper ──────────────────────────────────────────────────────────
@@ -35,8 +41,17 @@ function deriveSlug(name: string): string {
 
 // ─── Banner state type ────────────────────────────────────────────────────────
 
-// 'prefix-collision' is derived during render from sources; only json/warnings are set via state
-type BannerState = 'invalid-json' | 'warnings' | null
+// 'prefix-collision' is derived during render from sources; only json/xml/warnings are set via state
+type BannerState = 'invalid-json' | 'invalid-xml' | 'warnings' | 'format-changed' | 'file-too-large' | 'file-read-error' | null
+
+// ─── Schema generation helper ─────────────────────────────────────────────────
+
+function runSchema(value: string, format: 'json' | 'xml', sourceName: string) {
+  if (format === 'xml') {
+    return xmlToSchema(value, sourceName)
+  }
+  return jsonToSchema(value, sourceName)
+}
 
 // ─── SourcePanel ──────────────────────────────────────────────────────────────
 
@@ -44,6 +59,7 @@ export function SourcePanel() {
   const sources = useSourcesStore((s) => s.sources)
   const activeSourceId = useSourcesStore((s) => s.activeSourceId)
   const updateSource = useSourcesStore((s) => s.updateSource)
+  const clearMappingsForSource = useMappingStore((s) => s.clearMappingsForSource)
 
   const source = sources.find((s) => s.id === activeSourceId) ?? null
 
@@ -55,24 +71,27 @@ export function SourcePanel() {
   const [banner, setBanner] = useState<BannerState>(null)
 
   // ── Prefix collision — derived from current sources list (no effect needed) ──
-  const hasPrefixCollision = source !== null && banner !== 'invalid-json' &&
+  const hasPrefixCollision = source !== null && banner !== 'invalid-json' && banner !== 'invalid-xml' &&
     sources.some((s) => s.id !== source.id && deriveSlug(s.name) === deriveSlug(source.name))
 
   // ── Last successful turtle (for preview) ─────────────────────────────────────
   // Lazy init derives turtle on mount (covers IDB restore without a sync effect).
   const [lastTurtle, setLastTurtle] = useState<string>(() => {
-    if (!source?.json) return ''
+    if (!source?.rawData) return ''
     try {
-      JSON.parse(source.json)
-      return jsonToSchema(source.json, source.name).turtle
+      const result = runSchema(source.rawData, source.dataFormat ?? 'json', source.name)
+      return result.turtle
     } catch {
       return ''
     }
   })
 
-  // ── CodeMirror refs (JSON editor) ────────────────────────────────────────────
-  const jsonContainerRef = useRef<HTMLDivElement>(null)
-  const jsonViewRef = useRef<EditorView | null>(null)
+  // ── File input ref ────────────────────────────────────────────────────────────
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // ── CodeMirror refs (data editor) ────────────────────────────────────────────
+  const dataContainerRef = useRef<HTMLDivElement>(null)
+  const dataViewRef = useRef<EditorView | null>(null)
   const isUpdatingFromStore = useRef(false)
 
   // ── CodeMirror refs (Turtle preview) ─────────────────────────────────────────
@@ -83,92 +102,186 @@ export function SourcePanel() {
   // ── Turtle preview open state ─────────────────────────────────────────────────
   const [showTurtle, setShowTurtle] = useState(true)
 
+  // ── Current dataFormat (tracked locally for editor remount key) ───────────────
+  const [dataFormat, setDataFormat] = useState<'json' | 'xml'>(source?.dataFormat ?? 'json')
+
   // ── Debounced update (per source.id) ─────────────────────────────────────────
   // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const debouncedUpdate = useMemo(() => {
     if (!source) return null
     const sourceId = source.id  // RD-06: capture in closure, do NOT read from store inside callback
 
-    return debounce((value: string) => {
-      // Try parse JSON
-      let parsed: unknown
-      try {
-        parsed = JSON.parse(value)
-        void parsed  // suppress unused var warning
-      } catch {
-        setBanner('invalid-json')
-        // Do NOT update schemaNodes/schemaEdges on invalid JSON
-        updateSource(sourceId, { json: value })
+    return debounce((value: string, currentFormat: 'json' | 'xml') => {
+      // Detect format from content
+      const detected = detectFormatFromContent(value)
+      const resolvedFormat: 'json' | 'xml' = detected === 'unknown' ? currentFormat : detected
+
+      // If format changed, clear mappings and update local format state
+      if (resolvedFormat !== currentFormat) {
+        clearMappingsForSource(sourceId)
+        setBanner('format-changed')
+        setDataFormat(resolvedFormat)
+        updateSource(sourceId, { dataFormat: resolvedFormat })
+      }
+
+      if (resolvedFormat === 'xml') {
+        const result = xmlToSchema(value, sources.find((s) => s.id === sourceId)?.name ?? '')
+        if (result.warnings.some((w) => w.startsWith('Invalid XML'))) {
+          setBanner((b) => b === 'format-changed' ? b : 'invalid-xml')
+          updateSource(sourceId, { rawData: value })
+          return
+        }
+        if (!('format-changed' === banner)) {
+          setBanner(result.warnings.length > 0 ? 'warnings' : null)
+        }
+        if (result.turtle) setLastTurtle(result.turtle)
+        updateSource(sourceId, {
+          rawData: value,
+          dataFormat: resolvedFormat,
+          schemaNodes: result.nodes,
+          schemaEdges: result.edges,
+        })
         return
       }
 
-      // Valid JSON: call converter; prefix collision is derived during render (hasPrefixCollision)
-      const result = jsonToSchema(value, sources.find((s) => s.id === sourceId)?.name ?? '')
-
-      setBanner(result.warnings.length > 0 ? 'warnings' : null)
-
-      // Update turtle preview if we have turtle output
-      if (result.turtle) {
-        setLastTurtle(result.turtle)
+      // JSON path
+      let parsed: unknown
+      try {
+        parsed = JSON.parse(value)
+        void parsed
+      } catch {
+        setBanner((b) => b === 'format-changed' ? b : 'invalid-json')
+        updateSource(sourceId, { rawData: value })
+        return
       }
 
+      const result = jsonToSchema(value, sources.find((s) => s.id === sourceId)?.name ?? '')
+      if (banner !== 'format-changed') {
+        setBanner(result.warnings.length > 0 ? 'warnings' : null)
+      }
+      if (result.turtle) setLastTurtle(result.turtle)
       updateSource(sourceId, {
-        json: value,
+        rawData: value,
+        dataFormat: resolvedFormat,
         schemaNodes: result.nodes,
         schemaEdges: result.edges,
       })
-    }, 500)
+    }, 600)
   }, [source?.id])  // eslint-disable-line react-hooks/exhaustive-deps
-  // Re-create debounce fn when source changes; sources/updateSource are stable Zustand refs
+  // Re-create debounce fn when source changes; sources/updateSource/clearMappingsForSource are stable Zustand refs
 
-  // ── Mount JSON editor ─────────────────────────────────────────────────────────
+  // ── File upload handler ───────────────────────────────────────────────────────
+  function handleFileUpload(file: File | undefined) {
+    if (!file || !source) return
+
+    if (file.size > 1_000_000) {
+      setBanner('file-too-large')
+      return
+    }
+
+    const detectedFormat = detectFormatFromFile(file)
+    const resolvedFormat: 'json' | 'xml' = detectedFormat === 'unknown' ? source.dataFormat : detectedFormat
+
+    const reader = new FileReader()
+    reader.onerror = () => {
+      setBanner('file-read-error')
+    }
+    reader.onload = (e) => {
+      const text = e.target?.result
+      if (typeof text !== 'string') {
+        setBanner('file-read-error')
+        return
+      }
+
+      // If format changed, clear mappings
+      if (resolvedFormat !== source.dataFormat) {
+        clearMappingsForSource(source.id)
+        setBanner('format-changed')
+        setDataFormat(resolvedFormat)
+      } else {
+        setBanner(null)
+      }
+
+      // Update editor content
+      isUpdatingFromStore.current = true
+      const view = dataViewRef.current
+      if (view) {
+        view.dispatch({
+          changes: { from: 0, to: view.state.doc.length, insert: text },
+        })
+      }
+      isUpdatingFromStore.current = false
+
+      // Generate schema
+      const result = runSchema(text, resolvedFormat, source.name)
+      if (result.turtle) setLastTurtle(result.turtle)
+      if (resolvedFormat !== source.dataFormat || banner !== 'format-changed') {
+        if (result.warnings.length > 0 && banner !== 'format-changed') setBanner('warnings')
+      }
+      updateSource(source.id, {
+        rawData: text,
+        dataFormat: resolvedFormat,
+        schemaNodes: result.nodes,
+        schemaEdges: result.edges,
+      })
+    }
+    reader.readAsText(file)
+
+    // Reset file input so same file can be re-uploaded
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  // ── Mount data editor ─────────────────────────────────────────────────────────
+  // key={dataFormat} on the container div causes remount when format changes
   useEffect(() => {
-    if (jsonContainerRef.current === null) return
+    if (dataContainerRef.current === null) return
+
+    const langExtension = dataFormat === 'xml' ? xml() : json()
 
     const updateListener = EditorView.updateListener.of((update) => {
       if (!update.docChanged) return
       if (isUpdatingFromStore.current) return
       const value = update.state.doc.toString()
-      debouncedUpdate?.(value)
+      debouncedUpdate?.(value, dataFormat)
     })
 
     const state = EditorState.create({
-      doc: source?.json ?? '',
+      doc: source?.rawData ?? '',
       extensions: [
         basicSetup,
         lineNumbers(),
         highlightActiveLine(),
-        json(),
+        langExtension,
         lightTheme,
         updateListener,
       ],
     })
 
-    const view = new EditorView({ state, parent: jsonContainerRef.current })
-    jsonViewRef.current = view
+    const view = new EditorView({ state, parent: dataContainerRef.current })
+    dataViewRef.current = view
 
     return () => {
       view.destroy()
-      jsonViewRef.current = null
+      dataViewRef.current = null
     }
-  }, [source?.id])  // eslint-disable-line react-hooks/exhaustive-deps
-  // Re-mount editor when source switches
+  }, [source?.id, dataFormat])  // eslint-disable-line react-hooks/exhaustive-deps
+  // Re-mount editor when source switches or format changes
 
-  // ── External update effect: store → JSON editor ───────────────────────────────
+  // ── External update effect: store → data editor ───────────────────────────────
   // RD-11: No hasFocus guard — source switching must always update content.
   useEffect(() => {
-    const view = jsonViewRef.current
+    const view = dataViewRef.current
     if (view === null) return
-    const newJson = source?.json ?? ''
+    const newData = source?.rawData ?? ''
     const currentDoc = view.state.doc.toString()
-    if (currentDoc === newJson) return
+    if (currentDoc === newData) return
 
     isUpdatingFromStore.current = true
     view.dispatch({
-      changes: { from: 0, to: view.state.doc.length, insert: newJson },
+      changes: { from: 0, to: view.state.doc.length, insert: newData },
     })
     isUpdatingFromStore.current = false
-  }, [source?.json])  // RD-11: effect dependency is source?.json
+  }, [source?.rawData])  // RD-11: effect dependency is source?.rawData
 
   // ── Mount Turtle preview editor ────────────────────────────────────────────────
   useEffect(() => {
@@ -247,10 +360,58 @@ export function SourcePanel() {
         />
       </div>
 
+      {/* Toolbar: format badge + upload button */}
+      <div className="shrink-0 flex items-center justify-between px-3 py-1.5 border-b border-border bg-muted/10">
+        <span
+          className={
+            'inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ' +
+            (dataFormat === 'xml'
+              ? 'bg-blue-100 text-blue-700'
+              : 'bg-amber-100 text-amber-700')
+          }
+          aria-label={`Format: ${dataFormat.toUpperCase()}`}
+        >
+          {dataFormat.toUpperCase()}
+        </span>
+        <div className="flex items-center gap-1">
+          <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+            <UploadSimpleIcon size={14} />
+            <span className="ml-1">Upload File</span>
+          </Button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".json,.xml"
+            className="hidden"
+            onChange={(e) => handleFileUpload(e.target.files?.[0])}
+          />
+        </div>
+      </div>
+
       {/* Banner */}
       {banner === 'invalid-json' && (
         <Alert variant="destructive" className="shrink-0 rounded-none border-x-0 text-xs">
           <AlertDescription>Invalid JSON — schema not updated</AlertDescription>
+        </Alert>
+      )}
+      {banner === 'invalid-xml' && (
+        <Alert variant="destructive" className="shrink-0 rounded-none border-x-0 text-xs">
+          <AlertDescription>Invalid XML — schema not updated</AlertDescription>
+        </Alert>
+      )}
+      {banner === 'format-changed' && (
+        <Alert className="shrink-0 rounded-none border-x-0 text-xs bg-blue-50 border-blue-200 text-blue-800">
+          <AlertDescription>Format changed — mappings for this source were cleared</AlertDescription>
+        </Alert>
+      )}
+      {banner === 'file-too-large' && (
+        <Alert variant="destructive" className="shrink-0 rounded-none border-x-0 text-xs">
+          <AlertDescription>File too large (max 1MB). Paste content manually for larger files</AlertDescription>
+        </Alert>
+      )}
+      {banner === 'file-read-error' && (
+        <Alert variant="destructive" className="shrink-0 rounded-none border-x-0 text-xs">
+          <AlertDescription>Could not read file. Try again.</AlertDescription>
         </Alert>
       )}
       {hasPrefixCollision && (
@@ -262,15 +423,16 @@ export function SourcePanel() {
       )}
       {banner === 'warnings' && (
         <Alert className="shrink-0 rounded-none border-x-0 text-xs bg-yellow-50 border-yellow-200 text-yellow-800">
-          <AlertDescription>Schema generated with warnings — check your JSON structure</AlertDescription>
+          <AlertDescription>Schema generated with warnings — check your data structure</AlertDescription>
         </Alert>
       )}
 
-      {/* JSON editor */}
+      {/* Data editor — key remounts CodeMirror with correct language when format changes */}
       <div
-        ref={jsonContainerRef}
+        key={dataFormat}
+        ref={dataContainerRef}
         className="flex-1 overflow-hidden"
-        aria-label="JSON source editor"
+        aria-label={`${dataFormat.toUpperCase()} source editor`}
       />
 
       {/* Collapsible Turtle preview */}

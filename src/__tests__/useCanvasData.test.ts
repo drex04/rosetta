@@ -30,7 +30,8 @@ describe('useCanvasData', () => {
       id: 'src-1',
       name: 'Test Source',
       order: 0,
-      json: '{}',
+      rawData: '{}',
+      dataFormat: 'json' as const,
       schemaNodes: [sourceNode],
       schemaEdges: [sourceEdge],
     }

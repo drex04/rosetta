@@ -73,9 +73,9 @@ export function SourceSelector() {
     commitEdit(id)
   }
 
-  function handleDeleteClick(id: string, name: string, json: string) {
-    if (json !== '') {
-      // RD-13: non-empty json → show confirmation dialog
+  function handleDeleteClick(id: string, name: string, rawData: string) {
+    if (rawData !== '') {
+      // RD-13: non-empty rawData → show confirmation dialog
       setDeleteTarget({ id, name })
     } else {
       removeSource(id)
@@ -101,7 +101,8 @@ export function SourceSelector() {
       id: generateSourceId(),
       name,
       order: sources.length,
-      json: '',
+      rawData: '',
+      dataFormat: 'json' as const,
       schemaNodes: [],
       schemaEdges: [],
     }
@@ -197,7 +198,7 @@ export function SourceSelector() {
                 ].join(' ')}
                 onClick={(e) => {
                   e.stopPropagation()
-                  handleDeleteClick(source.id, source.name, source.json)
+                  handleDeleteClick(source.id, source.name, source.rawData)
                 }}
                 aria-label={`Delete source ${source.name}`}
                 tabIndex={-1}

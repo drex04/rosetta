@@ -61,7 +61,8 @@ describe('useSourcesStore', () => {
       id: 'src-1',
       name: 'Test Source',
       order: 0,
-      json: '{}',
+      rawData: '{}',
+      dataFormat: 'json',
       schemaNodes: [],
       schemaEdges: [],
     }
@@ -71,8 +72,8 @@ describe('useSourcesStore', () => {
   })
 
   it('addSource appends multiple sources in order', () => {
-    const s1: Source = { id: 'src-1', name: 'A', order: 0, json: '{}', schemaNodes: [], schemaEdges: [] }
-    const s2: Source = { id: 'src-2', name: 'B', order: 1, json: '{}', schemaNodes: [], schemaEdges: [] }
+    const s1: Source = { id: 'src-1', name: 'A', order: 0, rawData: '{}', dataFormat: 'json', schemaNodes: [], schemaEdges: [] }
+    const s2: Source = { id: 'src-2', name: 'B', order: 1, rawData: '{}', dataFormat: 'json', schemaNodes: [], schemaEdges: [] }
     useSourcesStore.getState().addSource(s1)
     useSourcesStore.getState().addSource(s2)
     const { sources } = useSourcesStore.getState()
@@ -82,8 +83,8 @@ describe('useSourcesStore', () => {
   })
 
   it('removeSource removes by id', () => {
-    const s1: Source = { id: 'src-1', name: 'A', order: 0, json: '{}', schemaNodes: [], schemaEdges: [] }
-    const s2: Source = { id: 'src-2', name: 'B', order: 1, json: '{}', schemaNodes: [], schemaEdges: [] }
+    const s1: Source = { id: 'src-1', name: 'A', order: 0, rawData: '{}', dataFormat: 'json', schemaNodes: [], schemaEdges: [] }
+    const s2: Source = { id: 'src-2', name: 'B', order: 1, rawData: '{}', dataFormat: 'json', schemaNodes: [], schemaEdges: [] }
     useSourcesStore.getState().addSource(s1)
     useSourcesStore.getState().addSource(s2)
     useSourcesStore.getState().removeSource('src-1')
@@ -93,7 +94,7 @@ describe('useSourcesStore', () => {
   })
 
   it('removeSource on unknown id is a no-op', () => {
-    const s1: Source = { id: 'src-1', name: 'A', order: 0, json: '{}', schemaNodes: [], schemaEdges: [] }
+    const s1: Source = { id: 'src-1', name: 'A', order: 0, rawData: '{}', dataFormat: 'json', schemaNodes: [], schemaEdges: [] }
     useSourcesStore.getState().addSource(s1)
     useSourcesStore.getState().removeSource('does-not-exist')
     expect(useSourcesStore.getState().sources).toHaveLength(1)

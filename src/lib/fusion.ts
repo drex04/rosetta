@@ -52,7 +52,7 @@ export async function executeAllConstructs(
 
   for (const source of sources) {
     // Skip empty sources
-    if (source.json.trim() === '') continue
+    if (source.rawData.trim() === '') continue
 
     const mappings = mappingsBySource[source.id]
     if (!mappings?.length) continue
@@ -67,7 +67,7 @@ export async function executeAllConstructs(
     // Build instance store from source JSON
     let instanceStore: N3.Store
     try {
-      instanceStore = jsonToInstances(source.json, source.schemaNodes)
+      instanceStore = jsonToInstances(source.rawData, source.schemaNodes)
     } catch {
       continue
     }

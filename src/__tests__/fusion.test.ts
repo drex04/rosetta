@@ -54,7 +54,8 @@ const baseMapping: Mapping = {
 const baseSource = {
   id: 's1',
   name: 'TestSource',
-  json: JSON.stringify([{ id: 1, speed: 5.5 }]),
+  rawData: JSON.stringify([{ id: 1, speed: 5.5 }]),
+  dataFormat: 'json' as const,
   schemaNodes: [] as never[],
   schemaEdges: [] as never[],
 }
@@ -83,7 +84,8 @@ describe('executeAllConstructs', () => {
     const badSource = {
       id: 's1',
       name: 'Bad',
-      json: 'NOT_JSON',
+      rawData: 'NOT_JSON',
+      dataFormat: 'json' as const,
       schemaNodes: [] as never[],
       schemaEdges: [] as never[],
     }

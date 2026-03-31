@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { get, set } from 'idb-keyval'
 import { useOntologyStore } from '@/store/ontologyStore'
-import { useSourcesStore } from '@/store/sourcesStore'
+import { useSourcesStore, migrateSource } from '@/store/sourcesStore'
 import { useMappingStore } from '@/store/mappingStore'
 import { parseTurtle } from '@/lib/rdf'
 import type { Mapping, ProjectFile } from '@/types/index'
@@ -62,8 +62,11 @@ export function useAutoSave() {
       // Restore sources ────────────────────────────────────────────────────────
       try {
         if (Array.isArray(saved.sources) && saved.sources.length > 0) {
+          const migratedSources = saved.sources.map((s) =>
+            migrateSource(s as unknown as Record<string, unknown>)
+          )
           useSourcesStore.setState({
-            sources: saved.sources,
+            sources: migratedSources,
             activeSourceId: saved.activeSourceId ?? null,
           })
         }
