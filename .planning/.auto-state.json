@@ -1,0 +1,91 @@
+{
+  "active": true,
+  "phase": null,
+  "phase_name": null,
+  "step": "plan-work",
+  "step_index": 0,
+  "steps_total": 8,
+  "steps_completed": [],
+  "started_at": "2026-03-30T19:26:04.675Z",
+  "phase_started_at": null,
+  "elapsed_ms": 14,
+  "total_cost_estimate": 0,
+  "budget": null,
+  "phases_total": 2,
+  "phases_completed": 0,
+  "phases_failed": 0,
+  "phases_skipped": 0,
+  "current_plan_path": null,
+  "step_history": [],
+  "errors": [],
+  "last_log_line": "Planning wave starting",
+  "log_buffer": [
+    {
+      "ts": "2026-03-30 19:26:04Z",
+      "msg": "Opening dashboard..."
+    },
+    {
+      "ts": "2026-03-30 19:26:04Z",
+      "msg": "Auto-execution starting"
+    },
+    {
+      "ts": "2026-03-30 19:26:04Z",
+      "msg": "  Project: /home/ubuntu/dev/rosetta"
+    },
+    {
+      "ts": "2026-03-30 19:26:04Z",
+      "msg": "  Phases: 6–7 (2 phases)"
+    },
+    {
+      "ts": "2026-03-30 19:26:04Z",
+      "msg": ""
+    },
+    {
+      "ts": "2026-03-30 19:26:04Z",
+      "msg": "Mode: speculative pipeline (planning wave → review wave → build wave)"
+    },
+    {
+      "ts": "2026-03-30 19:26:04Z",
+      "msg": "  Context-mode DB: ~/.claude/context-mode/sessions/6a1aece1c82724df.db (shared across all steps)"
+    },
+    {
+      "ts": "2026-03-30 19:26:04Z",
+      "msg": "  Phase 7: already complete — excluding from pipeline"
+    },
+    {
+      "ts": "2026-03-30 19:26:04Z",
+      "msg": "  1 phase(s) excluded, 1 remaining"
+    },
+    {
+      "ts": "2026-03-30 19:26:04Z",
+      "msg": ""
+    },
+    {
+      "ts": "2026-03-30 19:26:04Z",
+      "msg": "═══ Planning wave ═══"
+    }
+  ],
+  "optimizations": {
+    "health_checks_cached": 0,
+    "state_writes_saved": 0,
+    "reviews_batched": 0,
+    "speculative_plans_validated": 0,
+    "speculative_plans_replanned": 0
+  },
+  "project_dir": "/home/ubuntu/dev/rosetta",
+  "claude_tmp_base": "/tmp/claude-1001/-home-ubuntu-dev-rosetta",
+  "current_wave": "planning",
+  "concurrency": {
+    "max": 2,
+    "active": 1
+  },
+  "phase_states": {
+    "6": "pending"
+  },
+  "dep_graph": {},
+  "build_order": [],
+  "last_activity_at": null,
+  "activity_events": [],
+  "phase_costs": {},
+  "concurrency_max": 2
+}
