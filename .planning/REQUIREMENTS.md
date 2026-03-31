@@ -55,7 +55,7 @@ REQ-36: Validation results UI: pass/fail, violations grouped by source, human-re
 REQ-37: Per-source status indicators on source selector (✓ mapped+valid, ⚠ errors, ○ unmapped)
 REQ-38: Clicking a violation: switch to relevant source, highlight offending nodes/edges on canvas
 
-## Phase 6: Transform & Fuse
+## Phase 6: Transform, Fuse & RML Export
 
 REQ-39: Integrate Comunica (@comunica/query-sparql) — in-browser SPARQL engine against N3.Store
 REQ-40: For each source: execute CONSTRUCT queries → collect output quads
@@ -64,17 +64,30 @@ REQ-42: Add source provenance annotations (_source or JSON-LD provenance) per en
 REQ-43: JSON-LD framing: auto-generate frame from master ontology class hierarchy → serialize fused RDF to structured JSON
 REQ-44: OUT tab: display fused JSON with source summary ("Fused from: Norwegian Radar (12 tracks), German Radar (8 tracks)")
 REQ-45: Download as .json / .jsonld
+REQ-46: Expand Mapping.kind to `direct | template | constant | typecast | language | join | sparql`.
+         Kind-specific fields: template→templatePattern, constant→constantValue+constantType,
+         typecast→targetDatatype (XSD URI), language→languageTag, join→parentSourceId+parentRef+childRef.
+         Mapping panel UI shows a type picker when creating/editing a mapping.
+REQ-47: Infer `rml:iterator` (JSONPath) from generated JSON schema per source
+         (root array → `$[*]`, nested object → `$.parent.children[*]`)
+REQ-48: Generate RML Turtle from all non-SPARQL mappings — one `rr:TriplesMap` per source class,
+         `rml:logicalSource` with inferred JSONPath iterator, `rr:predicateObjectMap` per mapping.
+         Modular generator in `src/lib/rml.ts` (pure functions, no React/store deps, extractable to separate package).
+REQ-49: Generate equivalent YARRRML (.yml) from same mapping data, in `src/lib/yarrrml.ts`
+         (pure functions, same extractability constraints as rml.ts)
+REQ-50: OUT tab: "Download RML (.rml.ttl)" and "Download YARRRML (.yarrrml.yml)" export buttons.
+         SPARQL-kind mappings listed with "requires manual conversion" annotation in exported files.
 
 ## Phase 7: Onboarding & Polish
 
-REQ-46: Interactive walkthrough tour (react-joyride) — 10 steps covering full workflow; launches on first visit
-REQ-47: Sample project bundle: NATO air defense scenario with 2 sources (Nation Alpha + Nation Bravo), pre-built mappings including unit conversions and code translations
-REQ-48: "Load Sample Project" on empty state + toolbar
-REQ-49: Contextual tooltips (Phosphor info icons + shadcn Tooltip) on all key UI elements
-REQ-50: About dialog (shadcn Dialog/Sheet): problem statement, Semantic Web approach, workflow diagram, key concepts glossary, NATO relevance, learn more links
-REQ-51: Empty states on all panels (canvas, SRC, MAP, OUT tabs)
-REQ-52: Undo/redo support
-REQ-53: SPARQL template library for common mapping patterns (rename, concatenate, restructure, filter, unit convert)
-REQ-54: Keyboard shortcuts
-REQ-55: Comprehensive error handling and loading states (progress indicator for Comunica queries)
-REQ-56: Node palette on right edge of canvas for dragging new class/property nodes onto master ontology
+REQ-51: Interactive walkthrough tour (react-joyride) — 10 steps covering full workflow; launches on first visit
+REQ-52: Sample project bundle: NATO air defense scenario with 2 sources (Nation Alpha + Nation Bravo), pre-built mappings including unit conversions and code translations
+REQ-53: "Load Sample Project" on empty state + toolbar
+REQ-54: Contextual tooltips (Phosphor info icons + shadcn Tooltip) on all key UI elements
+REQ-55: About dialog (shadcn Dialog/Sheet): problem statement, Semantic Web approach, workflow diagram, key concepts glossary, NATO relevance, learn more links
+REQ-56: Empty states on all panels (canvas, SRC, MAP, OUT tabs)
+REQ-57: Undo/redo support
+REQ-58: SPARQL template library for common mapping patterns (rename, concatenate, restructure, filter, unit convert)
+REQ-59: Keyboard shortcuts
+REQ-60: Comprehensive error handling and loading states (progress indicator for Comunica queries)
+REQ-61: Node palette on right edge of canvas for dragging new class/property nodes onto master ontology

@@ -25,12 +25,12 @@
 **Requirements:** REQ-33 through REQ-38
 **Exit criteria:** Validate button runs SHACL; violations listed per source; clicking a violation navigates to the relevant node.
 
-## Phase 6: Transform & Fuse
-**Goal:** Full data fusion pipeline — all sources transformed and merged into unified JSON output.
-**Requirements:** REQ-39 through REQ-45
-**Exit criteria:** Transform button executes all source CONSTRUCT queries, fuses triples, and exports structured JSON-LD with provenance annotations.
+## Phase 6: Transform, Fuse & RML Export
+**Goal:** Full data fusion pipeline — all sources transformed and merged into unified JSON output. Additionally, generate RML/YARRRML export files so users can take browser-designed mappings into production ETL pipelines.
+**Requirements:** REQ-39 through REQ-50
+**Exit criteria:** Transform button executes all source CONSTRUCT queries, fuses triples, and exports structured JSON-LD with provenance annotations. Mapping type picker supports direct/template/constant/typecast/language/join/sparql kinds. OUT tab offers RML (.rml.ttl) and YARRRML (.yarrrml.yml) downloads; SPARQL-kind mappings annotated as "requires manual conversion" in exports.
 
 ## Phase 7: Onboarding & Polish
 **Goal:** Demo-ready product — sample project, guided tour, contextual education, empty states.
-**Requirements:** REQ-46 through REQ-56
+**Requirements:** REQ-51 through REQ-61
 **Exit criteria:** First-time user gets interactive tour; sample NATO project loads with both sources pre-configured; all panels have empty states; About dialog explains the technology.

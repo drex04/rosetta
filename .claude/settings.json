@@ -1,0 +1,5 @@
+{
+  "env": {
+    "CLAUDE_MEM_PROJECT": "/home/ubuntu/dev/rosetta"
+  }
+}

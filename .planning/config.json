@@ -1,7 +1,9 @@
 {
   "version": "1.0",
   "project": "rosetta",
-  "workflow": "gsd",
+  "workflow": {
+    "auto_advance": true
+  },
   "phases": 7,
   "currentPhase": 1,
   "testCommand": "npm run test",
