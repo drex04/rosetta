@@ -6,7 +6,7 @@ import { basicSetup } from 'codemirror'
 import { json } from '@codemirror/lang-json'
 import { xml } from '@codemirror/lang-xml'
 import { turtle } from 'codemirror-lang-turtle'
-import { UploadSimpleIcon } from '@phosphor-icons/react'
+import { UploadSimpleIcon, ArrowCounterClockwiseIcon } from '@phosphor-icons/react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { useSourcesStore } from '@/store/sourcesStore'
@@ -55,7 +55,12 @@ function runSchema(value: string, format: 'json' | 'xml', sourceName: string) {
 
 // ─── SourcePanel ──────────────────────────────────────────────────────────────
 
-export function SourcePanel() {
+interface SourcePanelProps {
+  onSourceEditorChange?: (turtle: string) => void
+  resetSourceSchema?: () => void
+}
+
+export function SourcePanel({ onSourceEditorChange, resetSourceSchema }: SourcePanelProps) {
   const sources = useSourcesStore((s) => s.sources)
   const activeSourceId = useSourcesStore((s) => s.activeSourceId)
   const updateSource = useSourcesStore((s) => s.updateSource)
@@ -74,9 +79,12 @@ export function SourcePanel() {
   const hasPrefixCollision = source !== null && banner !== 'invalid-json' && banner !== 'invalid-xml' &&
     sources.some((s) => s.id !== source.id && deriveSlug(s.name) === deriveSlug(source.name))
 
-  // ── Last successful turtle (for preview) ─────────────────────────────────────
-  // Lazy init derives turtle on mount (covers IDB restore without a sync effect).
+  // ── Last successful turtle (for preview / editing) ───────────────────────────
+  // Prefer store's turtleSource when available (set by useSourceSync).
+  // Fall back to lazy-init derivation for IDB-restored sources that predate
+  // the turtleSource field (migrateSource sets it to '').
   const [lastTurtle, setLastTurtle] = useState<string>(() => {
+    if (source?.turtleSource) return source.turtleSource
     if (!source?.rawData) return ''
     try {
       const result = runSchema(source.rawData, source.dataFormat ?? 'json', source.name)
@@ -283,19 +291,30 @@ export function SourcePanel() {
     isUpdatingFromStore.current = false
   }, [source?.rawData])  // RD-11: effect dependency is source?.rawData
 
-  // ── Mount Turtle preview editor ────────────────────────────────────────────────
+  // ── Mount Turtle editor (editable when onSourceEditorChange provided) ────────
   useEffect(() => {
     if (!showTurtle) return
     if (turtleContainerRef.current === null) return
+
+    const isEditable = onSourceEditorChange !== undefined
+
+    const updateListener = EditorView.updateListener.of((update) => {
+      if (!update.docChanged) return
+      if (isUpdatingTurtleFromStore.current) return
+      if (!isEditable) return
+      const value = update.state.doc.toString()
+      onSourceEditorChange(value)
+    })
 
     const state = EditorState.create({
       doc: lastTurtle,
       extensions: [
         basicSetup,
         lineNumbers(),
+        ...(isEditable ? [highlightActiveLine()] : []),
         turtle(),
         lightTheme,
-        EditorState.readOnly.of(true),
+        ...(isEditable ? [updateListener] : [EditorState.readOnly.of(true)]),
       ],
     })
 
@@ -306,10 +325,17 @@ export function SourcePanel() {
       view.destroy()
       turtleViewRef.current = null
     }
-  }, [showTurtle])  // eslint-disable-line react-hooks/exhaustive-deps
-  // Re-mount turtle editor when section is opened
+  }, [showTurtle, source?.id])  // eslint-disable-line react-hooks/exhaustive-deps
+  // Re-mount turtle editor when section is opened or source switches
 
-  // ── Update Turtle preview when lastTurtle changes ─────────────────────────────
+  // ── Sync lastTurtle from store's turtleSource (canvas→editor path) ───────────
+  useEffect(() => {
+    if (source?.turtleSource !== undefined && source.turtleSource !== '') {
+      setLastTurtle(source.turtleSource)
+    }
+  }, [source?.turtleSource])
+
+  // ── Update Turtle editor when lastTurtle changes ──────────────────────────────
   useEffect(() => {
     const view = turtleViewRef.current
     if (view === null) return
@@ -360,7 +386,7 @@ export function SourcePanel() {
         />
       </div>
 
-      {/* Toolbar: format badge + upload button */}
+      {/* Toolbar: format badge + upload + reset buttons */}
       <div className="shrink-0 flex items-center justify-between px-3 py-1.5 border-b border-border bg-muted/10">
         <span
           className={
@@ -374,6 +400,17 @@ export function SourcePanel() {
           {dataFormat.toUpperCase()}
         </span>
         <div className="flex items-center gap-1">
+          {resetSourceSchema !== undefined && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={resetSourceSchema}
+              title="Reset RDFS schema from source data"
+            >
+              <ArrowCounterClockwiseIcon size={14} />
+              <span className="ml-1">Reset Schema</span>
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
             <UploadSimpleIcon size={14} />
             <span className="ml-1">Upload File</span>
@@ -443,7 +480,7 @@ export function SourcePanel() {
           aria-expanded={showTurtle}
           aria-controls="turtle-preview"
         >
-          <span>Generated RDFS</span>
+          <span>{onSourceEditorChange !== undefined ? 'RDFS Schema (editable)' : 'Generated RDFS'}</span>
           <span className="text-[10px]">{showTurtle ? '▲' : '▼'}</span>
         </button>
         {showTurtle && (

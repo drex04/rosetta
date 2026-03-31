@@ -11,9 +11,11 @@ import { ValidationPanel } from '@/components/panels/ValidationPanel'
 
 interface RightPanelProps {
   onEditorChange: (value: string) => void
+  onSourceEditorChange?: (turtle: string) => void
+  resetSourceSchema?: () => void
 }
 
-export function RightPanel({ onEditorChange }: RightPanelProps) {
+export function RightPanel({ onEditorChange, onSourceEditorChange, resetSourceSchema }: RightPanelProps) {
   const { activeRightTab, setActiveRightTab } = useUiStore()
   const turtleSource = useOntologyStore((s) => s.turtleSource)
   const parseError = useOntologyStore((s) => s.parseError)
@@ -137,7 +139,7 @@ export function RightPanel({ onEditorChange }: RightPanelProps) {
             </div>
             <div className="flex-1 overflow-hidden">
               <TabsContent value="SRC" className="h-full m-0">
-                <SourcePanel />
+                <SourcePanel onSourceEditorChange={onSourceEditorChange} resetSourceSchema={resetSourceSchema} />
               </TabsContent>
               <TabsContent value="ONTO" className="h-full m-0">
                 <TurtleEditorPanel turtleSource={turtleSource} onEditorChange={onEditorChange} parseError={parseError} />
