@@ -3,19 +3,19 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-last_updated: "2026-03-30T21:00:00.000Z"
+last_updated: "2026-03-31T19:45:28.423Z"
 progress:
-  total_phases: 7
-  completed_phases: 5
-  total_plans: 15
-  completed_plans: 15
+  total_phases: 10
+  completed_phases: 7
+  total_plans: 23
+  completed_plans: 19
 ---
 
 # Project State
 
 ## Current Position
 
-- **Phase:** 6
+- **Phase:** 7
 - **Plan:** 0/? (not started)
 - **Status:** Planning
 
@@ -28,7 +28,7 @@ progress:
 | 3 | JSON Import (Multi-Source) | complete |
 | 4 | Mapping (Per-Source) | complete |
 | 5 | SHACL Validation | complete |
-| 6 | Transform & Fuse | not started |
+| 6 | Transform & Fuse | complete |
 | 7 | Onboarding & Polish | not started |
 
 ## Notes
@@ -44,4 +44,8 @@ Phase 4 Plan 02 completed 2026-03-26: sparql.ts generateConstruct (TDD, 11 tests
 Phase 4 Plan 03 completed 2026-03-26: ProjectFile.mappings typed as Record<string, Mapping[]>, mappingStore hydrate action, useAutoSave extended (subscribe + snapshot + mount restore + IDB error banner).
 Phase 5 Plan 02 completed 2026-03-30: validationStore (runValidation, subscribeValidationToMappings, 9 tests), Validate button in Header (outline, disabled when loading, amber ring when stale).
 Phase 5 complete 2026-03-30: Full SHACL validation pipeline — shapes, instances, CONSTRUCT executor, store, UI wiring.
-Next: run `/fh:plan-work` for Phase 6 — Transform & Fuse.
+Phase 6 Plan 01 completed 2026-03-30: Comunica integration, executeAllConstructs + fusionStore, jsonldFramer.ts, OUT tab Fused sub-tab (FusedTab with provenance summary + JSON-LD download).
+Phase 6 Plan 02 completed 2026-03-30: Mapping.kind expanded to 7 kinds (direct/template/constant/typecast/language/join/sparql), kind picker UI + kind-specific fields in MappingPanel, OutputPanel Export sub-tab placeholder.
+Phase 6 Plan 03 completed 2026-03-31: rml.ts (inferIterator + generateRml, pure), yarrrml.ts (generateYarrrml, pure), Export sub-tab wired with Download RML + Download YARRRML buttons. Build clean, 149 unit tests pass.
+Phase 6 complete 2026-03-31: All REQ-39 through REQ-50 implemented.
+Next: run `/fh:plan-work` for Phase 7 — Onboarding & Polish.
