@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
 import { jsonToSchema } from '@/lib/jsonToSchema'
 
 // ─── Primitive fields → DatatypeProperty ──────────────────────────────────────
@@ -124,7 +124,6 @@ describe('circular reference handling', () => {
     //
     // The real circular ref detection is internal: we test it via the
     // exported function by monkey-patching JSON.parse to return a cyclic graph.
-    const originalParse = JSON.parse
     const circularObj: Record<string, unknown> = { id: 'root', name: 'test' }
     circularObj['self'] = circularObj
 
@@ -138,7 +137,6 @@ describe('circular reference handling', () => {
   })
 
   it('still emits parent Class even when circular property is suppressed', () => {
-    const originalParse = JSON.parse
     const circularObj: Record<string, unknown> = { id: 'root', name: 'test' }
     circularObj['self'] = circularObj
 
@@ -270,7 +268,7 @@ describe('N3.Writer failure handling', () => {
         ...actual,
         Writer: class {
           addQuad() { throw new Error('N3 writer error') }
-          end(_cb: (err: Error | null, result: string) => void) { throw new Error('N3 writer error') }
+          end() { throw new Error('N3 writer error') }
         },
       }
     })

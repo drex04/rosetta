@@ -7,3 +7,5 @@ dist/
 .project-tracker/
 .sentry-local/
 *.log
+/test-results/
+/playwright-report/
