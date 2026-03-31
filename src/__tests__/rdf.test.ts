@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { parseTurtle, canvasToTurtle, localName, COLUMN_X_MASTER } from '@/lib/rdf'
 import { TREE_BASE_Y, TREE_INDENT_X } from '@/lib/layout'
-import type { OntologyNode } from '../types/index'
 
 // ─── localName ────────────────────────────────────────────────────────────────
 
