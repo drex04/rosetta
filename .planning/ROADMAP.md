@@ -30,7 +30,17 @@
 **Requirements:** REQ-39 through REQ-50
 **Exit criteria:** Transform button executes all source CONSTRUCT queries, fuses triples, and exports structured JSON-LD with provenance annotations. Mapping type picker supports direct/template/constant/typecast/language/join/sparql kinds. OUT tab offers RML (.rml.ttl) and YARRRML (.yarrrml.yml) downloads; SPARQL-kind mappings annotated as "requires manual conversion" in exports.
 
-## Phase 7: Onboarding & Polish
+## Phase 7: UI Polish & Bug Fixes
+**Goal:** Quick wins — fix mapping bugs, rename tabs, clean up OUTPUT tab, improve visual clarity.
+**Requirements:** REQ-51 through REQ-57
+**Exit criteria:** Tabs read INPUT/ONTOLOGY/MAP/OUTPUT with clear active styling; mapping SPARQL snippets auto-update on option changes; stale mappings auto-deleted on schema change; minimap hidden on mobile; ontology export .ttl button on ONTOLOGY tab.
+
+## Phase 8: Source & Ontology Editing
+**Goal:** Full source schema editing — XML support, file upload, editable source .ttl with bidirectional canvas sync, source node editor, full ontology canvas editor, and mapping groups for multi-field combinations.
+**Requirements:** REQ-58 through REQ-67
+**Exit criteria:** User can upload/paste JSON or XML; source .ttl is editable with live canvas sync; source nodes can be created/deleted/connected on canvas; reset button re-generates schema from raw data; ontology nodes can be created/deleted/connected directly on canvas (context menus + edge drawing); drawing multiple edges to same target auto-groups them with CONCAT/COALESCE/TEMPLATE strategy.
+
+## Phase 9: Onboarding & Demo
 **Goal:** Demo-ready product — sample project, guided tour, contextual education, empty states.
-**Requirements:** REQ-51 through REQ-61
+**Requirements:** REQ-68 through REQ-78
 **Exit criteria:** First-time user gets interactive tour; sample NATO project loads with both sources pre-configured; all panels have empty states; About dialog explains the technology.
