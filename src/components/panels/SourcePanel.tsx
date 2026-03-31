@@ -8,6 +8,7 @@ import { turtle } from 'codemirror-lang-turtle'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useSourcesStore } from '@/store/sourcesStore'
 import { jsonToSchema } from '@/lib/jsonToSchema'
+import { lightTheme } from '@/lib/codemirror-theme'
 
 // ─── Debounce helper ──────────────────────────────────────────────────────────
 
@@ -32,44 +33,10 @@ function deriveSlug(name: string): string {
   return 'src_' + name.replace(/[^a-zA-Z0-9_]/g, '').toLowerCase() + '_'
 }
 
-// ─── Light theme (shared with TurtleEditorPanel) ──────────────────────────────
-
-const lightTheme = EditorView.theme({
-  '&': {
-    height: '100%',
-    fontSize: '12px',
-    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
-    backgroundColor: '#ffffff',
-  },
-  '.cm-content': {
-    padding: '8px 0',
-    caretColor: '#000000',
-  },
-  '.cm-line': {
-    padding: '0 8px',
-  },
-  '.cm-gutters': {
-    backgroundColor: '#f8f9fa',
-    borderRight: '1px solid #e5e7eb',
-    color: '#9ca3af',
-  },
-  '.cm-activeLineGutter': {
-    backgroundColor: '#f1f5f9',
-  },
-  '.cm-activeLine': {
-    backgroundColor: '#f8fafc',
-  },
-  '.cm-focused': {
-    outline: 'none',
-  },
-  '.cm-scroller': {
-    overflow: 'auto',
-  },
-})
-
 // ─── Banner state type ────────────────────────────────────────────────────────
 
-type BannerState = 'invalid-json' | 'prefix-collision' | 'warnings' | null
+// 'prefix-collision' is derived during render from sources; only json/warnings are set via state
+type BannerState = 'invalid-json' | 'warnings' | null
 
 // ─── SourcePanel ──────────────────────────────────────────────────────────────
 
@@ -80,19 +47,28 @@ export function SourcePanel() {
 
   const source = sources.find((s) => s.id === activeSourceId) ?? null
 
-  // ── Name editing ────────────────────────────────────────────────────────────
+  // ── Name editing ─────────────────────────────────────────────────────────────
+  // No sync effect needed: SourcePanel is remounted via key={activeSourceId} in RightPanel
   const [editName, setEditName] = useState(source?.name ?? '')
-
-  // Keep editName in sync when active source changes
-  useEffect(() => {
-    setEditName(source?.name ?? '')
-  }, [source?.id, source?.name])
 
   // ── Banners ─────────────────────────────────────────────────────────────────
   const [banner, setBanner] = useState<BannerState>(null)
 
-  // ── Last successful turtle (for preview) ────────────────────────────────────
-  const [lastTurtle, setLastTurtle] = useState('')
+  // ── Prefix collision — derived from current sources list (no effect needed) ──
+  const hasPrefixCollision = source !== null && banner !== 'invalid-json' &&
+    sources.some((s) => s.id !== source.id && deriveSlug(s.name) === deriveSlug(source.name))
+
+  // ── Last successful turtle (for preview) ─────────────────────────────────────
+  // Lazy init derives turtle on mount (covers IDB restore without a sync effect).
+  const [lastTurtle, setLastTurtle] = useState<string>(() => {
+    if (!source?.json) return ''
+    try {
+      JSON.parse(source.json)
+      return jsonToSchema(source.json, source.name).turtle
+    } catch {
+      return ''
+    }
+  })
 
   // ── CodeMirror refs (JSON editor) ────────────────────────────────────────────
   const jsonContainerRef = useRef<HTMLDivElement>(null)
@@ -107,24 +83,8 @@ export function SourcePanel() {
   // ── Turtle preview open state ─────────────────────────────────────────────────
   const [showTurtle, setShowTurtle] = useState(true)
 
-  // ── Initialize lastTurtle from stored source data on mount/source-switch ──────
-  // After IDB restore, lastTurtle starts empty even though source.json is populated.
-  // Re-derive the turtle so the preview is available without requiring a keystroke.
-  useEffect(() => {
-    if (!source?.json) {
-      setLastTurtle('')
-      return
-    }
-    try {
-      JSON.parse(source.json) // only proceed if JSON is valid
-      const result = jsonToSchema(source.json, source.name)
-      setLastTurtle(result.turtle)
-    } catch {
-      setLastTurtle('')
-    }
-  }, [source?.id]) // eslint-disable-line react-hooks/exhaustive-deps
-
   // ── Debounced update (per source.id) ─────────────────────────────────────────
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const debouncedUpdate = useMemo(() => {
     if (!source) return null
     const sourceId = source.id  // RD-06: capture in closure, do NOT read from store inside callback
@@ -142,24 +102,10 @@ export function SourcePanel() {
         return
       }
 
-      // Valid JSON: call converter
+      // Valid JSON: call converter; prefix collision is derived during render (hasPrefixCollision)
       const result = jsonToSchema(value, sources.find((s) => s.id === sourceId)?.name ?? '')
 
-      // Check prefix collision against other sources (RD-07)
-      const currentSource = sources.find((s) => s.id === sourceId)
-      const currentSlug = deriveSlug(currentSource?.name ?? '')
-      const hasCollision = sources.some(
-        (s) => s.id !== sourceId && deriveSlug(s.name) === currentSlug,
-      )
-
-      if (result.warnings.length > 0) {
-        // Show warnings banner (highest priority after invalid-json)
-        setBanner('warnings')
-      } else if (hasCollision) {
-        setBanner('prefix-collision')
-      } else {
-        setBanner(null)
-      }
+      setBanner(result.warnings.length > 0 ? 'warnings' : null)
 
       // Update turtle preview if we have turtle output
       if (result.turtle) {
@@ -264,21 +210,6 @@ export function SourcePanel() {
     isUpdatingTurtleFromStore.current = false
   }, [lastTurtle])
 
-  // ── Prefix collision check on source name change ───────────────────────────────
-  // Recheck collision banner when sources list changes (names may have changed)
-  useEffect(() => {
-    if (!source || banner === 'invalid-json') return
-    const currentSlug = deriveSlug(source.name)
-    const hasCollision = sources.some(
-      (s) => s.id !== source.id && deriveSlug(s.name) === currentSlug,
-    )
-    if (hasCollision) {
-      setBanner('prefix-collision')
-    } else if (banner === 'prefix-collision') {
-      setBanner(null)
-    }
-  }, [sources])  // eslint-disable-line react-hooks/exhaustive-deps
-
   // ── Empty state ────────────────────────────────────────────────────────────────
   if (!source) {
     return (
@@ -322,7 +253,7 @@ export function SourcePanel() {
           <AlertDescription>Invalid JSON — schema not updated</AlertDescription>
         </Alert>
       )}
-      {banner === 'prefix-collision' && (
+      {hasPrefixCollision && (
         <Alert className="shrink-0 rounded-none border-x-0 text-xs bg-yellow-50 border-yellow-200 text-yellow-800">
           <AlertDescription>
             Prefix collision — rename this source to avoid RDF conflicts

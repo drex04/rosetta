@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type { Mapping } from '@/types/index'
+import { useValidationStore } from './validationStore'
 
 // ─── Store interface ──────────────────────────────────────────────────────────
 
@@ -57,6 +58,7 @@ export const useMappingStore = create<MappingState>((set, get) => ({
         [m.sourceId]: [...(s.mappings[m.sourceId] ?? []), newMapping],
       },
     }))
+    useValidationStore.getState().setStale(true)
     return id
   },
 
@@ -71,6 +73,7 @@ export const useMappingStore = create<MappingState>((set, get) => ({
         selectedMappingId: s.selectedMappingId === id ? null : s.selectedMappingId,
       }
     })
+    useValidationStore.getState().setStale(true)
   },
 
   updateMapping: (id, patch) => {

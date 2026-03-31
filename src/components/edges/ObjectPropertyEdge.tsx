@@ -3,7 +3,7 @@ import type { ObjectPropertyEdgeData } from '@/types/index'
 import { MASTER_BLUE } from './shared'
 import { EdgeLabel } from './EdgeLabel'
 
-export type ObjectPropertyEdgeType = Edge<ObjectPropertyEdgeData & Record<string, unknown>, 'objectPropertyEdge'>
+type ObjectPropertyEdgeType = Edge<ObjectPropertyEdgeData & Record<string, unknown>, 'objectPropertyEdge'>
 
 export function ObjectPropertyEdge({
   id,

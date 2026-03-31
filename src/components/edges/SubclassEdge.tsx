@@ -3,7 +3,7 @@ import type { SubclassEdgeData } from '@/types/index'
 import { MASTER_BLUE } from './shared'
 import { EdgeLabel } from './EdgeLabel'
 
-export type SubclassEdgeType = Edge<SubclassEdgeData & Record<string, unknown>, 'subclassEdge'>
+type SubclassEdgeType = Edge<SubclassEdgeData & Record<string, unknown>, 'subclassEdge'>
 
 export function SubclassEdge({
   id,
