@@ -1,5 +1,4 @@
 node_modules/
-node-compile-cache/
 dist/
 .env
 .env.local
@@ -10,3 +9,7 @@ dist/
 *.log
 /test-results/
 /playwright-report/
+
+# FHHS cache files
+node-compile-cache/
+cache.bin
