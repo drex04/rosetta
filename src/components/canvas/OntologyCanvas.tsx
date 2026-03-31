@@ -42,6 +42,13 @@ interface EdgePickerState {
   connection: Connection
 }
 
+interface GroupPromptState {
+  x: number
+  y: number
+  mappingIds: string[]
+  sourceId: string
+}
+
 // ─── nodeTypes must be stable (outside component) ────────────────────────────
 
 const nodeTypes = {
@@ -90,6 +97,7 @@ function OntologyCanvasInner({ onCanvasChange }: OntologyCanvasProps) {
   const [nodeMenu, setNodeMenu] = useState<NodeMenuState | null>(null)
   const [addPropFor, setAddPropFor] = useState<{ nodeId: string; nodePrefix: string } | null>(null)
   const [edgePicker, setEdgePicker] = useState<EdgePickerState | null>(null)
+  const [groupPrompt, setGroupPrompt] = useState<GroupPromptState | null>(null)
 
   // ─── fitView on first nodes ──────────────────────────────────────────────────
   useEffect(() => {
@@ -303,7 +311,7 @@ function OntologyCanvasInner({ onCanvasChange }: OntologyCanvasProps) {
         kind: 'direct',
       })
 
-      addMapping({
+      const newMappingId = addMapping({
         sourceId: activeSourceId,
         sourceClassUri: sourceFlowNode.data.uri,
         sourcePropUri: sourceProp.uri,
@@ -314,6 +322,24 @@ function OntologyCanvasInner({ onCanvasChange }: OntologyCanvasProps) {
         kind: 'direct',
         sparqlConstruct,
       })
+
+      // Auto-group detection: check if target prop already has mappings from this source
+      const existingMappings = useMappingStore.getState().getMappingsForSource(activeSourceId)
+      const duplicates = existingMappings.filter(
+        (m) =>
+          m.targetClassUri === targetNode.data.uri &&
+          m.targetPropUri === targetProp.uri &&
+          m.id !== newMappingId,
+      )
+
+      if (duplicates.length > 0) {
+        setGroupPrompt({
+          x: 0,
+          y: 0,
+          mappingIds: [newMappingId, ...duplicates.map((m) => m.id)],
+          sourceId: activeSourceId,
+        })
+      }
     }
   }, [addMapping, updateSource])
 
@@ -584,6 +610,34 @@ function OntologyCanvasInner({ onCanvasChange }: OntologyCanvasProps) {
           }}
           onClose={() => setAddPropFor(null)}
         />
+      )}
+
+      {/* Group prompt */}
+      {groupPrompt && (
+        <div
+          className="fixed z-50 bg-popover border border-border rounded-lg shadow-xl p-3 flex flex-col gap-1 min-w-[180px]"
+          style={{ left: '50%', top: '40%', transform: 'translate(-50%, -50%)' }}
+        >
+          <p className="text-xs font-semibold text-muted-foreground mb-1 px-1">Group these mappings?</p>
+          {(['concat', 'coalesce', 'template'] as const).map((strategy) => (
+            <button
+              key={strategy}
+              className="text-sm text-left px-2 py-1.5 rounded hover:bg-accent transition-colors capitalize"
+              onClick={() => {
+                useMappingStore.getState().createGroup(groupPrompt.sourceId, groupPrompt.mappingIds, strategy)
+                setGroupPrompt(null)
+              }}
+            >
+              {strategy.charAt(0).toUpperCase() + strategy.slice(1)}
+            </button>
+          ))}
+          <button
+            className="text-xs text-muted-foreground text-left px-2 py-1 rounded hover:bg-accent transition-colors mt-1"
+            onClick={() => setGroupPrompt(null)}
+          >
+            Keep separate
+          </button>
+        </div>
       )}
 
       {/* Edge type picker */}
