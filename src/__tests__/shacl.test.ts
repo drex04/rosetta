@@ -108,12 +108,13 @@ function makeSourceNode(prefix: string): SourceNode {
   } as SourceNode
 }
 
-function makeSource(overrides: Partial<{ id: string; name: string; order: number; json: string; schemaNodes: SourceNode[]; schemaEdges: OntologyEdge[] }>): Source {
+function makeSource(overrides: Partial<{ id: string; name: string; order: number; rawData: string; dataFormat: 'json' | 'xml'; schemaNodes: SourceNode[]; schemaEdges: OntologyEdge[] }>): Source {
   return {
     id: 'src1',
     name: 'test',
     order: 0,
-    json: '{}',
+    rawData: '{}',
+    dataFormat: 'json',
     schemaNodes: [],
     schemaEdges: [],
     ...overrides,
@@ -158,7 +159,7 @@ describe('validateSource', () => {
     const URI_BASE = 'http://src_test_#'
     const TGT = 'http://tgt_#'
     const source = makeSource({
-      json: '{"tracks":[{"speed":3.14}]}',
+      rawData: '{"tracks":[{"speed":3.14}]}',
       schemaNodes: [makeSourceNode(URI_BASE)],
     })
     const ontNode = makeOntologyNode(TGT + 'Target', [
@@ -178,7 +179,7 @@ describe('validateSource', () => {
     const URI_BASE = 'http://src_test_#'
     const TGT = 'http://tgt_#'
     const source = makeSource({
-      json: '{"tracks":[{"speed":3.14}]}',
+      rawData: '{"tracks":[{"speed":3.14}]}',
       schemaNodes: [makeSourceNode(URI_BASE)],
     })
     const ontNode = makeOntologyNode(TGT + 'Target', [
@@ -198,7 +199,7 @@ describe('validateSource', () => {
     const URI_BASE = 'http://src_test_#'
     const TGT = 'http://tgt_#'
     const source = makeSource({
-      json: '{"tracks":[{"speed":3.14}]}',
+      rawData: '{"tracks":[{"speed":3.14}]}',
       schemaNodes: [makeSourceNode(URI_BASE)],
     })
     const ontNode = makeOntologyNode(TGT + 'Target', [
@@ -218,7 +219,7 @@ describe('validateSource', () => {
     const URI_BASE = 'http://src_test_#'
     const TGT = 'http://tgt_#'
     const source = makeSource({
-      json: '{"tracks":[{"speed":3.14}]}',
+      rawData: '{"tracks":[{"speed":3.14}]}',
       schemaNodes: [makeSourceNode(URI_BASE)],
     })
     const ontNode = makeOntologyNode(TGT + 'Target', [

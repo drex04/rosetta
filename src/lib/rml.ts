@@ -88,9 +88,9 @@ export function generateRml(
   ]
 
   for (const source of sources) {
-    if (source.json.trim() === '') continue
+    if (source.rawData.trim() === '') continue
 
-    const iterator = inferIterator(source.json)
+    const iterator = inferIterator(source.rawData)
     const mlist = mappingsBySource[source.id] ?? []
 
     // Group mappings by sourceClassUri

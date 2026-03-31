@@ -61,9 +61,9 @@ export function generateYarrrml(
   const mapBlocks: string[] = []
 
   for (const source of sources) {
-    if (source.json.trim() === '') continue
+    if (source.rawData.trim() === '') continue
 
-    const iterator = inferIterator(source.json)
+    const iterator = inferIterator(source.rawData)
     const safeName = source.name.replace(/[^a-zA-Z0-9]/g, '').toLowerCase()
     const uriPrefix = `http://src_${safeName}_#`
 

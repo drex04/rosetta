@@ -5,9 +5,30 @@ export interface Source {
   id: string
   name: string
   order: number
-  json: string
+  rawData: string
+  dataFormat: 'json' | 'xml'
   schemaNodes: SourceNode[]
   schemaEdges: OntologyEdge[]
+}
+
+/**
+ * IDB migration guard: upgrades a persisted source record from the old
+ * `json` field shape to the new `rawData` / `dataFormat` shape.
+ * Safe to call on already-migrated records.
+ */
+export function migrateSource(record: Record<string, unknown>): Source {
+  const migrated = { ...record }
+  if ('json' in migrated && !('rawData' in migrated)) {
+    migrated['rawData'] = migrated['json'] ?? ''
+    migrated['dataFormat'] = 'json'
+    delete migrated['json']
+  }
+  // Ensure fields exist even on brand-new records missing both
+  if (!('rawData' in migrated)) migrated['rawData'] = ''
+  if (!('dataFormat' in migrated)) migrated['dataFormat'] = 'json'
+  // Remove any stale json key
+  delete migrated['json']
+  return migrated as unknown as Source
 }
 
 interface SourcesState {

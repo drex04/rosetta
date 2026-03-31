@@ -96,8 +96,8 @@ export function Header() {
     const idA = generateSourceId()
     const idB = generateSourceId()
     const sources = [
-      { id: idA, name: 'Norway', order: 0, json: sampleNorwegianRaw, schemaNodes: resultA.nodes, schemaEdges: resultA.edges },
-      { id: idB, name: 'Germany', order: 1, json: sampleGermanRaw, schemaNodes: resultB.nodes, schemaEdges: resultB.edges },
+      { id: idA, name: 'Norway', order: 0, rawData: sampleNorwegianRaw, dataFormat: 'json' as const, schemaNodes: resultA.nodes, schemaEdges: resultA.edges },
+      { id: idB, name: 'Germany', order: 1, rawData: sampleGermanRaw, dataFormat: 'json' as const, schemaNodes: resultB.nodes, schemaEdges: resultB.edges },
     ]
     useSourcesStore.setState({ sources, activeSourceId: idA })
 

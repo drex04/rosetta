@@ -33,9 +33,10 @@ describe('inferIterator', () => {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function makeSource(overrides: Partial<Source> & { id: string; name: string; json: string }): Source {
+function makeSource(overrides: Partial<Source> & { id: string; name: string; rawData: string }): Source {
   return {
     order: 0,
+    dataFormat: 'json',
     schemaNodes: [],
     schemaEdges: [],
     ...overrides,
@@ -64,7 +65,7 @@ describe('generateRml', () => {
     const source = makeSource({
       id: 'src1',
       name: 'radar',
-      json: '{"tracks":[{"trackId":"T1"}]}',
+      rawData: '{"tracks":[{"trackId":"T1"}]}',
       schemaNodes: [
         {
           id: 'node1',
@@ -88,7 +89,7 @@ describe('generateRml', () => {
   })
 
   it('comments out sparql mapping with manual conversion note', () => {
-    const source = makeSource({ id: 'src1', name: 'radar', json: '{"tracks":[]}' })
+    const source = makeSource({ id: 'src1', name: 'radar', rawData: '{"tracks":[]}' })
     const mapping = makeMapping({ kind: 'sparql' })
     const result = generateRml([source], { src1: [mapping] })
 
@@ -99,7 +100,7 @@ describe('generateRml', () => {
     const source = makeSource({
       id: 'src1',
       name: 'radar',
-      json: '{"tracks":[]}',
+      rawData: '{"tracks":[]}',
     })
     const mapping = makeMapping({
       kind: 'constant',
@@ -112,7 +113,7 @@ describe('generateRml', () => {
   })
 
   it('emits rr:language for language mapping', () => {
-    const source = makeSource({ id: 'src1', name: 'radar', json: '{"tracks":[]}' })
+    const source = makeSource({ id: 'src1', name: 'radar', rawData: '{"tracks":[]}' })
     const mapping = makeMapping({ kind: 'language', languageTag: 'en' })
     const result = generateRml([source], { src1: [mapping] })
 
@@ -120,7 +121,7 @@ describe('generateRml', () => {
   })
 
   it('emits rr:datatype for typecast mapping', () => {
-    const source = makeSource({ id: 'src1', name: 'radar', json: '{"tracks":[]}' })
+    const source = makeSource({ id: 'src1', name: 'radar', rawData: '{"tracks":[]}' })
     const mapping = makeMapping({
       kind: 'typecast',
       targetDatatype: 'http://www.w3.org/2001/XMLSchema#integer',
@@ -131,8 +132,8 @@ describe('generateRml', () => {
   })
 
   it('skips source with empty JSON', () => {
-    const emptySource = makeSource({ id: 'src1', name: 'empty', json: '' })
-    const otherSource = makeSource({ id: 'src2', name: 'radar', json: '{"tracks":[]}' })
+    const emptySource = makeSource({ id: 'src1', name: 'empty', rawData: '' })
+    const otherSource = makeSource({ id: 'src2', name: 'radar', rawData: '{"tracks":[]}' })
     const mapping = makeMapping({ kind: 'direct', sourceId: 'src2' })
     const result = generateRml([emptySource, otherSource], { src2: [mapping] })
 
@@ -143,7 +144,7 @@ describe('generateRml', () => {
     const source = makeSource({
       id: 'src1',
       name: 'radar',
-      json: '{"tracks":[]}',
+      rawData: '{"tracks":[]}',
       schemaNodes: [
         {
           id: 'node1',

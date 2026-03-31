@@ -155,6 +155,36 @@ describe('useMappingStore — setSelectedMappingId', () => {
   })
 })
 
+describe('useMappingStore — clearMappingsForSource', () => {
+  it('removes all mappings for the given sourceId, leaving others intact', () => {
+    useMappingStore.getState().addMapping(makeBase({ sourceId: 'src-1' }))
+    useMappingStore.getState().addMapping(makeBase({ sourceId: 'src-1', sourcePropUri: 'http://example.org/speed' }))
+    useMappingStore.getState().addMapping(makeBase({ sourceId: 'src-2' }))
+
+    useMappingStore.getState().clearMappingsForSource('src-1')
+
+    const state = useMappingStore.getState().mappings
+    expect(state['src-1']).toBeUndefined()
+    expect(state['src-2']).toHaveLength(1)
+  })
+
+  it('clears selectedMappingId when a mapping in that source was selected', () => {
+    const id = useMappingStore.getState().addMapping(makeBase({ sourceId: 'src-1' }))
+    useMappingStore.setState({ selectedMappingId: id })
+
+    useMappingStore.getState().clearMappingsForSource('src-1')
+
+    expect(useMappingStore.getState().selectedMappingId).toBeNull()
+  })
+
+  it('is a no-op for an unknown sourceId', () => {
+    useMappingStore.getState().addMapping(makeBase({ sourceId: 'src-1' }))
+    useMappingStore.getState().clearMappingsForSource('src-unknown')
+
+    expect(useMappingStore.getState().mappings['src-1']).toHaveLength(1)
+  })
+})
+
 describe('useMappingStore — hydrate', () => {
   it('replaces all existing mappings', () => {
     // Add a mapping first so there is pre-existing state

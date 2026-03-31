@@ -16,7 +16,7 @@ export async function validateSource(
   if (source.schemaNodes.length === 0) return []
 
   const shapesStore = generateShapes(ontologyNodes)
-  const instanceStore = jsonToInstances(source.json, source.schemaNodes)
+  const instanceStore = jsonToInstances(source.rawData, source.schemaNodes)
   const dataStore = executeConstruct(instanceStore, mappings)
   const violations = await validateWithShacl(dataStore, shapesStore)
 
