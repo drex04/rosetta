@@ -31,6 +31,13 @@ export type OntologyEdge =
   | import('@xyflow/react').Edge<SubclassEdgeData & Record<string, unknown>, 'subclassEdge'>
   | import('@xyflow/react').Edge<ObjectPropertyEdgeData & Record<string, unknown>, 'objectPropertyEdge'>
 
+// ─── MappingGroup ─────────────────────────────────────────────────────────────
+
+export type MappingGroup =
+  | { id: string; strategy: 'concat'; separator: string; targetClassUri: string; targetPropUri: string; sparqlConstruct: string }
+  | { id: string; strategy: 'coalesce'; separator: string; targetClassUri: string; targetPropUri: string; sparqlConstruct: string }
+  | { id: string; strategy: 'template'; separator: string; templatePattern: string; targetClassUri: string; targetPropUri: string; sparqlConstruct: string }
+
 // ─── Mapping ──────────────────────────────────────────────────────────────────
 
 export interface Mapping {
@@ -53,6 +60,8 @@ export interface Mapping {
   parentSourceId?: string       // join: the other source id
   parentRef?: string            // join: property URI in parent source
   childRef?: string             // join: property URI in this source
+  groupId?: string              // group membership
+  groupOrder?: number           // position within group
 }
 
 // ─── ProjectFile ──────────────────────────────────────────────────────────────
@@ -66,5 +75,6 @@ export interface ProjectFile {
   sources: import('@/store/sourcesStore').Source[]
   activeSourceId?: string | null
   mappings: Record<string, Mapping[]>
+  groups?: Record<string, MappingGroup[]>
   timestamp: string
 }

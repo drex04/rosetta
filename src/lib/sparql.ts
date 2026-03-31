@@ -1,4 +1,4 @@
-import type { Mapping } from '@/types/index'
+import type { Mapping, MappingGroup } from '@/types/index'
 import { localName } from '@/lib/rdf' // RD-01: import, don't re-implement
 
 export function generateConstruct(
@@ -116,6 +116,113 @@ export function generateConstruct(
 
   // kind === 'sparql': user-managed, return empty string (sparqlConstruct is omitted from param)
   return ''
+}
+
+export function generateGroupConstruct(group: MappingGroup, members: Mapping[]): string {
+  if (members.length === 0) return ''
+
+  // Sort by groupOrder ascending
+  const sorted = [...members].sort((a, b) => (a.groupOrder ?? 0) - (b.groupOrder ?? 0))
+
+  // Derive prefixes from first member (sorted is non-empty due to early return above)
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  const first = sorted[0]!
+  const srcPrefix = derivePrefix(first.sourceClassUri)
+  const tgtPrefix = derivePrefix(group.targetClassUri)
+  const srcClass = localName(first.sourceClassUri)
+  const tgtClass = localName(group.targetClassUri)
+  const tgtPropRaw = localName(group.targetPropUri)
+  const tgtProp = tgtPropRaw === group.targetPropUri ? 'val' : tgtPropRaw || 'val'
+
+  // Build per-member prop local names and variable names
+  const propLines = sorted.map((m, i) => {
+    const raw = localName(m.sourcePropUri)
+    const prop = raw === m.sourcePropUri ? `prop${i}` : raw || `prop${i}`
+    return { prop, varName: `v${i}` }
+  })
+
+  const prefixLines = [
+    `PREFIX src: <${srcPrefix}>`,
+    `PREFIX tgt: <${tgtPrefix}>`,
+  ]
+
+  const constructBlock = [
+    `CONSTRUCT {`,
+    `  ?target a tgt:${tgtClass} .`,
+    `  ?target tgt:${tgtProp} ?joinedVal .`,
+    `}`,
+  ]
+
+  if (group.strategy === 'concat') {
+    const sep = group.separator ?? ''
+    const triples = propLines.map((p) => `  ?source src:${p.prop} ?${p.varName} .`)
+    const concatArgs = propLines.flatMap((p, i) =>
+      i < propLines.length - 1
+        ? [`STR(?${p.varName})`, `"${sep}"`]
+        : [`STR(?${p.varName})`],
+    )
+    const bindLine = `  BIND(CONCAT(${concatArgs.join(', ')}) AS ?joinedVal)`
+
+    return [
+      ...prefixLines,
+      ``,
+      ...constructBlock,
+      `WHERE {`,
+      `  ?source a src:${srcClass} .`,
+      ...triples,
+      bindLine,
+      `}`,
+    ].join('\n')
+  }
+
+  if (group.strategy === 'coalesce') {
+    const optionals = propLines.map((p) => `  OPTIONAL { ?source src:${p.prop} ?${p.varName} . }`)
+    const coalesceArgs = propLines.map((p) => `?${p.varName}`).join(', ')
+    const bindLine = `  BIND(COALESCE(${coalesceArgs}) AS ?joinedVal)`
+
+    return [
+      ...prefixLines,
+      ``,
+      ...constructBlock,
+      `WHERE {`,
+      `  ?source a src:${srcClass} .`,
+      ...optionals,
+      bindLine,
+      `}`,
+    ].join('\n')
+  }
+
+  // strategy === 'template'
+  const pattern = group.templatePattern ?? ''
+  // Split template on {N} placeholders and rebuild as CONCAT args
+  const parts = pattern.split(/(\{\d+\})/)
+  const concatArgs: string[] = []
+  for (const part of parts) {
+    const match = part.match(/^\{(\d+)\}$/)
+    if (match) {
+      const idx = parseInt(match[1] ?? '0', 10)
+      const pl = propLines[idx]
+      if (pl !== undefined) {
+        concatArgs.push(`STR(?${pl.varName})`)
+      }
+    } else if (part.length > 0) {
+      concatArgs.push(`"${part}"`)
+    }
+  }
+  const concatExpr = concatArgs.length === 1 ? concatArgs[0] : `CONCAT(${concatArgs.join(', ')})`
+  const bindLine = `  BIND(${concatExpr} AS ?joinedVal)`
+  const triples = propLines.map((p) => `  ?source src:${p.prop} ?${p.varName} .`)
+
+  return [
+    ...prefixLines,
+    ``,
+    ...constructBlock,
+    `WHERE {`,
+    `  ?source a src:${srcClass} .`,
+    ...triples,
+    bindLine,
+    `}`,
+  ].join('\n')
 }
 
 function derivePrefix(classUri: string): string {
