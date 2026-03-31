@@ -6,6 +6,7 @@ import { RightPanel } from './components/layout/RightPanel'
 import { OntologyCanvas } from './components/canvas/OntologyCanvas'
 import { ConfirmDialog } from './components/ui/confirm-dialog'
 import { useOntologyStore, SEED_TURTLE } from './store/ontologyStore'
+import { useMappingStore } from './store/mappingStore'
 import { subscribeValidationToMappings } from './store/validationStore'
 import { useOntologySync } from './hooks/useOntologySync'
 import { useAutoSave } from './hooks/useAutoSave'
@@ -24,6 +25,20 @@ function App() {
   useEffect(() => {
     const unsub = subscribeValidationToMappings()
     return unsub
+  }, [])
+
+  useEffect(() => {
+    useOntologyStore.getState().setInvalidateMappingsCallback((propertyUris: string[]) => {
+      const uriSet = new Set(propertyUris)
+      const store = useMappingStore.getState()
+      for (const list of Object.values(store.mappings)) {
+        for (const m of (list as { id: string; targetPropUri: string }[])) {
+          if (uriSet.has(m.targetPropUri)) {
+            store.removeMapping(m.id)
+          }
+        }
+      }
+    })
   }, [])
 
   const handleCanvasChange = useCallback(

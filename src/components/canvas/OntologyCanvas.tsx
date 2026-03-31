@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef } from 'react'
-import { ReactFlow, MiniMap, Controls, Background, applyNodeChanges } from '@xyflow/react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { ReactFlow, ReactFlowProvider, MiniMap, Controls, Background, applyNodeChanges, useReactFlow } from '@xyflow/react'
 import type { NodeChange, Connection, Edge } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { useCanvasData } from '../../hooks/useCanvasData'
@@ -13,7 +13,36 @@ import { SourceNode as SourceNodeComponent } from '../nodes/SourceNode'
 import { SubclassEdge } from '../edges/SubclassEdge'
 import { ObjectPropertyEdge } from '../edges/ObjectPropertyEdge'
 import { MappingEdge } from '../edges/MappingEdge'
-import type { OntologyNode, OntologyEdge, SourceNode } from '@/types/index'
+import { CanvasContextMenu } from './CanvasContextMenu'
+import { NodeContextMenu } from './NodeContextMenu'
+import { AddPropertyDialog } from './AddPropertyDialog'
+import type { OntologyNode, OntologyEdge, SourceNode, PropertyData } from '@/types/index'
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface ContextMenuState {
+  x: number
+  y: number
+  flowX: number
+  flowY: number
+}
+
+interface NodeMenuState {
+  x: number
+  y: number
+  nodeId: string
+  nodeType: 'classNode' | 'sourceNode'
+  nodeLabel: string
+  nodePrefix: string
+}
+
+interface EdgePickerState {
+  x: number
+  y: number
+  connection: Connection
+}
+
+// ─── nodeTypes must be stable (outside component) ────────────────────────────
 
 const nodeTypes = {
   classNode: ClassNode,
@@ -33,17 +62,36 @@ interface OntologyCanvasProps {
 // Only these change types modify the RDF graph — position/select/dimensions do not
 const STRUCTURAL_CHANGE_TYPES = new Set(['add', 'remove', 'reset'])
 
-export function OntologyCanvas({ onCanvasChange }: OntologyCanvasProps) {
+// ─── Inner component (needs useReactFlow) ────────────────────────────────────
+
+function OntologyCanvasInner({ onCanvasChange }: OntologyCanvasProps) {
   const { nodes, edges } = useCanvasData()
   const setNodes = useOntologyStore((s) => s.setNodes)
+  const addNode = useOntologyStore((s) => s.addNode)
+  const removeNode = useOntologyStore((s) => s.removeNode)
+  const addPropertyToNode = useOntologyStore((s) => s.addPropertyToNode)
+  const addOntologyEdge = useOntologyStore((s) => s.addEdge)
+  const removeOntologyEdge = useOntologyStore((s) => s.removeEdge)
   const updateSource = useSourcesStore((s) => s.updateSource)
   const addMapping = useMappingStore((s) => s.addMapping)
   const removeMapping = useMappingStore((s) => s.removeMapping)
+  const mappings = useMappingStore((s) => s.mappings)
   const canvasDebounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const rfInstance = useRef<{ fitView: (opts?: { padding?: number; duration?: number }) => void } | null>(null)
   const prevHadNodes = useRef(false)
   const highlightedCanvasNodeId = useValidationStore((s) => s.highlightedCanvasNodeId)
+  const { screenToFlowPosition } = useReactFlow()
 
+  // Offset ref to stagger rapidly-added nodes
+  const addNodeOffset = useRef(0)
+
+  // ─── UI state ───────────────────────────────────────────────────────────────
+  const [canvasMenu, setCanvasMenu] = useState<ContextMenuState | null>(null)
+  const [nodeMenu, setNodeMenu] = useState<NodeMenuState | null>(null)
+  const [addPropFor, setAddPropFor] = useState<{ nodeId: string; nodePrefix: string } | null>(null)
+  const [edgePicker, setEdgePicker] = useState<EdgePickerState | null>(null)
+
+  // ─── fitView on first nodes ──────────────────────────────────────────────────
   useEffect(() => {
     const hasNodes = nodes.length > 0
     if (hasNodes && !prevHadNodes.current && rfInstance.current) {
@@ -57,10 +105,48 @@ export function OntologyCanvas({ onCanvasChange }: OntologyCanvasProps) {
     rfInstance.current.fitView({ padding: 0.4, duration: 400 })
   }, [highlightedCanvasNodeId])
 
+  // ─── Inject onContextMenu into node data ─────────────────────────────────────
+  // We inject a callback into each node's data so ClassNode/SourceNode can call
+  // it on right-click without knowing about the canvas state.
+  const handleNodeContextMenu = useCallback((nodeId: string, x: number, y: number) => {
+    // Find the node across ontology + sources
+    const ontologyNodes = useOntologyStore.getState().nodes
+    const ontNode = ontologyNodes.find((n) => n.id === nodeId)
+    if (ontNode) {
+      setNodeMenu({
+        x, y,
+        nodeId,
+        nodeType: 'classNode',
+        nodeLabel: ontNode.data.label,
+        nodePrefix: ontNode.data.prefix ?? 'onto',
+      })
+      return
+    }
+    const { sources } = useSourcesStore.getState()
+    for (const src of sources) {
+      const srcNode = src.schemaNodes.find((n) => n.id === nodeId)
+      if (srcNode) {
+        setNodeMenu({
+          x, y,
+          nodeId,
+          nodeType: 'sourceNode',
+          nodeLabel: srcNode.data.label,
+          nodePrefix: srcNode.data.prefix ?? src.name,
+        })
+        return
+      }
+    }
+  }, [])
+
+  // Augment nodes with the onContextMenu callback
+  const augmentedNodes = nodes.map((n) => ({
+    ...n,
+    data: { ...n.data, onContextMenu: handleNodeContextMenu },
+  }))
+
+  // ─── onNodesChange ────────────────────────────────────────────────────────────
   const onNodesChange = useCallback(
     (changes: NodeChange<OntologyNode | SourceNode>[]) => {
-      // RD-02: Split changes by source node ID membership.
-      // Source-node changes → updateSource; master-node changes → ontologyStore.
       const { activeSourceId, sources } = useSourcesStore.getState()
       const activeSource = activeSourceId !== null
         ? sources.find((s) => s.id === activeSourceId)
@@ -70,13 +156,11 @@ export function OntologyCanvas({ onCanvasChange }: OntologyCanvasProps) {
       const masterChanges = changes.filter((c) => !('id' in c) || !sourceNodeIds.has(c.id))
       const sourceChanges = changes.filter((c) => 'id' in c && sourceNodeIds.has(c.id))
 
-      // Apply master changes (existing path — unchanged)
       if (masterChanges.length > 0) {
         const masterNodes = useOntologyStore.getState().nodes
         const updated = applyNodeChanges(masterChanges as NodeChange<OntologyNode>[], masterNodes) as OntologyNode[]
         setNodes(updated)
 
-        // Only notify parent for structural changes
         const hasStructural = masterChanges.some((c) => STRUCTURAL_CHANGE_TYPES.has(c.type))
         if (hasStructural && onCanvasChange !== undefined) {
           if (canvasDebounceTimer.current !== null) {
@@ -89,7 +173,6 @@ export function OntologyCanvas({ onCanvasChange }: OntologyCanvasProps) {
         }
       }
 
-      // Apply source changes — only when activeSource exists and Set is non-empty
       if (sourceChanges.length > 0 && activeSource !== undefined && sourceNodeIds.size > 0) {
         const updatedSourceNodes = applyNodeChanges(
           sourceChanges as NodeChange<SourceNode>[],
@@ -101,93 +184,445 @@ export function OntologyCanvas({ onCanvasChange }: OntologyCanvasProps) {
     [setNodes, updateSource, onCanvasChange],
   )
 
+  // ─── isValidConnection ────────────────────────────────────────────────────────
   const isValidConnection = useCallback((connection: Connection | Edge) => {
-    const { sourceHandle, targetHandle } = connection
-    return (
-      (sourceHandle ?? '').startsWith('prop_') &&
-      (targetHandle ?? '').startsWith('target_prop_')
-    )
+    const { source, target, sourceHandle, targetHandle } = connection
+
+    // Build O(1) lookup sets
+    const ontologyNodeIds = new Set(useOntologyStore.getState().nodes.map((n) => n.id))
+    const { sources } = useSourcesStore.getState()
+    const sourceNodeIds = new Set(sources.flatMap((src) => src.schemaNodes.map((n) => n.id)))
+
+    const srcIsOnto = ontologyNodeIds.has(source ?? '')
+    const srcIsSource = sourceNodeIds.has(source ?? '')
+    const tgtIsOnto = ontologyNodeIds.has(target ?? '')
+    const tgtIsSource = sourceNodeIds.has(target ?? '')
+
+    // onto→onto: class-level handles (not property handles)
+    if (srcIsOnto && tgtIsOnto) {
+      const sh = sourceHandle ?? ''
+      const th = targetHandle ?? ''
+      // Must be class-level handles, not property handles
+      return !sh.startsWith('prop_') && !sh.startsWith('target_prop_') &&
+             !th.startsWith('prop_') && !th.startsWith('target_prop_')
+    }
+
+    // source→source: class-level handles
+    if (srcIsSource && tgtIsSource) {
+      const sh = sourceHandle ?? ''
+      const th = targetHandle ?? ''
+      return !sh.startsWith('prop_') && !sh.startsWith('target_prop_') &&
+             !th.startsWith('prop_') && !th.startsWith('target_prop_')
+    }
+
+    // source-prop→onto-prop: mapping edge
+    if (srcIsSource && tgtIsOnto) {
+      return (
+        (sourceHandle ?? '').startsWith('prop_') &&
+        (targetHandle ?? '').startsWith('target_prop_')
+      )
+    }
+
+    return false
   }, [])
 
+  // ─── onConnect ────────────────────────────────────────────────────────────────
   const onConnect = useCallback((connection: Connection) => {
     const { source, sourceHandle, target, targetHandle } = connection
     if (!source || !sourceHandle || !target || !targetHandle) return
 
-    // Find the source node across all sources
+    const ontologyNodeIds = new Set(useOntologyStore.getState().nodes.map((n) => n.id))
     const { sources } = useSourcesStore.getState()
-    let sourceNode: SourceNode | undefined
-    let activeSourceId: string | undefined
-    for (const src of sources) {
-      const found = src.schemaNodes.find((n) => n.id === source)
-      if (found) {
-        sourceNode = found
-        activeSourceId = src.id
-        break
-      }
+    const sourceNodeIds = new Set(sources.flatMap((src) => src.schemaNodes.map((n) => n.id)))
+
+    const srcIsOnto = ontologyNodeIds.has(source)
+    const tgtIsOnto = ontologyNodeIds.has(target)
+    const srcIsSource = sourceNodeIds.has(source)
+    const tgtIsSource = sourceNodeIds.has(target)
+
+    // onto→onto: show edge type picker
+    if (srcIsOnto && tgtIsOnto) {
+      // Use a simple confirm-style choice via a small popover state
+      setEdgePicker({ x: 200, y: 200, connection })
+      return
     }
 
-    // Find the target node from the ontology store
-    const { nodes: allNodes } = useOntologyStore.getState()
-    const targetNode = allNodes.find((n) => n.id === target)
+    // source→source: create a subclass-style edge in the active source's schemaEdges
+    if (srcIsSource && tgtIsSource) {
+      const { activeSourceId } = useSourcesStore.getState()
+      if (!activeSourceId) return
+      const activeSrc = sources.find((s) => s.id === activeSourceId)
+      if (!activeSrc) return
+      const newEdge: OntologyEdge = {
+        id: `source_edge_${Date.now()}`,
+        source,
+        target,
+        sourceHandle,
+        targetHandle,
+        type: 'subclassEdge',
+        data: { predicate: 'rdfs:subClassOf' },
+      }
+      updateSource(activeSourceId, {
+        schemaEdges: [...activeSrc.schemaEdges, newEdge],
+      })
+      return
+    }
 
-    if (!sourceNode || !targetNode || !activeSourceId) return
+    // source-prop→onto-prop: mapping edge (existing logic)
+    if (srcIsSource && tgtIsOnto) {
+      let sourceFlowNode: SourceNode | undefined
+      let activeSourceId: string | undefined
+      for (const src of sources) {
+        const found = src.schemaNodes.find((n) => n.id === source)
+        if (found) {
+          sourceFlowNode = found
+          activeSourceId = src.id
+          break
+        }
+      }
 
-    const propLabel = sourceHandle.replace('prop_', '')
-    const targetPropLabel = targetHandle.replace('target_prop_', '')
-    const sourceProp = sourceNode.data.properties.find((p) => p.label === propLabel)
-    const targetProp = targetNode.data.properties.find((p) => p.label === targetPropLabel)
-    if (!sourceProp || !targetProp) return
+      const { nodes: allNodes } = useOntologyStore.getState()
+      const targetNode = allNodes.find((n) => n.id === target)
 
-    const sparqlConstruct = generateConstruct({
-      sourceId: activeSourceId,
-      sourceClassUri: sourceNode.data.uri,
-      sourcePropUri: sourceProp.uri,
-      sourceHandle,
-      targetClassUri: targetNode.data.uri,
-      targetPropUri: targetProp.uri,
-      targetHandle,
-      kind: 'direct',
-    })
+      if (!sourceFlowNode || !targetNode || !activeSourceId) return
 
-    addMapping({
-      sourceId: activeSourceId,
-      sourceClassUri: sourceNode.data.uri,
-      sourcePropUri: sourceProp.uri,
-      targetClassUri: targetNode.data.uri,
-      targetPropUri: targetProp.uri,
-      sourceHandle,
-      targetHandle,
-      kind: 'direct',
-      sparqlConstruct,
-    })
-  }, [addMapping])
+      const propLabel = sourceHandle.replace('prop_', '')
+      const targetPropLabel = targetHandle.replace('target_prop_', '')
+      const sourceProp = sourceFlowNode.data.properties.find((p) => p.label === propLabel)
+      const targetProp = targetNode.data.properties.find((p) => p.label === targetPropLabel)
+      if (!sourceProp || !targetProp) return
 
+      const sparqlConstruct = generateConstruct({
+        sourceId: activeSourceId,
+        sourceClassUri: sourceFlowNode.data.uri,
+        sourcePropUri: sourceProp.uri,
+        sourceHandle,
+        targetClassUri: targetNode.data.uri,
+        targetPropUri: targetProp.uri,
+        targetHandle,
+        kind: 'direct',
+      })
+
+      addMapping({
+        sourceId: activeSourceId,
+        sourceClassUri: sourceFlowNode.data.uri,
+        sourcePropUri: sourceProp.uri,
+        targetClassUri: targetNode.data.uri,
+        targetPropUri: targetProp.uri,
+        sourceHandle,
+        targetHandle,
+        kind: 'direct',
+        sparqlConstruct,
+      })
+    }
+  }, [addMapping, updateSource])
+
+  // ─── onEdgesDelete ────────────────────────────────────────────────────────────
   const onEdgesDelete = useCallback((deletedEdges: Edge[]) => {
     for (const edge of deletedEdges) {
       if (edge.id.startsWith('mapping_')) {
         removeMapping(edge.id)
+      } else if (edge.type === 'subclassEdge' || edge.type === 'objectPropertyEdge') {
+        // Check if it's in the ontology store
+        const ontEdges = useOntologyStore.getState().edges
+        if (ontEdges.some((e) => e.id === edge.id)) {
+          removeOntologyEdge(edge.id)
+        } else {
+          // It's a source schema edge
+          const { sources } = useSourcesStore.getState()
+          for (const src of sources) {
+            if (src.schemaEdges.some((e) => e.id === edge.id)) {
+              updateSource(src.id, {
+                schemaEdges: src.schemaEdges.filter((e) => e.id !== edge.id),
+              })
+              break
+            }
+          }
+        }
       }
     }
-  }, [removeMapping])
+  }, [removeMapping, removeOntologyEdge, updateSource])
+
+  // ─── Canvas pane context menu ─────────────────────────────────────────────────
+  const onPaneContextMenu = useCallback((e: React.MouseEvent | MouseEvent) => {
+    e.preventDefault()
+    const mouseEvent = e as React.MouseEvent
+    const flowPos = screenToFlowPosition({ x: mouseEvent.clientX, y: mouseEvent.clientY })
+    setCanvasMenu({
+      x: mouseEvent.clientX,
+      y: mouseEvent.clientY,
+      flowX: flowPos.x,
+      flowY: flowPos.y,
+    })
+  }, [screenToFlowPosition])
+
+  // ─── Add ontology class ────────────────────────────────────────────────────────
+  const handleAddClass = useCallback(() => {
+    if (!canvasMenu) return
+    const offset = addNodeOffset.current * 30
+    addNodeOffset.current += 1
+    setTimeout(() => { addNodeOffset.current = Math.max(0, addNodeOffset.current - 1) }, 2000)
+
+    const ts = Date.now()
+    const newNode: OntologyNode = {
+      id: `class_${ts}`,
+      type: 'classNode',
+      position: { x: canvasMenu.flowX + offset, y: canvasMenu.flowY + offset },
+      data: {
+        uri: `onto:NewClass_${ts}`,
+        label: 'NewClass',
+        prefix: 'onto',
+        properties: [],
+      },
+    }
+    addNode(newNode)
+  }, [canvasMenu, addNode])
+
+  // ─── Add source class ──────────────────────────────────────────────────────────
+  const handleAddSourceClass = useCallback(() => {
+    if (!canvasMenu) return
+    const { activeSourceId, sources } = useSourcesStore.getState()
+    if (!activeSourceId) return
+    const activeSrc = sources.find((s) => s.id === activeSourceId)
+    if (!activeSrc) return
+
+    const offset = addNodeOffset.current * 30
+    addNodeOffset.current += 1
+    setTimeout(() => { addNodeOffset.current = Math.max(0, addNodeOffset.current - 1) }, 2000)
+
+    const ts = Date.now()
+    const srcPrefix = activeSrc.name.toLowerCase().replace(/\s+/g, '_')
+    const newNode: SourceNode = {
+      id: `source_class_${ts}`,
+      type: 'sourceNode',
+      position: { x: canvasMenu.flowX + offset, y: canvasMenu.flowY + offset },
+      data: {
+        uri: `${srcPrefix}:NewClass_${ts}`,
+        label: 'NewClass',
+        prefix: srcPrefix,
+        properties: [],
+      },
+    }
+    updateSource(activeSourceId, {
+      schemaNodes: [...activeSrc.schemaNodes, newNode],
+    })
+  }, [canvasMenu, updateSource])
+
+  // ─── Delete node handler ───────────────────────────────────────────────────────
+  const handleDeleteNode = useCallback((nodeId: string, nodeType: 'classNode' | 'sourceNode') => {
+    if (nodeType === 'classNode') {
+      removeNode(nodeId)
+    } else {
+      const { sources } = useSourcesStore.getState()
+      for (const src of sources) {
+        if (src.schemaNodes.some((n) => n.id === nodeId)) {
+          updateSource(src.id, {
+            schemaNodes: src.schemaNodes.filter((n) => n.id !== nodeId),
+            schemaEdges: src.schemaEdges.filter((e) => e.source !== nodeId && e.target !== nodeId),
+          })
+          break
+        }
+      }
+    }
+  }, [removeNode, updateSource])
+
+  // ─── Rename handler ────────────────────────────────────────────────────────────
+  const handleRename = useCallback((nodeId: string, nodeType: 'classNode' | 'sourceNode', currentLabel: string) => {
+    const newLabel = window.prompt('New name:', currentLabel)
+    if (!newLabel || newLabel.trim() === currentLabel) return
+    const trimmed = newLabel.trim()
+    if (nodeType === 'classNode') {
+      const { nodes: ontNodes } = useOntologyStore.getState()
+      const node = ontNodes.find((n) => n.id === nodeId)
+      if (!node) return
+      useOntologyStore.getState().setNodes(
+        ontNodes.map((n) =>
+          n.id === nodeId ? { ...n, data: { ...n.data, label: trimmed } } : n,
+        ),
+      )
+    } else {
+      const { sources } = useSourcesStore.getState()
+      for (const src of sources) {
+        const srcNode = src.schemaNodes.find((n) => n.id === nodeId)
+        if (srcNode) {
+          updateSource(src.id, {
+            schemaNodes: src.schemaNodes.map((n) =>
+              n.id === nodeId ? { ...n, data: { ...n.data, label: trimmed } } : n,
+            ),
+          })
+          break
+        }
+      }
+    }
+  }, [updateSource])
+
+  // ─── Add property to node ──────────────────────────────────────────────────────
+  const handleAddProperty = useCallback((nodeId: string, nodeType: 'classNode' | 'sourceNode', property: PropertyData) => {
+    if (nodeType === 'classNode') {
+      addPropertyToNode(nodeId, property)
+    } else {
+      const { sources } = useSourcesStore.getState()
+      for (const src of sources) {
+        const srcNode = src.schemaNodes.find((n) => n.id === nodeId)
+        if (srcNode) {
+          updateSource(src.id, {
+            schemaNodes: src.schemaNodes.map((n) =>
+              n.id === nodeId
+                ? { ...n, data: { ...n.data, properties: [...n.data.properties, property] } }
+                : n,
+            ),
+          })
+          break
+        }
+      }
+    }
+  }, [addPropertyToNode, updateSource])
+
+  // ─── Check if node has active mappings ────────────────────────────────────────
+  const nodeHasMappings = useCallback((nodeId: string): boolean => {
+    const { nodes: ontNodes } = useOntologyStore.getState()
+    const ontNode = ontNodes.find((n) => n.id === nodeId)
+    if (ontNode) {
+      const uris = new Set(ontNode.data.properties.map((p) => p.uri))
+      uris.add(ontNode.data.uri)
+      return Object.values(mappings).some((list) =>
+        list.some((m) => uris.has(m.targetClassUri) || uris.has(m.targetPropUri)),
+      )
+    }
+    return false
+  }, [mappings])
+
+  // ─── Create ontology edge from picker ─────────────────────────────────────────
+  const createOntologyEdge = useCallback((type: 'subclassEdge' | 'objectPropertyEdge') => {
+    if (!edgePicker) return
+    const { connection } = edgePicker
+    const { source, target, sourceHandle, targetHandle } = connection
+
+    if (type === 'subclassEdge') {
+      addOntologyEdge({
+        id: `subclass_${Date.now()}`,
+        source: source ?? '',
+        target: target ?? '',
+        sourceHandle: sourceHandle ?? undefined,
+        targetHandle: targetHandle ?? undefined,
+        type: 'subclassEdge',
+        data: { predicate: 'rdfs:subClassOf' },
+      })
+    } else {
+      addOntologyEdge({
+        id: `objprop_${Date.now()}`,
+        source: source ?? '',
+        target: target ?? '',
+        sourceHandle: sourceHandle ?? undefined,
+        targetHandle: targetHandle ?? undefined,
+        type: 'objectPropertyEdge',
+        data: { uri: `onto:relatedTo_${Date.now()}`, label: 'relatedTo', predicate: 'owl:ObjectProperty' },
+      })
+    }
+    setEdgePicker(null)
+  }, [edgePicker, addOntologyEdge])
+
+  const activeSourceId = useSourcesStore((s) => s.activeSourceId)
 
   return (
-    <ReactFlow
-      nodes={nodes}
-      edges={edges}
-      nodeTypes={nodeTypes}
-      edgeTypes={edgeTypes}
-      onNodesChange={onNodesChange}
-      onConnect={onConnect}
-      onEdgesDelete={onEdgesDelete}
-      isValidConnection={isValidConnection}
-      nodesDraggable={true}
-      fitView
-      onInit={(instance) => { rfInstance.current = instance }}
-      aria-label="Ontology mapping canvas"
-    >
-      <MiniMap />
-      <Controls aria-label="Canvas controls" />
-      <Background />
-    </ReactFlow>
+    <>
+      <ReactFlow
+        nodes={augmentedNodes}
+        edges={edges}
+        nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
+        onNodesChange={onNodesChange}
+        onConnect={onConnect}
+        onEdgesDelete={onEdgesDelete}
+        isValidConnection={isValidConnection}
+        nodesDraggable={true}
+        fitView
+        onInit={(instance) => { rfInstance.current = instance }}
+        onPaneContextMenu={onPaneContextMenu}
+        aria-label="Ontology mapping canvas"
+      >
+        <MiniMap />
+        <Controls aria-label="Canvas controls" />
+        <Background />
+      </ReactFlow>
+
+      {/* Canvas context menu */}
+      {canvasMenu && (
+        <CanvasContextMenu
+          x={canvasMenu.x}
+          y={canvasMenu.y}
+          hasActiveSource={activeSourceId !== null}
+          onAddClass={handleAddClass}
+          onAddSourceClass={handleAddSourceClass}
+          onClose={() => setCanvasMenu(null)}
+        />
+      )}
+
+      {/* Node context menu */}
+      {nodeMenu && (
+        <NodeContextMenu
+          x={nodeMenu.x}
+          y={nodeMenu.y}
+          nodeId={nodeMenu.nodeId}
+          nodeLabel={nodeMenu.nodeLabel}
+          nodeType={nodeMenu.nodeType}
+          hasMappings={nodeHasMappings(nodeMenu.nodeId)}
+          onAddProperty={() => setAddPropFor({ nodeId: nodeMenu.nodeId, nodePrefix: nodeMenu.nodePrefix })}
+          onRename={() => handleRename(nodeMenu.nodeId, nodeMenu.nodeType, nodeMenu.nodeLabel)}
+          onDelete={() => handleDeleteNode(nodeMenu.nodeId, nodeMenu.nodeType)}
+          onClose={() => setNodeMenu(null)}
+        />
+      )}
+
+      {/* Add property dialog */}
+      {addPropFor && nodeMenu && (
+        <AddPropertyDialog
+          nodePrefix={addPropFor.nodePrefix}
+          onAdd={(property) => {
+            handleAddProperty(addPropFor.nodeId, nodeMenu.nodeType, property)
+            setAddPropFor(null)
+          }}
+          onClose={() => setAddPropFor(null)}
+        />
+      )}
+
+      {/* Edge type picker */}
+      {edgePicker && (
+        <div
+          className="fixed z-50 bg-popover border border-border rounded-lg shadow-xl p-3 flex flex-col gap-1 min-w-[160px]"
+          style={{ left: edgePicker.x, top: edgePicker.y }}
+        >
+          <p className="text-xs font-semibold text-muted-foreground mb-1 px-1">Edge type</p>
+          <button
+            className="text-sm text-left px-2 py-1.5 rounded hover:bg-accent transition-colors"
+            onClick={() => createOntologyEdge('subclassEdge')}
+          >
+            Subclass of
+          </button>
+          <button
+            className="text-sm text-left px-2 py-1.5 rounded hover:bg-accent transition-colors"
+            onClick={() => createOntologyEdge('objectPropertyEdge')}
+          >
+            Object Property
+          </button>
+          <button
+            className="text-xs text-muted-foreground text-left px-2 py-1 rounded hover:bg-accent transition-colors mt-1"
+            onClick={() => setEdgePicker(null)}
+          >
+            Cancel
+          </button>
+        </div>
+      )}
+    </>
+  )
+}
+
+// ─── Public wrapper (provides ReactFlow context) ──────────────────────────────
+
+export function OntologyCanvas({ onCanvasChange }: OntologyCanvasProps) {
+  return (
+    <ReactFlowProvider>
+      <OntologyCanvasInner onCanvasChange={onCanvasChange} />
+    </ReactFlowProvider>
   )
 }
