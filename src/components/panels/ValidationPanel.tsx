@@ -47,7 +47,7 @@ export function ValidationPanel() {
 
   return (
     <div className="flex flex-col gap-2 p-3 overflow-y-auto h-full">
-      {stale && sourceResults !== undefined && (
+      {stale && (
         <Alert className="border-amber-400/50 text-amber-700 dark:text-amber-400 bg-amber-50/50 dark:bg-amber-950/20">
           <AlertDescription>Mappings changed — re-validate to refresh</AlertDescription>
         </Alert>
@@ -57,10 +57,12 @@ export function ValidationPanel() {
         <p className="text-sm text-green-600 p-4">✓ All valid</p>
       ) : (
         sourceResults.map((violation) => (
-          <div
+          <button
             key={violation.id}
+            data-testid="violation-item"
+            data-canvas-node-id={violation.canvasNodeId ?? ''}
             className={[
-              'border border-border rounded p-2 text-xs',
+              'border border-border rounded p-2 text-xs text-left w-full',
               violation.canvasNodeId !== null ? 'cursor-pointer hover:bg-muted/50' : 'cursor-default',
             ].join(' ')}
             onClick={() => {
@@ -77,7 +79,7 @@ export function ValidationPanel() {
               ) : null}
             </div>
             <div className="text-muted-foreground line-clamp-2 mt-0.5">{violation.message}</div>
-          </div>
+          </button>
         ))
       )}
     </div>

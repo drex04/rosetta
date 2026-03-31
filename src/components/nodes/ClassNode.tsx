@@ -2,37 +2,7 @@ import { Handle, Position } from '@xyflow/react'
 import type { NodeProps } from '@xyflow/react'
 import { GraphIcon } from '@phosphor-icons/react'
 import type { OntologyNode } from '@/types/index'
-import { localName, prefixFromUri } from '@/lib/rdf'
-
-const STANDARD_NAMESPACES: ReadonlyArray<readonly [string, string]> = [
-  ['http://www.w3.org/2001/XMLSchema#', 'xsd'],
-  ['http://www.w3.org/2002/07/owl#', 'owl'],
-  ['http://www.w3.org/2000/01/rdf-schema#', 'rdfs'],
-  ['http://www.w3.org/1999/02/22-rdf-syntax-ns#', 'rdf'],
-]
-
-// Derive a short "prefix:LocalName" form from a full URI and its namespace prefix
-function shortenUri(uri: string, prefix: string): string {
-  if (prefix.length > 0 && uri.startsWith(prefix)) {
-    const local = uri.slice(prefix.length)
-    if (local.length > 0) {
-      const withoutTrailing = prefix.replace(/[#/]$/, '')
-      const alias = localName(withoutTrailing)
-      return `${alias}:${local}`
-    }
-  }
-  return uri
-}
-
-// Best-effort shorten for a range URI that may use standard namespaces
-function shortenRange(range: string): string {
-  for (const [ns, alias] of STANDARD_NAMESPACES) {
-    if (range.startsWith(ns)) {
-      return `${alias}:${range.slice(ns.length)}`
-    }
-  }
-  return localName(range)
-}
+import { prefixFromUri, shortenUri, shortenRange } from '@/lib/rdf'
 
 export function ClassNode({ data }: NodeProps<OntologyNode>) {
   const shortUri = shortenUri(data.uri, data.prefix || prefixFromUri(data.uri))
