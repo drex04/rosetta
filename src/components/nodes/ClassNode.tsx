@@ -4,17 +4,28 @@ import { GraphIcon } from '@phosphor-icons/react'
 import type { OntologyNode } from '@/types/index'
 import { prefixFromUri, shortenUri, shortenRange } from '@/lib/rdf'
 
-export function ClassNode({ data }: NodeProps<OntologyNode>) {
+export function ClassNode({ id, data }: NodeProps<OntologyNode>) {
   const shortUri = shortenUri(data.uri, data.prefix || prefixFromUri(data.uri))
 
+  const handleContextMenu = (e: React.MouseEvent) => {
+    if (typeof data.onContextMenu === 'function') {
+      e.preventDefault()
+      e.stopPropagation()
+      data.onContextMenu(id, e.clientX, e.clientY)
+    }
+  }
+
   return (
-    <div className="bg-white border-2 border-master rounded-md shadow-md min-w-[200px] text-sm font-sans overflow-visible">
+    <div
+      className="bg-white border-2 border-master rounded-md shadow-md min-w-[200px] text-sm font-sans overflow-visible"
+      onContextMenu={handleContextMenu}
+    >
       <Handle
         id="class-top"
         type="source"
         position={Position.Top}
         className="!w-2.5 !h-2.5 !bg-master !border-master"
-        isConnectable={false}
+        isConnectable={true}
       />
       <Handle
         id="class-left"
@@ -22,7 +33,7 @@ export function ClassNode({ data }: NodeProps<OntologyNode>) {
         position={Position.Left}
         style={{ top: 26 }}
         className="!w-2.5 !h-2.5 !bg-master !border-master"
-        isConnectable={false}
+        isConnectable={true}
       />
 
       <div className="bg-master px-3 py-2 flex items-center gap-2 rounded-t-[4px]">
@@ -62,7 +73,7 @@ export function ClassNode({ data }: NodeProps<OntologyNode>) {
                 type="source"
                 position={Position.Right}
                 className="!w-2.5 !h-2.5 !bg-master !border-master"
-                isConnectable={false}
+                isConnectable={true}
               />
             </div>
           ))}
@@ -75,14 +86,14 @@ export function ClassNode({ data }: NodeProps<OntologyNode>) {
         position={Position.Right}
         style={{ top: 26 }}
         className="!w-2.5 !h-2.5 !bg-master !border-master"
-        isConnectable={false}
+        isConnectable={true}
       />
       <Handle
         id="class-bottom"
         type="source"
         position={Position.Bottom}
         className="!w-2.5 !h-2.5 !bg-master !border-master"
-        isConnectable={false}
+        isConnectable={true}
       />
     </div>
   )

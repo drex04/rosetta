@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { OntologyNode, OntologyEdge } from '@/types/index'
+import type { OntologyNode, OntologyEdge, PropertyData } from '@/types/index'
 import { parseTurtle } from '@/lib/rdf'
 
 // ─── Seed ontology ────────────────────────────────────────────────────────────
@@ -29,30 +29,109 @@ interface OntologyState {
   edges: OntologyEdge[]
   turtleSource: string
   parseError: string | null
+  /**
+   * Optional callback registered externally (e.g. App.tsx) to handle
+   * mapping invalidation when nodes/properties are removed.
+   * Called with the list of property URIs that were removed.
+   */
+  onInvalidateMappings: ((propertyUris: string[]) => void) | null
   setNodes: (nodes: OntologyNode[]) => void
   setEdges: (edges: OntologyEdge[]) => void
   setTurtleSource: (turtle: string) => void
   setParseError: (error: string | null) => void
+  /** Register an external callback for mapping invalidation. */
+  setInvalidateMappingsCallback: (cb: (propertyUris: string[]) => void) => void
   /** Parse turtle text, update turtleSource, nodes, and edges atomically. */
   loadTurtle: (text: string) => Promise<void>
   /** Reset all ontology state to empty. */
   reset: () => void
+
+  // ─── Granular canvas mutations ─────────────────────────────────────────────
+  /** Append a node to the canvas. */
+  addNode: (node: OntologyNode) => void
+  /**
+   * Remove a node by id. Also removes all edges referencing it and fires
+   * onInvalidateMappings with the URIs of all properties on that node.
+   */
+  removeNode: (nodeId: string) => void
+  /** Add a property to a node's data.properties array. */
+  addPropertyToNode: (nodeId: string, property: PropertyData) => void
+  /**
+   * Remove a property from a node by URI. Fires onInvalidateMappings with
+   * the removed property URI.
+   */
+  removePropertyFromNode: (nodeId: string, propertyUri: string) => void
+  /** Append an edge to the canvas. */
+  addEdge: (edge: OntologyEdge) => void
+  /** Remove an edge by id. */
+  removeEdge: (edgeId: string) => void
 }
 
 // ─── Store ────────────────────────────────────────────────────────────────────
 
-export const useOntologyStore = create<OntologyState>((set) => ({
+export const useOntologyStore = create<OntologyState>((set, get) => ({
   nodes: [],
   edges: [],
   turtleSource: '',
   parseError: null,
+  onInvalidateMappings: null,
   setNodes: (nodes) => set({ nodes }),
   setEdges: (edges) => set({ edges }),
   setTurtleSource: (turtleSource) => set({ turtleSource }),
   setParseError: (parseError) => set({ parseError }),
+  setInvalidateMappingsCallback: (cb) => set({ onInvalidateMappings: cb }),
   loadTurtle: async (text: string) => {
     const { nodes, edges } = await parseTurtle(text)
     set({ turtleSource: text, nodes, edges })
   },
   reset: () => set({ nodes: [], edges: [], turtleSource: '', parseError: null }),
+
+  // ─── Granular canvas mutations ───────────────────────────────────────────────
+
+  addNode: (node) => set((s) => ({ nodes: [...s.nodes, node] })),
+
+  removeNode: (nodeId) => {
+    const { nodes, edges, onInvalidateMappings } = get()
+    const target = nodes.find((n) => n.id === nodeId)
+    if (!target) return
+    const propertyUris = target.data.properties.map((p) => p.uri)
+    set({
+      nodes: nodes.filter((n) => n.id !== nodeId),
+      edges: edges.filter((e) => e.source !== nodeId && e.target !== nodeId),
+    })
+    if (propertyUris.length > 0) {
+      onInvalidateMappings?.(propertyUris)
+    }
+  },
+
+  addPropertyToNode: (nodeId, property) =>
+    set((s) => ({
+      nodes: s.nodes.map((n) =>
+        n.id === nodeId
+          ? { ...n, data: { ...n.data, properties: [...n.data.properties, property] } }
+          : n,
+      ),
+    })),
+
+  removePropertyFromNode: (nodeId, propertyUri) => {
+    const { onInvalidateMappings } = get()
+    set((s) => ({
+      nodes: s.nodes.map((n) =>
+        n.id === nodeId
+          ? {
+              ...n,
+              data: {
+                ...n.data,
+                properties: n.data.properties.filter((p) => p.uri !== propertyUri),
+              },
+            }
+          : n,
+      ),
+    }))
+    onInvalidateMappings?.([propertyUri])
+  },
+
+  addEdge: (edge) => set((s) => ({ edges: [...s.edges, edge] })),
+
+  removeEdge: (edgeId) => set((s) => ({ edges: s.edges.filter((e) => e.id !== edgeId) })),
 }))

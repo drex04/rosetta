@@ -11,17 +11,28 @@ export function SourceNode({ id, data }: NodeProps<SourceNodeType>) {
   // Boolean selector: only this node re-renders when its own highlighted state changes
   const isHighlighted = useValidationStore((s) => s.highlightedCanvasNodeId === id)
 
+  const handleContextMenu = (e: React.MouseEvent) => {
+    if (typeof data.onContextMenu === 'function') {
+      e.preventDefault()
+      e.stopPropagation()
+      data.onContextMenu(id, e.clientX, e.clientY)
+    }
+  }
+
   return (
-    <div className={[
-      'bg-white border-2 border-source rounded-md shadow-md min-w-[200px] text-sm font-sans overflow-visible',
-      isHighlighted ? 'ring-2 ring-destructive ring-offset-2' : '',
-    ].join(' ')}>
+    <div
+      className={[
+        'bg-white border-2 border-source rounded-md shadow-md min-w-[200px] text-sm font-sans overflow-visible',
+        isHighlighted ? 'ring-2 ring-destructive ring-offset-2' : '',
+      ].join(' ')}
+      onContextMenu={handleContextMenu}
+    >
       <Handle
         id="class-top"
         type="source"
         position={Position.Top}
         className="!w-2.5 !h-2.5 !bg-source !border-source"
-        isConnectable={false}
+        isConnectable={true}
       />
       <Handle
         id="class-left"
@@ -29,7 +40,7 @@ export function SourceNode({ id, data }: NodeProps<SourceNodeType>) {
         position={Position.Left}
         style={{ top: 26 }}
         className="!w-2.5 !h-2.5 !bg-source !border-source"
-        isConnectable={false}
+        isConnectable={true}
       />
 
       <div className="bg-source px-3 py-2 flex items-center gap-2 rounded-t-[4px]">
@@ -75,14 +86,14 @@ export function SourceNode({ id, data }: NodeProps<SourceNodeType>) {
         position={Position.Right}
         style={{ top: 26 }}
         className="!w-2.5 !h-2.5 !bg-source !border-source"
-        isConnectable={false}
+        isConnectable={true}
       />
       <Handle
         id="class-bottom"
         type="source"
         position={Position.Bottom}
         className="!w-2.5 !h-2.5 !bg-source !border-source"
-        isConnectable={false}
+        isConnectable={true}
       />
     </div>
   )
