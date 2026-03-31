@@ -12,4 +12,4 @@ dist/
 
 # FHHS cache files
 node-compile-cache/
-cache.bin
+.fallow
