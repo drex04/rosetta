@@ -64,6 +64,7 @@ const edgeTypes = {
 
 interface OntologyCanvasProps {
   onCanvasChange?: (nodes: OntologyNode[], edges: OntologyEdge[]) => void
+  onSourceCanvasChange?: (nodes: SourceNode[], edges: OntologyEdge[]) => void
 }
 
 // Only these change types modify the RDF graph — position/select/dimensions do not
@@ -71,7 +72,7 @@ const STRUCTURAL_CHANGE_TYPES = new Set(['add', 'remove', 'reset'])
 
 // ─── Inner component (needs useReactFlow) ────────────────────────────────────
 
-function OntologyCanvasInner({ onCanvasChange }: OntologyCanvasProps) {
+function OntologyCanvasInner({ onCanvasChange, onSourceCanvasChange }: OntologyCanvasProps) {
   const { nodes, edges } = useCanvasData()
   const setNodes = useOntologyStore((s) => s.setNodes)
   const addNode = useOntologyStore((s) => s.addNode)
@@ -84,6 +85,7 @@ function OntologyCanvasInner({ onCanvasChange }: OntologyCanvasProps) {
   const removeMapping = useMappingStore((s) => s.removeMapping)
   const mappings = useMappingStore((s) => s.mappings)
   const canvasDebounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const sourceCanvasDebounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const rfInstance = useRef<{ fitView: (opts?: { padding?: number; duration?: number }) => void } | null>(null)
   const prevHadNodes = useRef(false)
   const highlightedCanvasNodeId = useValidationStore((s) => s.highlightedCanvasNodeId)
@@ -187,9 +189,22 @@ function OntologyCanvasInner({ onCanvasChange }: OntologyCanvasProps) {
           activeSource.schemaNodes,
         ) as SourceNode[]
         updateSource(activeSource.id, { schemaNodes: updatedSourceNodes })
+
+        const hasSourceStructural = sourceChanges.some((c) => STRUCTURAL_CHANGE_TYPES.has(c.type))
+        if (hasSourceStructural && onSourceCanvasChange !== undefined) {
+          if (sourceCanvasDebounceTimer.current !== null) {
+            clearTimeout(sourceCanvasDebounceTimer.current)
+          }
+          sourceCanvasDebounceTimer.current = setTimeout(() => {
+            const currentEdges = useSourcesStore.getState().sources.find(
+              (s) => s.id === activeSource.id,
+            )?.schemaEdges ?? []
+            void onSourceCanvasChange(updatedSourceNodes, currentEdges)
+          }, 100)
+        }
       }
     },
-    [setNodes, updateSource, onCanvasChange],
+    [setNodes, updateSource, onCanvasChange, onSourceCanvasChange],
   )
 
   // ─── isValidConnection ────────────────────────────────────────────────────────
@@ -673,10 +688,10 @@ function OntologyCanvasInner({ onCanvasChange }: OntologyCanvasProps) {
 
 // ─── Public wrapper (provides ReactFlow context) ──────────────────────────────
 
-export function OntologyCanvas({ onCanvasChange }: OntologyCanvasProps) {
+export function OntologyCanvas({ onCanvasChange, onSourceCanvasChange }: OntologyCanvasProps) {
   return (
     <ReactFlowProvider>
-      <OntologyCanvasInner onCanvasChange={onCanvasChange} />
+      <OntologyCanvasInner onCanvasChange={onCanvasChange} onSourceCanvasChange={onSourceCanvasChange} />
     </ReactFlowProvider>
   )
 }

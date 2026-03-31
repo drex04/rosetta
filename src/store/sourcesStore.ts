@@ -9,6 +9,8 @@ export interface Source {
   dataFormat: 'json' | 'xml'
   schemaNodes: SourceNode[]
   schemaEdges: OntologyEdge[]
+  turtleSource: string
+  parseError: string | null
 }
 
 /**
@@ -26,6 +28,8 @@ export function migrateSource(record: Record<string, unknown>): Source {
   // Ensure fields exist even on brand-new records missing both
   if (!('rawData' in migrated)) migrated['rawData'] = ''
   if (!('dataFormat' in migrated)) migrated['dataFormat'] = 'json'
+  if (!('turtleSource' in migrated)) migrated['turtleSource'] = ''
+  if (!('parseError' in migrated)) migrated['parseError'] = null
   // Remove any stale json key
   delete migrated['json']
   return migrated as unknown as Source

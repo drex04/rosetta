@@ -105,6 +105,8 @@ export function SourceSelector() {
       dataFormat: 'json' as const,
       schemaNodes: [],
       schemaEdges: [],
+      turtleSource: '',
+      parseError: null,
     }
     addSource(newSource)
     setActiveSourceId(newSource.id)

@@ -117,6 +117,8 @@ function makeSource(overrides: Partial<{ id: string; name: string; order: number
     dataFormat: 'json',
     schemaNodes: [],
     schemaEdges: [],
+    turtleSource: '',
+    parseError: null,
     ...overrides,
   }
 }

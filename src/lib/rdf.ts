@@ -1,6 +1,6 @@
 import * as N3 from 'n3'
 import { MarkerType } from '@xyflow/react'
-import type { OntologyNode, OntologyEdge, ClassData, PropertyData } from '@/types/index'
+import type { OntologyNode, OntologyEdge, SourceNode, ClassData, PropertyData } from '@/types/index'
 import { applyTreeLayout } from '@/lib/layout'
 
 // ─── Layout Constants ─────────────────────────────────────────────────────────
@@ -349,5 +349,71 @@ export async function canvasToTurtle(
       }
       resolve(result)
     })
+  })
+}
+
+// ─── sourceCanvasToTurtle ─────────────────────────────────────────────────────
+//
+// Serializes source schema nodes/edges to Turtle using the source's own URI
+// prefix. Mirrors canvasToTurtle but accepts SourceNode[] and the source's
+// URI prefix string so the output uses the correct prefix declaration.
+// Returns valid Turtle (prefix-only) even when nodes is empty.
+
+export async function sourceCanvasToTurtle(
+  nodes: SourceNode[],
+  edges: OntologyEdge[],
+  _uriPrefix: string,
+): Promise<string> {
+  // Cast SourceNode[] to OntologyNode[] — same data shape, different type tag.
+  // canvasToTurtle only reads .data and .id, so this is safe.
+  return canvasToTurtle(nodes as unknown as OntologyNode[], edges)
+    .then((turtle) => {
+      // If uriPrefix was already detected by canvasToTurtle's getOrAssignPrefix,
+      // the output is correct. For the empty-nodes case, return a minimal prefix
+      // block so callers always get valid Turtle.
+      if (nodes.length === 0 && turtle.trim() === '') {
+        const prefixMap: Record<string, string> = {
+          rdf:  'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
+          rdfs: 'http://www.w3.org/2000/01/rdf-schema#',
+          owl:  'http://www.w3.org/2002/07/owl#',
+          xsd:  'http://www.w3.org/2001/XMLSchema#',
+        }
+        return new Promise<string>((resolve, reject) => {
+          const writer = new N3.Writer({ format: 'Turtle', prefixes: prefixMap })
+          writer.end((err, result) => {
+            if (err) reject(err)
+            else resolve(result)
+          })
+        })
+      }
+      return turtle
+    })
+}
+
+// ─── convertToSourceNodes ─────────────────────────────────────────────────────
+//
+// Takes OntologyNode[] produced by parseTurtle (type='classNode') and converts
+// them to SourceNode[] (type='sourceNode') for amber rendering.
+// Overlays positions from existingSourceNodes by matching node ID or class URI,
+// so dragged nodes keep their location.
+
+export function convertToSourceNodes(
+  ontologyNodes: OntologyNode[],
+  existingSourceNodes: SourceNode[],
+): SourceNode[] {
+  const posById = new Map(existingSourceNodes.map((n) => [n.id, n.position]))
+  const posByUri = new Map(existingSourceNodes.map((n) => [n.data.uri, n.position]))
+
+  return ontologyNodes.map((n): SourceNode => {
+    const position =
+      posById.get(n.id) ??
+      posByUri.get(n.data.uri) ??
+      n.position
+
+    return {
+      ...n,
+      type: 'sourceNode' as const,
+      position,
+    }
   })
 }

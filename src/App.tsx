@@ -9,12 +9,14 @@ import { useOntologyStore, SEED_TURTLE } from './store/ontologyStore'
 import { useMappingStore } from './store/mappingStore'
 import { subscribeValidationToMappings } from './store/validationStore'
 import { useOntologySync } from './hooks/useOntologySync'
+import { useSourceSync } from './hooks/useSourceSync'
 import { useAutoSave } from './hooks/useAutoSave'
 import type { OntologyNode, OntologyEdge } from './types/index'
 
 function App() {
   const loadTurtle = useOntologyStore((s) => s.loadTurtle)
   const { onEditorChange, onCanvasChange, hasPendingEdits } = useOntologySync()
+  const { onSourceEditorChange, onSourceCanvasChange, resetSourceSchema } = useSourceSync()
   const { saveStatus } = useAutoSave()
   const [pendingSync, setPendingSync] = useState<{ nodes: OntologyNode[]; edges: OntologyEdge[] } | null>(null)
 
@@ -60,9 +62,13 @@ function App() {
       <SourceSelector />
       <div className="flex flex-1 overflow-hidden">
         <div className="flex-1 relative">
-          <OntologyCanvas onCanvasChange={handleCanvasChange} />
+          <OntologyCanvas onCanvasChange={handleCanvasChange} onSourceCanvasChange={onSourceCanvasChange} />
         </div>
-        <RightPanel onEditorChange={onEditorChange} />
+        <RightPanel
+          onEditorChange={onEditorChange}
+          onSourceEditorChange={onSourceEditorChange}
+          resetSourceSchema={resetSourceSchema}
+        />
       </div>
       <ConfirmDialog
         open={pendingSync !== null}
