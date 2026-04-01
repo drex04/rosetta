@@ -14,6 +14,7 @@ export function useCanvasData(): { nodes: (OntologyNode | SourceNode)[]; edges: 
   const sources = useSourcesStore((s) => s.sources)
   const activeSourceId = useSourcesStore((s) => s.activeSourceId)
   const mappings = useMappingStore((s) => s.mappings)
+  const selectedMappingId = useMappingStore((s) => s.selectedMappingId)
 
   const active = useMemo(
     () => sources.find((s) => s.id === activeSourceId),
@@ -25,7 +26,7 @@ export function useCanvasData(): { nodes: (OntologyNode | SourceNode)[]; edges: 
     [masterNodes, active?.schemaNodes],
   )
 
-  const mappingEdges = useMemo((): MappingFlowEdge[] => {
+  const mappingEdgesBase = useMemo((): MappingFlowEdge[] => {
     const result: MappingFlowEdge[] = []
 
     // Collect all source schema nodes across all sources
@@ -47,13 +48,26 @@ export function useCanvasData(): { nodes: (OntologyNode | SourceNode)[]; edges: 
           target: targetNode.id,
           targetHandle: mapping.targetHandle,
           type: 'mappingEdge',
-          data: { mappingId: mapping.id, groupId: mapping.groupId, groupOrder: mapping.groupOrder },
+          data: { mappingId: mapping.id, groupId: mapping.groupId, groupOrder: mapping.groupOrder, kind: mapping.kind },
         })
       }
     }
 
     return result
   }, [mappings, masterNodes, sources])
+
+  const mappingEdges = useMemo(
+    () =>
+      mappingEdgesBase.map((e) => ({
+        ...e,
+        selected: (e.data as { mappingId?: string })?.mappingId === selectedMappingId,
+        data: {
+          ...(e.data as object),
+          selected: (e.data as { mappingId?: string })?.mappingId === selectedMappingId,
+        },
+      })),
+    [mappingEdgesBase, selectedMappingId],
+  )
 
   const edges = useMemo(
     () => [...masterEdges, ...(active?.schemaEdges ?? []), ...mappingEdges],
