@@ -9,7 +9,7 @@ import type { OntologyNode, OntologyEdge } from '../types/index'
 beforeEach(() => {
   useOntologyStore.setState({ nodes: [], edges: [], turtleSource: '' })
   useSourcesStore.setState({ sources: [], activeSourceId: null })
-  useUiStore.setState({ activeRightTab: 'SRC' })
+  useUiStore.setState({ activeRightTab: 'INPUT' })
 })
 
 describe('useOntologyStore', () => {
@@ -65,6 +65,8 @@ describe('useSourcesStore', () => {
       dataFormat: 'json',
       schemaNodes: [],
       schemaEdges: [],
+      turtleSource: '',
+      parseError: null,
     }
     useSourcesStore.getState().addSource(source)
     expect(useSourcesStore.getState().sources).toHaveLength(1)
@@ -72,8 +74,8 @@ describe('useSourcesStore', () => {
   })
 
   it('addSource appends multiple sources in order', () => {
-    const s1: Source = { id: 'src-1', name: 'A', order: 0, rawData: '{}', dataFormat: 'json', schemaNodes: [], schemaEdges: [] }
-    const s2: Source = { id: 'src-2', name: 'B', order: 1, rawData: '{}', dataFormat: 'json', schemaNodes: [], schemaEdges: [] }
+    const s1: Source = { id: 'src-1', name: 'A', order: 0, rawData: '{}', dataFormat: 'json', schemaNodes: [], schemaEdges: [], turtleSource: '', parseError: null }
+    const s2: Source = { id: 'src-2', name: 'B', order: 1, rawData: '{}', dataFormat: 'json', schemaNodes: [], schemaEdges: [], turtleSource: '', parseError: null }
     useSourcesStore.getState().addSource(s1)
     useSourcesStore.getState().addSource(s2)
     const { sources } = useSourcesStore.getState()
@@ -83,8 +85,8 @@ describe('useSourcesStore', () => {
   })
 
   it('removeSource removes by id', () => {
-    const s1: Source = { id: 'src-1', name: 'A', order: 0, rawData: '{}', dataFormat: 'json', schemaNodes: [], schemaEdges: [] }
-    const s2: Source = { id: 'src-2', name: 'B', order: 1, rawData: '{}', dataFormat: 'json', schemaNodes: [], schemaEdges: [] }
+    const s1: Source = { id: 'src-1', name: 'A', order: 0, rawData: '{}', dataFormat: 'json', schemaNodes: [], schemaEdges: [], turtleSource: '', parseError: null }
+    const s2: Source = { id: 'src-2', name: 'B', order: 1, rawData: '{}', dataFormat: 'json', schemaNodes: [], schemaEdges: [], turtleSource: '', parseError: null }
     useSourcesStore.getState().addSource(s1)
     useSourcesStore.getState().addSource(s2)
     useSourcesStore.getState().removeSource('src-1')
@@ -94,7 +96,7 @@ describe('useSourcesStore', () => {
   })
 
   it('removeSource on unknown id is a no-op', () => {
-    const s1: Source = { id: 'src-1', name: 'A', order: 0, rawData: '{}', dataFormat: 'json', schemaNodes: [], schemaEdges: [] }
+    const s1: Source = { id: 'src-1', name: 'A', order: 0, rawData: '{}', dataFormat: 'json', schemaNodes: [], schemaEdges: [], turtleSource: '', parseError: null }
     useSourcesStore.getState().addSource(s1)
     useSourcesStore.getState().removeSource('does-not-exist')
     expect(useSourcesStore.getState().sources).toHaveLength(1)
@@ -104,7 +106,7 @@ describe('useSourcesStore', () => {
 describe('useUiStore', () => {
   it('has correct initial state', () => {
     const state = useUiStore.getState()
-    expect(state.activeRightTab).toBe('SRC')
+    expect(state.activeRightTab).toBe('INPUT')
   })
 
   it('setActiveRightTab updates to MAP', () => {
@@ -112,14 +114,14 @@ describe('useUiStore', () => {
     expect(useUiStore.getState().activeRightTab).toBe('MAP')
   })
 
-  it('setActiveRightTab updates to OUT', () => {
-    useUiStore.getState().setActiveRightTab('OUT')
-    expect(useUiStore.getState().activeRightTab).toBe('OUT')
+  it('setActiveRightTab updates to OUTPUT', () => {
+    useUiStore.getState().setActiveRightTab('OUTPUT')
+    expect(useUiStore.getState().activeRightTab).toBe('OUTPUT')
   })
 
-  it('setActiveRightTab updates back to SRC', () => {
+  it('setActiveRightTab updates back to INPUT', () => {
     useUiStore.getState().setActiveRightTab('MAP')
-    useUiStore.getState().setActiveRightTab('SRC')
-    expect(useUiStore.getState().activeRightTab).toBe('SRC')
+    useUiStore.getState().setActiveRightTab('INPUT')
+    expect(useUiStore.getState().activeRightTab).toBe('INPUT')
   })
 })

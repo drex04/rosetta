@@ -1,11 +1,25 @@
 import { useEffect, useRef } from 'react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import { DownloadSimpleIcon } from '@phosphor-icons/react'
 import { EditorView } from '@codemirror/view'
 import { EditorState } from '@codemirror/state'
 import { lineNumbers, highlightActiveLine } from '@codemirror/view'
 import { basicSetup } from 'codemirror'
 import { turtle } from 'codemirror-lang-turtle'
 import { lightTheme } from '@/lib/codemirror-theme'
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function downloadBlob(content: string, filename: string, mime: string): void {
+  const blob = new Blob([content], { type: mime })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(url)
+}
 
 interface TurtleEditorPanelProps {
   turtleSource: string
@@ -75,6 +89,18 @@ export function TurtleEditorPanel({ turtleSource, onEditorChange, parseError }: 
 
   return (
     <div className="flex flex-col h-full">
+      <div className="shrink-0 flex items-center justify-between px-3 py-1.5 border-b border-border bg-muted/20">
+        <span className="text-xs text-muted-foreground font-mono">ontology.ttl</span>
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-1.5 text-xs"
+          onClick={() => downloadBlob(turtleSource, 'ontology.ttl', 'text/turtle')}
+        >
+          <DownloadSimpleIcon size={12} />
+          Download .ttl
+        </Button>
+      </div>
       <div
         ref={containerRef}
         className="flex-1 overflow-hidden"

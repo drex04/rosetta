@@ -88,45 +88,45 @@ export function RightPanel({ onEditorChange, onSourceEditorChange, resetSourceSc
           )}
           <Tabs
             value={activeRightTab}
-            onValueChange={(v) => setActiveRightTab(v as 'SRC' | 'ONTO' | 'MAP' | 'OUT' | 'VAL')}
+            onValueChange={(v) => setActiveRightTab(v as 'INPUT' | 'ONTOLOGY' | 'MAP' | 'OUTPUT' | 'VALIDATE')}
             className="flex flex-col h-full gap-0"
           >
             <div className="border-b border-border px-3 py-2 shrink-0 flex items-center gap-1">
               <TabsList className="h-8 w-full bg-transparent p-0 gap-1">
                 <TabsTrigger
-                  value="SRC"
-                  className="flex-1 text-xs h-7 data-[state=active]:bg-muted"
-                  aria-label="Source tab"
+                  value="INPUT"
+                  className="flex-1 text-sm h-7"
+                  aria-label="Input tab"
                 >
-                  SRC
+                  INPUT
                 </TabsTrigger>
                 <TabsTrigger
-                  value="ONTO"
-                  className="flex-1 text-xs h-7 data-[state=active]:bg-muted"
+                  value="ONTOLOGY"
+                  className="flex-1 text-sm h-7"
                   aria-label="Ontology tab"
                 >
-                  ONTO
+                  ONTOLOGY
                 </TabsTrigger>
                 <TabsTrigger
                   value="MAP"
-                  className="flex-1 text-xs h-7 data-[state=active]:bg-muted"
+                  className="flex-1 text-sm h-7"
                   aria-label="Mapping tab"
                 >
                   MAP
                 </TabsTrigger>
                 <TabsTrigger
-                  value="OUT"
-                  className="flex-1 text-xs h-7 data-[state=active]:bg-muted"
+                  value="OUTPUT"
+                  className="flex-1 text-sm h-7"
                   aria-label="Output tab"
                 >
-                  OUT
+                  OUTPUT
                 </TabsTrigger>
                 <TabsTrigger
-                  value="VAL"
-                  className="flex-1 text-xs h-7 data-[state=active]:bg-muted"
-                  aria-label="Validation tab"
+                  value="VALIDATE"
+                  className="flex-1 text-sm h-7"
+                  aria-label="Validate tab"
                 >
-                  VAL
+                  VALIDATE
                 </TabsTrigger>
               </TabsList>
               <button
@@ -138,19 +138,19 @@ export function RightPanel({ onEditorChange, onSourceEditorChange, resetSourceSc
               </button>
             </div>
             <div className="flex-1 overflow-hidden">
-              <TabsContent value="SRC" className="h-full m-0">
+              <TabsContent value="INPUT" className="h-full m-0">
                 <SourcePanel onSourceEditorChange={onSourceEditorChange} resetSourceSchema={resetSourceSchema} />
               </TabsContent>
-              <TabsContent value="ONTO" className="h-full m-0">
+              <TabsContent value="ONTOLOGY" className="h-full m-0">
                 <TurtleEditorPanel turtleSource={turtleSource} onEditorChange={onEditorChange} parseError={parseError} />
               </TabsContent>
               <TabsContent value="MAP" className="h-full m-0">
                 <MappingPanel />
               </TabsContent>
-              <TabsContent value="OUT" className="h-full m-0">
+              <TabsContent value="OUTPUT" className="h-full m-0">
                 <OutputPanel />
               </TabsContent>
-              <TabsContent value="VAL" className="h-full m-0">
+              <TabsContent value="VALIDATE" className="h-full m-0">
                 <ValidationPanel />
               </TabsContent>
             </div>
