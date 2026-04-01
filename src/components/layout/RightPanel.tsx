@@ -89,42 +89,42 @@ export function RightPanel({ onEditorChange, onSourceEditorChange, resetSourceSc
           )}
           <Tabs
             value={activeRightTab}
-            onValueChange={(v) => setActiveRightTab(v as 'INPUT' | 'ONTOLOGY' | 'MAP' | 'OUTPUT' | 'VALIDATE')}
+            onValueChange={(v) => setActiveRightTab(v as 'SOURCE' | 'ONTOLOGY' | 'MAP' | 'OUTPUT' | 'VALIDATE')}
             className="flex flex-col h-full gap-0"
           >
             <div className="border-b border-border px-3 py-2 shrink-0 flex items-center gap-1">
               <TabsList className="h-8 w-full bg-transparent p-0 gap-1">
                 <TabsTrigger
-                  value="INPUT"
-                  className="flex-1 text-sm h-7"
-                  aria-label="Input tab"
+                  value="SOURCE"
+                  className="flex-1 text-sm h-7 rounded data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted"
+                  aria-label="Source tab"
                 >
-                  INPUT
+                  SOURCE
                 </TabsTrigger>
                 <TabsTrigger
                   value="ONTOLOGY"
-                  className="flex-1 text-sm h-7"
+                  className="flex-1 text-sm h-7 rounded data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted"
                   aria-label="Ontology tab"
                 >
                   ONTOLOGY
                 </TabsTrigger>
                 <TabsTrigger
                   value="MAP"
-                  className="flex-1 text-sm h-7"
+                  className="flex-1 text-sm h-7 rounded data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted"
                   aria-label="Mapping tab"
                 >
                   MAP
                 </TabsTrigger>
                 <TabsTrigger
                   value="OUTPUT"
-                  className="flex-1 text-sm h-7"
+                  className="flex-1 text-sm h-7 rounded data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted"
                   aria-label="Output tab"
                 >
                   OUTPUT
                 </TabsTrigger>
                 <TabsTrigger
                   value="VALIDATE"
-                  className="flex-1 text-sm h-7"
+                  className="flex-1 text-sm h-7 rounded data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted"
                   aria-label="SHACL validation tab"
                 >
                   SHACL
@@ -139,7 +139,7 @@ export function RightPanel({ onEditorChange, onSourceEditorChange, resetSourceSc
               </button>
             </div>
             <div className="flex-1 overflow-hidden">
-              <TabsContent value="INPUT" className="h-full m-0">
+              <TabsContent value="SOURCE" className="h-full m-0">
                 <SourcePanel onSourceEditorChange={onSourceEditorChange} resetSourceSchema={resetSourceSchema} />
               </TabsContent>
               <TabsContent value="ONTOLOGY" className="h-full m-0">
