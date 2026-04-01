@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { DownloadSimpleIcon, CircleNotchIcon, WarningIcon, PlayIcon } from '@phosphor-icons/react'
 import { generateRml } from '@/lib/rml'
@@ -138,14 +138,15 @@ function ExportTab() {
     .flat()
     .some((m) => m.kind === 'sparql' || m.kind === 'join')
 
+  const rmlPreview = useMemo(() => generateRml(sources, mappings), [sources, mappings])
+  const yarrrmlPreview = useMemo(() => generateYarrrml(sources, mappings), [sources, mappings])
+
   function handleDownloadRml() {
-    const rml = generateRml(sources, mappings)
-    downloadBlob(rml, 'mappings.rml.ttl', 'text/turtle')
+    downloadBlob(rmlPreview, 'mappings.rml.ttl', 'text/turtle')
   }
 
   function handleDownloadYarrrml() {
-    const yaml = generateYarrrml(sources, mappings)
-    downloadBlob(yaml, 'mappings.yarrrml.yml', 'application/yaml')
+    downloadBlob(yarrrmlPreview, 'mappings.yarrrml.yml', 'application/yaml')
   }
 
   if (!hasMappings) {
@@ -171,6 +172,14 @@ function ExportTab() {
         <p className="text-xs text-muted-foreground">
           Download production ETL mapping files for use with RML processors (RMLMapper, Morph-KGC, etc.).
         </p>
+        <details className="border border-border rounded text-xs">
+          <summary className="px-2 py-1.5 cursor-pointer hover:bg-muted font-medium text-muted-foreground select-none">
+            RML Preview
+          </summary>
+          <pre className="overflow-auto max-h-48 px-3 py-2 font-mono text-[10px] text-foreground bg-muted/30 border-t border-border whitespace-pre-wrap">
+            {rmlPreview}
+          </pre>
+        </details>
         <Button
           variant="outline"
           size="sm"
@@ -180,6 +189,14 @@ function ExportTab() {
           <DownloadSimpleIcon size={14} />
           Download RML (.rml.ttl)
         </Button>
+        <details className="border border-border rounded text-xs">
+          <summary className="px-2 py-1.5 cursor-pointer hover:bg-muted font-medium text-muted-foreground select-none">
+            YARRRML Preview
+          </summary>
+          <pre className="overflow-auto max-h-48 px-3 py-2 font-mono text-[10px] text-foreground bg-muted/30 border-t border-border whitespace-pre-wrap">
+            {yarrrmlPreview}
+          </pre>
+        </details>
         <Button
           variant="outline"
           size="sm"
