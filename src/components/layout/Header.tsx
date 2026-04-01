@@ -182,13 +182,20 @@ export function Header() {
           setNodes(positioned)
           setEdges(parsedEdges)
           if (Array.isArray(parsed.sources) && parsed.sources.length > 0) {
+            const validSources = parsed.sources.filter(
+              (s) => typeof s === 'object' && s !== null && typeof s.id === 'string' && typeof s.name === 'string',
+            )
             useSourcesStore.setState({
-              sources: parsed.sources,
+              sources: validSources,
               activeSourceId: parsed.activeSourceId ?? null,
             })
           }
           if (parsed.mappings && typeof parsed.mappings === 'object') {
-            useMappingStore.getState().hydrate(parsed.mappings)
+            const groups =
+              parsed.groups && typeof parsed.groups === 'object' && !Array.isArray(parsed.groups)
+                ? (parsed.groups as Record<string, import('@/types/index').MappingGroup[]>)
+                : undefined
+            useMappingStore.getState().hydrate(parsed.mappings, groups)
           }
           setImportError(null)
         }).catch(() => {
