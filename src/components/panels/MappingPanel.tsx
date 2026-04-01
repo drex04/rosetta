@@ -4,7 +4,9 @@ import { EditorState } from '@codemirror/state'
 import { basicSetup } from 'codemirror'
 import { useMappingStore } from '@/store/mappingStore'
 import { useSourcesStore } from '@/store/sourcesStore'
+import { useOntologyStore } from '@/store/ontologyStore'
 import { localName } from '@/lib/rdf'
+import { getPropRange } from '@/lib/mappingHelpers'
 import { generateConstruct } from '@/lib/sparql'
 import { lightTheme } from '@/lib/codemirror-theme'
 import type { Mapping, MappingGroup } from '@/types/index'
@@ -98,6 +100,9 @@ function SparqlEditor({ value, onChange, readOnly = false }: SparqlEditorProps) 
 
 export function MappingPanel() {
   const activeSourceId = useSourcesStore((s) => s.activeSourceId)
+  const sources = useSourcesStore((s) => s.sources)
+  const ontologyNodes = useOntologyStore((s) => s.nodes)
+  const activeSource = sources.find((src) => src.id === activeSourceId) ?? null
   const {
     getMappingsForSource,
     removeMapping,
@@ -196,7 +201,7 @@ export function MappingPanel() {
   if (activeSourceId === null) {
     return (
       <div className="flex items-center justify-center h-full p-6">
-        <p className="text-muted-foreground text-sm text-center">No source selected</p>
+        <p className="text-xs text-center text-muted-foreground px-4">Select a source tab above to map its fields to ontology classes.</p>
       </div>
     )
   }
@@ -357,6 +362,8 @@ export function MappingPanel() {
           {/* ── Ungrouped mapping rows ── */}
           {ungroupedMappings.map((mapping) => {
             const isSelected = mapping.id === selectedMappingId
+            const sourceRange = getPropRange(mapping.sourcePropUri, activeSource?.schemaNodes ?? [])
+            const targetRange = getPropRange(mapping.targetPropUri, ontologyNodes)
             return (
               <li
                 key={mapping.id}
@@ -370,12 +377,13 @@ export function MappingPanel() {
                   isSelected ? 'bg-muted font-medium' : ''
                 }`}
               >
-                <span className="truncate text-amber-700 font-mono">
-                  {localName(mapping.sourcePropUri)}
-                </span>
-                <span className="mx-2 text-muted-foreground shrink-0">→</span>
-                <span className="truncate text-blue-700 font-mono flex-1">
-                  {localName(mapping.targetPropUri)}
+                <span className="flex flex-col min-w-0 flex-1">
+                  <span className="truncate text-amber-700 font-mono">
+                    {localName(mapping.sourcePropUri)}
+                  </span>
+                  <span className="text-muted-foreground text-[10px]">
+                    {sourceRange} → {localName(mapping.targetPropUri)} {targetRange}
+                  </span>
                 </span>
                 <button
                   type="button"
