@@ -54,7 +54,7 @@ export function prefixFromUri(uri: string): string {
 
 // ─── Node display helpers ─────────────────────────────────────────────────────
 
-export const STANDARD_NAMESPACES: ReadonlyArray<readonly [string, string]> = [
+const STANDARD_NAMESPACES: ReadonlyArray<readonly [string, string]> = [
   ['http://www.w3.org/2001/XMLSchema#', 'xsd'],
   ['http://www.w3.org/2002/07/owl#', 'owl'],
   ['http://www.w3.org/2000/01/rdf-schema#', 'rdfs'],
