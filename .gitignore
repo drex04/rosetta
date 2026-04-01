@@ -9,6 +9,11 @@ dist/
 *.log
 /test-results/
 /playwright-report/
+/playwright-artifacts-*/
+/playwright-transform-cache-*/
+/playwright_chromiumdev_profile-*/
+# Playwright MCP session dirs (random hash names containing a 'client' subdir)
+# These can't be matched by pattern — add to .git/info/exclude if needed per-machine
 
 # FHHS cache files
 node-compile-cache/
