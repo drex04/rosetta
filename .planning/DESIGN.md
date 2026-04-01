@@ -41,6 +41,10 @@ The tool should feel like it belongs in the same family as Snowflake or Databric
 
 **Typography:** Strong hierarchy. Clear distinction between headings, labels, and code. Monospace for all RDF/SPARQL/JSON content (code editors and inline code).
 
+**Typography:** Inter as the primary sans-serif — system-grade, technical, used by Figma/Linear/Vercel. Strong heading/label/code hierarchy. All RDF, SPARQL, JSON, and Turtle content uses monospace (JetBrains Mono or system monospace fallback). Font sizes should establish clear levels: large panel headings → medium labels → small metadata/status text → xs mono code.
+
+**Density:** Comfortable. Generous padding and visual breathing room take priority over information density. This is a demo tool as much as an analyst tool — give every element room to read clearly across a projector.
+
 **shadcn/ui preset:** `bcivVKZU` — custom color/font/radius configuration. Phosphor Icons as the icon library.
 
 ### Design Principles

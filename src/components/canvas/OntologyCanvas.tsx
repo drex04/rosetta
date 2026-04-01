@@ -17,7 +17,7 @@ import { MappingEdge } from '../edges/MappingEdge'
 import { CanvasContextMenu } from './CanvasContextMenu'
 import { NodeContextMenu } from './NodeContextMenu'
 import { AddPropertyDialog } from './AddPropertyDialog'
-import type { OntologyNode, OntologyEdge, SourceNode, PropertyData, ClassEditPatch } from '@/types/index'
+import type { OntologyNode, OntologyEdge, SourceNodeData, PropertyData, ClassEditPatch } from '@/types/index'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 
@@ -69,7 +69,7 @@ const edgeTypes = {
 
 interface OntologyCanvasProps {
   onCanvasChange?: (nodes: OntologyNode[], edges: OntologyEdge[]) => void
-  onSourceCanvasChange?: (nodes: SourceNode[], edges: OntologyEdge[]) => void
+  onSourceCanvasChange?: (nodes: SourceNodeData[], edges: OntologyEdge[]) => void
 }
 
 // Only these change types modify the RDF graph — position/select/dimensions do not
@@ -191,7 +191,7 @@ function OntologyCanvasInner({ onCanvasChange, onSourceCanvasChange }: OntologyC
 
   // ─── onNodesChange ────────────────────────────────────────────────────────────
   const onNodesChange = useCallback(
-    (changes: NodeChange<OntologyNode | SourceNode>[]) => {
+    (changes: NodeChange<OntologyNode | SourceNodeData>[]) => {
       const { activeSourceId, sources } = useSourcesStore.getState()
       const activeSource = activeSourceId !== null
         ? sources.find((s) => s.id === activeSourceId)
@@ -220,9 +220,9 @@ function OntologyCanvasInner({ onCanvasChange, onSourceCanvasChange }: OntologyC
 
       if (sourceChanges.length > 0 && activeSource !== undefined && sourceNodeIds.size > 0) {
         const updatedSourceNodes = applyNodeChanges(
-          sourceChanges as NodeChange<SourceNode>[],
+          sourceChanges as NodeChange<SourceNodeData>[],
           activeSource.schemaNodes,
-        ) as SourceNode[]
+        ) as SourceNodeData[]
         updateSource(activeSource.id, { schemaNodes: updatedSourceNodes })
 
         const hasSourceStructural = sourceChanges.some((c) => STRUCTURAL_CHANGE_TYPES.has(c.type))
@@ -313,7 +313,7 @@ function OntologyCanvasInner({ onCanvasChange, onSourceCanvasChange }: OntologyC
 
     // source-prop→onto-prop: mapping edge (existing logic)
     if (srcIsSource && tgtIsOnto) {
-      let sourceFlowNode: SourceNode | undefined
+      let sourceFlowNode: SourceNodeData | undefined
       let activeSourceId: string | undefined
       for (const src of sources) {
         const found = src.schemaNodes.find((n) => n.id === source)
@@ -458,7 +458,7 @@ function OntologyCanvasInner({ onCanvasChange, onSourceCanvasChange }: OntologyC
     const position = canvasMenu
       ? { x: canvasMenu.flowX + offset, y: canvasMenu.flowY + offset }
       : { x: 100 + offset, y: 100 + offset }
-    const newNode: SourceNode = {
+    const newNode: SourceNodeData = {
       id: `source_class_${ts}`,
       type: 'sourceNode',
       position,

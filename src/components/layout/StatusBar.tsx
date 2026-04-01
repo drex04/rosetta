@@ -7,16 +7,19 @@ interface StatusBarProps {
 }
 
 export function StatusBar({ saveStatus }: StatusBarProps) {
-  const [showSaving, setShowSaving] = useState(false)
+  const [savingVisible, setSavingVisible] = useState(false)
 
   useEffect(() => {
     if (saveStatus === 'saving') {
-      const timer = setTimeout(() => setShowSaving(true), 400)
-      return () => clearTimeout(timer)
-    } else {
-      setShowSaving(false)
+      const timer = setTimeout(() => setSavingVisible(true), 400)
+      return () => {
+        clearTimeout(timer)
+        setSavingVisible(false)
+      }
     }
   }, [saveStatus])
+
+  const showSaving = saveStatus === 'saving' && savingVisible
 
   return (
     <footer className="h-6 border-t border-border bg-background flex items-center justify-end px-3 shrink-0">

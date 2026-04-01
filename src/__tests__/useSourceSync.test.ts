@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import { useSourcesStore } from '../store/sourcesStore'
 import { useMappingStore } from '../store/mappingStore'
-import type { SourceNode, OntologyEdge } from '../types/index'
+import type { SourceNodeData, OntologyEdge } from '../types/index'
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 
@@ -25,14 +25,14 @@ import { jsonToSchema } from '../lib/jsonToSchema'
 
 const mockParseTurtle = vi.mocked(parseTurtle)
 const mockSourceCanvasToTurtle = vi.mocked(sourceCanvasToTurtle)
-const mockConvertToSourceNodes = vi.mocked(convertToSourceNodes)
+const mockConvertToSourceNodeDatas = vi.mocked(convertToSourceNodes)
 const mockJsonToSchema = vi.mocked(jsonToSchema)
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const SOURCE_ID = 'src-001'
 
-const MOCK_SOURCE_NODE: SourceNode = {
+const MOCK_SOURCE_NODE: SourceNodeData = {
   id: 'node_Track',
   type: 'sourceNode',
   position: { x: 100, y: 200 },
@@ -78,7 +78,7 @@ beforeEach(() => {
   seedStore()
   mockParseTurtle.mockReset()
   mockSourceCanvasToTurtle.mockReset()
-  mockConvertToSourceNodes.mockReset()
+  mockConvertToSourceNodeDatas.mockReset()
   mockJsonToSchema.mockReset()
 })
 
@@ -93,7 +93,7 @@ describe('useSourceSync', () => {
     // parseTurtle returns an OntologyNode (classNode type)
     const ontNode = { ...MOCK_SOURCE_NODE, type: 'classNode' as const }
     mockParseTurtle.mockResolvedValue({ nodes: [ontNode], edges: [MOCK_EDGE] })
-    mockConvertToSourceNodes.mockReturnValue([MOCK_SOURCE_NODE])
+    mockConvertToSourceNodeDatas.mockReturnValue([MOCK_SOURCE_NODE])
 
     const { result } = renderHook(() => useSourceSync())
 
@@ -114,7 +114,7 @@ describe('useSourceSync', () => {
     })
 
     expect(mockParseTurtle).toHaveBeenCalledWith('@prefix src: <http://src.test/> .')
-    expect(mockConvertToSourceNodes).toHaveBeenCalled()
+    expect(mockConvertToSourceNodeDatas).toHaveBeenCalled()
 
     const updated = useSourcesStore.getState().sources.find((s) => s.id === SOURCE_ID)
     expect(updated?.schemaNodes).toEqual([MOCK_SOURCE_NODE])
@@ -164,7 +164,7 @@ describe('useSourceSync', () => {
     }))
 
     mockParseTurtle.mockResolvedValue({ nodes: [], edges: [] })
-    mockConvertToSourceNodes.mockReturnValue([])
+    mockConvertToSourceNodeDatas.mockReturnValue([])
 
     const { result } = renderHook(() => useSourceSync())
 

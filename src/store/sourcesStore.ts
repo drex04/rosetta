@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { SourceNode, OntologyEdge, ClassData } from '@/types/index'
+import type { SourceNodeData, OntologyEdge, ClassData } from '@/types/index'
 
 export interface Source {
   id: string
@@ -7,7 +7,7 @@ export interface Source {
   order: number
   rawData: string
   dataFormat: 'json' | 'xml'
-  schemaNodes: SourceNode[]
+  schemaNodes: SourceNodeData[]
   schemaEdges: OntologyEdge[]
   turtleSource: string
   parseError: string | null

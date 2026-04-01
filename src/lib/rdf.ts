@@ -1,6 +1,6 @@
 import * as N3 from 'n3'
 import { MarkerType } from '@xyflow/react'
-import type { OntologyNode, OntologyEdge, SourceNode, ClassData, PropertyData } from '@/types/index'
+import type { OntologyNode, OntologyEdge, SourceNodeData, ClassData, PropertyData } from '@/types/index'
 import { applyTreeLayout } from '@/lib/layout'
 
 // ─── Layout Constants ─────────────────────────────────────────────────────────
@@ -355,17 +355,17 @@ export async function canvasToTurtle(
 // ─── sourceCanvasToTurtle ─────────────────────────────────────────────────────
 //
 // Serializes source schema nodes/edges to Turtle using the source's own URI
-// prefix. Mirrors canvasToTurtle but accepts SourceNode[] and the source's
+// prefix. Mirrors canvasToTurtle but accepts SourceNodeData[] and the source's
 // URI prefix string so the output uses the correct prefix declaration.
 // Returns valid Turtle (prefix-only) even when nodes is empty.
 
 export async function sourceCanvasToTurtle(
-  nodes: SourceNode[],
+  nodes: SourceNodeData[],
   edges: OntologyEdge[],
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _uriPrefix?: string,
 ): Promise<string> {
-  // Cast SourceNode[] to OntologyNode[] — same data shape, different type tag.
+  // Cast SourceNodeData[] to OntologyNode[] — same data shape, different type tag.
   // canvasToTurtle only reads .data and .id, so this is safe.
   return canvasToTurtle(nodes as unknown as OntologyNode[], edges)
     .then((turtle) => {
@@ -394,18 +394,18 @@ export async function sourceCanvasToTurtle(
 // ─── convertToSourceNodes ─────────────────────────────────────────────────────
 //
 // Takes OntologyNode[] produced by parseTurtle (type='classNode') and converts
-// them to SourceNode[] (type='sourceNode') for amber rendering.
+// them to SourceNodeData[] (type='sourceNode') for amber rendering.
 // Overlays positions from existingSourceNodes by matching node ID or class URI,
 // so dragged nodes keep their location.
 
 export function convertToSourceNodes(
   ontologyNodes: OntologyNode[],
-  existingSourceNodes: SourceNode[],
-): SourceNode[] {
+  existingSourceNodes: SourceNodeData[],
+): SourceNodeData[] {
   const posById = new Map(existingSourceNodes.map((n) => [n.id, n.position]))
   const posByUri = new Map(existingSourceNodes.map((n) => [n.data.uri, n.position]))
 
-  return ontologyNodes.map((n, index): SourceNode => {
+  return ontologyNodes.map((n, index): SourceNodeData => {
     const posByIndex = existingSourceNodes[index]?.position
 
     const position =

@@ -56,8 +56,8 @@ test.describe('Persistence', () => {
     // Adding a source triggers a store change which schedules an IDB save
     await page.getByRole('button', { name: 'Add new source' }).click()
 
-    // Wait for "Saved" to appear (scoped to header to avoid CodeMirror aria-live elements)
-    const liveRegion = page.locator('header [aria-live="polite"]')
+    // Wait for "Saved" to appear (scoped to footer status bar to avoid CodeMirror aria-live elements)
+    const liveRegion = page.locator('footer [aria-live="polite"]')
     await expect(liveRegion).toContainText('Saved', { timeout: 5000 })
   })
 })
