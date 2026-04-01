@@ -5,7 +5,7 @@ import type { Mapping } from '@/types/index'
 // ─── Mock inferIterator from @/lib/rml ────────────────────────────────────────
 // rml.ts is built in parallel; we stub it here so tests remain self-contained.
 vi.mock('@/lib/rml', () => ({
-  inferIterator: (_json: string) => '$[*]',
+  inferIterator: () => '$[*]',
 }))
 
 // Import after mock is registered

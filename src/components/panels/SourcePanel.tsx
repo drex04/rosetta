@@ -328,13 +328,6 @@ export function SourcePanel({ onSourceEditorChange, resetSourceSchema }: SourceP
   }, [showTurtle, source?.id])  // eslint-disable-line react-hooks/exhaustive-deps
   // Re-mount turtle editor when section is opened or source switches
 
-  // ── Sync lastTurtle from store's turtleSource (canvas→editor path) ───────────
-  useEffect(() => {
-    if (source?.turtleSource !== undefined && source.turtleSource !== '') {
-      setLastTurtle(source.turtleSource)
-    }
-  }, [source?.turtleSource])
-
   // ── Update Turtle editor when lastTurtle changes ──────────────────────────────
   useEffect(() => {
     const view = turtleViewRef.current
