@@ -13,9 +13,11 @@ import { subscribeValidationToMappings } from './store/validationStore'
 import { useOntologySync } from './hooks/useOntologySync'
 import { useSourceSync } from './hooks/useSourceSync'
 import { useAutoSave } from './hooks/useAutoSave'
+import { useInvalidateMappings } from './hooks/useInvalidateMappings'
 import type { OntologyNode, OntologyEdge } from './types/index'
 
 function App() {
+  useInvalidateMappings()
   const loadTurtle = useOntologyStore((s) => s.loadTurtle)
   const { onEditorChange, onCanvasChange, hasPendingEdits, isCanvasSyncPending } = useOntologySync()
   const { onSourceEditorChange, onSourceCanvasChange, resetSourceSchema } = useSourceSync()
