@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { convertToSourceNodes } from '@/lib/rdf'
-import type { OntologyNode, SourceNode } from '@/types/index'
+import { convertToSourceNodes } from '../lib/rdf'
+import type { OntologyNode, SourceNodeData } from '../types/index'
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -22,11 +22,11 @@ function makeOntologyNode(
   }
 }
 
-function makeSourceNode(
+function makeSourceNodeData(
   id: string,
   uri: string,
   position: { x: number; y: number },
-): SourceNode {
+): SourceNodeData {
   return {
     id,
     type: 'sourceNode',
@@ -44,8 +44,8 @@ function makeSourceNode(
 
 describe('convertToSourceNodes — position preservation', () => {
   it('preserves position by ID when ID matches', () => {
-    const existing: SourceNode[] = [
-      makeSourceNode('node-A', 'http://ex#Track', { x: 100, y: 200 }),
+    const existing: SourceNodeData[] = [
+      makeSourceNodeData('node-A', 'http://ex#Track', { x: 100, y: 200 }),
     ]
     const incoming: OntologyNode[] = [
       makeOntologyNode('node-A', 'http://ex#Track', { x: 0, y: 0 }),
@@ -55,8 +55,8 @@ describe('convertToSourceNodes — position preservation', () => {
   })
 
   it('preserves position by URI when URI matches but ID differs', () => {
-    const existing: SourceNode[] = [
-      makeSourceNode('old-id', 'http://ex#Track', { x: 50, y: 75 }),
+    const existing: SourceNodeData[] = [
+      makeSourceNodeData('old-id', 'http://ex#Track', { x: 50, y: 75 }),
     ]
     const incoming: OntologyNode[] = [
       makeOntologyNode('new-id', 'http://ex#Track', { x: 0, y: 0 }),
@@ -69,8 +69,8 @@ describe('convertToSourceNodes — position preservation', () => {
     // Simulates: user renames `Track` → `TrackInfo` in Turtle editor.
     // The old node had URI http://ex#Track; new parse yields http://ex#TrackInfo.
     // Neither ID nor URI match — fall back to index.
-    const existing: SourceNode[] = [
-      makeSourceNode('node-A', 'http://ex#Track', { x: 123, y: 456 }),
+    const existing: SourceNodeData[] = [
+      makeSourceNodeData('node-A', 'http://ex#Track', { x: 123, y: 456 }),
     ]
     const incoming: OntologyNode[] = [
       makeOntologyNode('node-B', 'http://ex#TrackInfo', { x: 0, y: 0 }),
@@ -80,9 +80,9 @@ describe('convertToSourceNodes — position preservation', () => {
   })
 
   it('multi-node rename: each node keeps its own position by index', () => {
-    const existing: SourceNode[] = [
-      makeSourceNode('a', 'http://ex#Alpha', { x: 10, y: 20 }),
-      makeSourceNode('b', 'http://ex#Beta', { x: 30, y: 40 }),
+    const existing: SourceNodeData[] = [
+      makeSourceNodeData('a', 'http://ex#Alpha', { x: 10, y: 20 }),
+      makeSourceNodeData('b', 'http://ex#Beta', { x: 30, y: 40 }),
     ]
     const incoming: OntologyNode[] = [
       makeOntologyNode('c', 'http://ex#AlphaRenamed', { x: 0, y: 0 }),
@@ -94,8 +94,8 @@ describe('convertToSourceNodes — position preservation', () => {
   })
 
   it('new node added gets default layout position, existing nodes stay put', () => {
-    const existing: SourceNode[] = [
-      makeSourceNode('node-A', 'http://ex#Track', { x: 100, y: 200 }),
+    const existing: SourceNodeData[] = [
+      makeSourceNodeData('node-A', 'http://ex#Track', { x: 100, y: 200 }),
     ]
     // Two nodes coming in: first matches by ID, second is brand-new
     const incoming: OntologyNode[] = [
@@ -110,9 +110,9 @@ describe('convertToSourceNodes — position preservation', () => {
   })
 
   it('existing nodes unaffected when new node is added', () => {
-    const existing: SourceNode[] = [
-      makeSourceNode('a', 'http://ex#Alpha', { x: 10, y: 20 }),
-      makeSourceNode('b', 'http://ex#Beta', { x: 30, y: 40 }),
+    const existing: SourceNodeData[] = [
+      makeSourceNodeData('a', 'http://ex#Alpha', { x: 10, y: 20 }),
+      makeSourceNodeData('b', 'http://ex#Beta', { x: 30, y: 40 }),
     ]
     // Three nodes: first two match by ID, third is new
     const incoming: OntologyNode[] = [

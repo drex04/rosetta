@@ -4,8 +4,6 @@ import { useSourcesStore } from './sourcesStore'
 import { useOntologyStore } from './ontologyStore'
 import { useMappingStore } from './mappingStore'
 
-export type { ViolationRecord }
-
 interface ValidationState {
   results: Record<string, ViolationRecord[]>
   loading: boolean

@@ -4,7 +4,7 @@ import { useMappingStore } from '@/store/mappingStore'
 import { parseTurtle, sourceCanvasToTurtle, convertToSourceNodes } from '@/lib/rdf'
 import { jsonToSchema } from '@/lib/jsonToSchema'
 import { xmlToSchema } from '@/lib/xmlToSchema'
-import type { SourceNode, OntologyEdge } from '@/types/index'
+import type { SourceNodeData, OntologyEdge } from '@/types/index'
 
 // ─── useSourceSync ────────────────────────────────────────────────────────────
 //
@@ -102,7 +102,7 @@ export function useSourceSync() {
   // ── Canvas → Editor ─────────────────────────────────────────────────────────
   // Serialize current canvas source nodes to Turtle and update turtleSource.
   const onSourceCanvasChange = useCallback(async (
-    nodes: SourceNode[],
+    nodes: SourceNodeData[],
     edges: OntologyEdge[],
   ) => {
     if (isUpdatingFromEditor.current) return

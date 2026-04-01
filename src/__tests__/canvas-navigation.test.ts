@@ -96,8 +96,8 @@ describe('edge selected derivation (mapping.id === selectedMappingId)', () => {
   })
 
   it('is false when IDs differ', () => {
-    const mappingId = 'map-1'
-    const selectedMappingId = 'map-2'
+    const mappingId: string = 'map-1'
+    const selectedMappingId: string = 'map-2'
     expect(mappingId === selectedMappingId).toBe(false)
   })
 
