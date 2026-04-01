@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ReactFlow, ReactFlowProvider, MiniMap, Controls, Background, applyNodeChanges, useReactFlow } from '@xyflow/react'
+import { ReactFlow, ReactFlowProvider, MiniMap, Controls, Background, Panel, applyNodeChanges, useReactFlow } from '@xyflow/react'
 import type { NodeChange, Connection, Edge } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { useCanvasData } from '../../hooks/useCanvasData'
@@ -16,7 +16,8 @@ import { MappingEdge } from '../edges/MappingEdge'
 import { CanvasContextMenu } from './CanvasContextMenu'
 import { NodeContextMenu } from './NodeContextMenu'
 import { AddPropertyDialog } from './AddPropertyDialog'
-import type { OntologyNode, OntologyEdge, SourceNode, PropertyData } from '@/types/index'
+import type { OntologyNode, OntologyEdge, SourceNode, PropertyData, ClassEditPatch } from '@/types/index'
+import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -81,7 +82,10 @@ function OntologyCanvasInner({ onCanvasChange, onSourceCanvasChange }: OntologyC
   const addPropertyToNode = useOntologyStore((s) => s.addPropertyToNode)
   const addOntologyEdge = useOntologyStore((s) => s.addEdge)
   const removeOntologyEdge = useOntologyStore((s) => s.removeEdge)
+  const updateNode = useOntologyStore((s) => s.updateNode)
+  const updateProperty = useOntologyStore((s) => s.updateProperty)
   const updateSource = useSourcesStore((s) => s.updateSource)
+  const updateSchemaNode = useSourcesStore((s) => s.updateSchemaNode)
   const addMapping = useMappingStore((s) => s.addMapping)
   const removeMapping = useMappingStore((s) => s.removeMapping)
   const mappings = useMappingStore((s) => s.mappings)
@@ -149,10 +153,14 @@ function OntologyCanvasInner({ onCanvasChange, onSourceCanvasChange }: OntologyC
     }
   }, [])
 
-  // Augment nodes with the onContextMenu callback
+  // Augment nodes with the onContextMenu and onCommitEdit callbacks
   const augmentedNodes = nodes.map((n) => ({
     ...n,
-    data: { ...n.data, onContextMenu: handleNodeContextMenu },
+    data: {
+      ...n.data,
+      onContextMenu: handleNodeContextMenu,
+      onCommitEdit: n.type === 'sourceNode' ? handleCommitSourceEdit : handleCommitOntologyEdit,
+    },
   }))
 
   // ─── onNodesChange ────────────────────────────────────────────────────────────
@@ -400,16 +408,18 @@ function OntologyCanvasInner({ onCanvasChange, onSourceCanvasChange }: OntologyC
 
   // ─── Add ontology class ────────────────────────────────────────────────────────
   const handleAddClass = useCallback(() => {
-    if (!canvasMenu) return
     const offset = addNodeOffset.current * 30
     addNodeOffset.current += 1
     setTimeout(() => { addNodeOffset.current = Math.max(0, addNodeOffset.current - 1) }, 2000)
 
     const ts = Date.now()
+    const position = canvasMenu
+      ? { x: canvasMenu.flowX + offset, y: canvasMenu.flowY + offset }
+      : { x: 100 + offset, y: 100 + offset }
     const newNode: OntologyNode = {
       id: `class_${ts}`,
       type: 'classNode',
-      position: { x: canvasMenu.flowX + offset, y: canvasMenu.flowY + offset },
+      position,
       data: {
         uri: `onto:NewClass_${ts}`,
         label: 'NewClass',
@@ -418,11 +428,11 @@ function OntologyCanvasInner({ onCanvasChange, onSourceCanvasChange }: OntologyC
       },
     }
     addNode(newNode)
+    setCanvasMenu(null)
   }, [canvasMenu, addNode])
 
   // ─── Add source class ──────────────────────────────────────────────────────────
   const handleAddSourceClass = useCallback(() => {
-    if (!canvasMenu) return
     const { activeSourceId, sources } = useSourcesStore.getState()
     if (!activeSourceId) return
     const activeSrc = sources.find((s) => s.id === activeSourceId)
@@ -434,10 +444,13 @@ function OntologyCanvasInner({ onCanvasChange, onSourceCanvasChange }: OntologyC
 
     const ts = Date.now()
     const srcPrefix = activeSrc.name.toLowerCase().replace(/\s+/g, '_')
+    const position = canvasMenu
+      ? { x: canvasMenu.flowX + offset, y: canvasMenu.flowY + offset }
+      : { x: 100 + offset, y: 100 + offset }
     const newNode: SourceNode = {
       id: `source_class_${ts}`,
       type: 'sourceNode',
-      position: { x: canvasMenu.flowX + offset, y: canvasMenu.flowY + offset },
+      position,
       data: {
         uri: `${srcPrefix}:NewClass_${ts}`,
         label: 'NewClass',
@@ -448,6 +461,7 @@ function OntologyCanvasInner({ onCanvasChange, onSourceCanvasChange }: OntologyC
     updateSource(activeSourceId, {
       schemaNodes: [...activeSrc.schemaNodes, newNode],
     })
+    setCanvasMenu(null)
   }, [canvasMenu, updateSource])
 
   // ─── Delete node handler ───────────────────────────────────────────────────────
@@ -490,35 +504,40 @@ function OntologyCanvasInner({ onCanvasChange, onSourceCanvasChange }: OntologyC
     }
   }, [removeNode, updateSource])
 
-  // ─── Rename handler ────────────────────────────────────────────────────────────
-  const handleRename = useCallback((nodeId: string, nodeType: 'classNode' | 'sourceNode', currentLabel: string) => {
-    const newLabel = window.prompt('New name:', currentLabel)
-    if (!newLabel || newLabel.trim() === currentLabel) return
-    const trimmed = newLabel.trim()
-    if (nodeType === 'classNode') {
-      const { nodes: ontNodes } = useOntologyStore.getState()
-      const node = ontNodes.find((n) => n.id === nodeId)
-      if (!node) return
-      useOntologyStore.getState().setNodes(
-        ontNodes.map((n) =>
-          n.id === nodeId ? { ...n, data: { ...n.data, label: trimmed } } : n,
-        ),
-      )
-    } else {
-      const { sources } = useSourcesStore.getState()
-      for (const src of sources) {
-        const srcNode = src.schemaNodes.find((n) => n.id === nodeId)
-        if (srcNode) {
-          updateSource(src.id, {
-            schemaNodes: src.schemaNodes.map((n) =>
-              n.id === nodeId ? { ...n, data: { ...n.data, label: trimmed } } : n,
-            ),
-          })
-          break
-        }
+  // ─── Commit ontology edit ──────────────────────────────────────────────────────
+  const handleCommitOntologyEdit = useCallback(
+    (nodeId: string, patch: ClassEditPatch) => {
+      const preEditNodes = useOntologyStore.getState().nodes
+      if ('propertyUri' in patch && patch.propertyUri) {
+        updateProperty(nodeId, patch.propertyUri, patch.propPatch ?? {})
+      } else {
+        updateNode(nodeId, patch)
       }
-    }
-  }, [updateSource])
+      const { nodes: latestNodes, edges: latestEdges } = useOntologyStore.getState()
+      try {
+        onCanvasChange?.(latestNodes, latestEdges)
+      } catch {
+        updateNode(nodeId, preEditNodes.find((n) => n.id === nodeId)?.data ?? {})
+        toast.error('Edit failed — Turtle serialization error, changes reverted')
+      }
+    },
+    [updateNode, updateProperty, onCanvasChange],
+  )
+
+  // ─── Commit source edit ────────────────────────────────────────────────────────
+  const handleCommitSourceEdit = useCallback(
+    (nodeId: string, patch: ClassEditPatch) => {
+      const { sources } = useSourcesStore.getState()
+      const ownerSource = sources.find((s) => s.schemaNodes.some((n) => n.id === nodeId))
+      if (!ownerSource) return
+      updateSchemaNode(ownerSource.id, nodeId, patch)
+      const updatedSource = useSourcesStore.getState().sources.find((s) => s.id === ownerSource.id)
+      if (updatedSource && onSourceCanvasChange) {
+        onSourceCanvasChange(updatedSource.schemaNodes, updatedSource.schemaEdges ?? [])
+      }
+    },
+    [updateSchemaNode, onSourceCanvasChange],
+  )
 
   // ─── Add property to node ──────────────────────────────────────────────────────
   const handleAddProperty = useCallback((nodeId: string, nodeType: 'classNode' | 'sourceNode', property: PropertyData) => {
@@ -610,6 +629,16 @@ function OntologyCanvasInner({ onCanvasChange, onSourceCanvasChange }: OntologyC
         </div>
         <Controls aria-label="Canvas controls" />
         <Background />
+        <Panel position="top-left" className="flex gap-2 p-2">
+          <Button size="sm" variant="outline" onClick={handleAddClass}>
+            + Ontology Class
+          </Button>
+          {activeSourceId && (
+            <Button size="sm" variant="outline" onClick={handleAddSourceClass}>
+              + Source Class
+            </Button>
+          )}
+        </Panel>
       </ReactFlow>
 
       {/* Canvas context menu */}
@@ -634,7 +663,17 @@ function OntologyCanvasInner({ onCanvasChange, onSourceCanvasChange }: OntologyC
           nodeType={nodeMenu.nodeType}
           hasMappings={nodeHasMappings(nodeMenu.nodeId)}
           onAddProperty={() => { setAddPropFor({ nodeId: nodeMenu.nodeId, nodePrefix: nodeMenu.nodePrefix, nodeType: nodeMenu.nodeType }); setNodeMenu(null) }}
-          onRename={() => handleRename(nodeMenu.nodeId, nodeMenu.nodeType, nodeMenu.nodeLabel)}
+          onRename={() => {
+            const nds = useOntologyStore.getState().nodes
+            setNodes(
+              nds.map((n) =>
+                n.id === nodeMenu.nodeId
+                  ? { ...n, data: { ...n.data, editTrigger: ((n.data.editTrigger as number) ?? 0) + 1 } }
+                  : n,
+              ),
+            )
+            setNodeMenu(null)
+          }}
           onDelete={() => handleDeleteNode(nodeMenu.nodeId, nodeMenu.nodeType)}
           onClose={() => setNodeMenu(null)}
         />

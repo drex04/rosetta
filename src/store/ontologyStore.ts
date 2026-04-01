@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { OntologyNode, OntologyEdge, PropertyData } from '@/types/index'
+import type { OntologyNode, OntologyEdge, PropertyData, ClassData } from '@/types/index'
 import { parseTurtle } from '@/lib/rdf'
 
 // ─── Seed ontology ────────────────────────────────────────────────────────────
@@ -65,6 +65,12 @@ interface OntologyState {
   addEdge: (edge: OntologyEdge) => void
   /** Remove an edge by id. */
   removeEdge: (edgeId: string) => void
+  /** Update a node's label or URI. Safe no-op when nodeId does not exist. */
+  updateNode: (nodeId: string, patch: Partial<Pick<ClassData, 'label' | 'uri'>>) => void
+  /** Update a single property on a node by current URI.
+   *  If patch.uri differs from propertyUri, fires onInvalidateMappings([propertyUri]).
+   *  Safe no-op when nodeId or propertyUri does not exist. */
+  updateProperty: (nodeId: string, propertyUri: string, patch: Partial<PropertyData>) => void
 }
 
 // ─── Store ────────────────────────────────────────────────────────────────────
@@ -134,4 +140,37 @@ export const useOntologyStore = create<OntologyState>((set, get) => ({
   addEdge: (edge) => set((s) => ({ edges: [...s.edges, edge] })),
 
   removeEdge: (edgeId) => set((s) => ({ edges: s.edges.filter((e) => e.id !== edgeId) })),
+
+  updateNode: (nodeId, patch) =>
+    set((s) => ({
+      nodes: s.nodes.map((n) =>
+        n.id === nodeId ? { ...n, data: { ...n.data, ...patch } } : n,
+      ),
+    })),
+
+  updateProperty: (nodeId, propertyUri, patch) => {
+    const { onInvalidateMappings } = get()
+    const node = get().nodes.find((n) => n.id === nodeId)
+    if (!node) return
+    const prop = node.data.properties.find((p) => p.uri === propertyUri)
+    if (!prop) return
+    set((s) => ({
+      nodes: s.nodes.map((n) =>
+        n.id === nodeId
+          ? {
+              ...n,
+              data: {
+                ...n.data,
+                properties: n.data.properties.map((p) =>
+                  p.uri === propertyUri ? { ...p, ...patch } : p,
+                ),
+              },
+            }
+          : n,
+      ),
+    }))
+    if (patch.uri !== undefined && patch.uri !== propertyUri) {
+      onInvalidateMappings?.([propertyUri])
+    }
+  },
 }))

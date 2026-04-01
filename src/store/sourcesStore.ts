@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { SourceNode, OntologyEdge } from '@/types/index'
+import type { SourceNode, OntologyEdge, ClassData } from '@/types/index'
 
 export interface Source {
   id: string
@@ -42,6 +42,8 @@ interface SourcesState {
   addSource: (source: Source) => void
   removeSource: (id: string) => void
   updateSource: (id: string, patch: Partial<Source>) => void
+  /** Update a schema node's label or URI within a source. Safe no-op when ids don't exist. */
+  updateSchemaNode: (sourceId: string, nodeId: string, patch: Partial<Pick<ClassData, 'label' | 'uri'>>) => void
   reset: () => void
 }
 
@@ -66,6 +68,19 @@ export const useSourcesStore = create<SourcesState>((set) => ({
   updateSource: (id, patch) =>
     set((s) => ({
       sources: s.sources.map((src) => (src.id === id ? { ...src, ...patch } : src)),
+    })),
+  updateSchemaNode: (sourceId, nodeId, patch) =>
+    set((s) => ({
+      sources: s.sources.map((src) =>
+        src.id === sourceId
+          ? {
+              ...src,
+              schemaNodes: src.schemaNodes.map((n) =>
+                n.id === nodeId ? { ...n, data: { ...n.data, ...patch } } : n,
+              ),
+            }
+          : src,
+      ),
     })),
   reset: () => set({ sources: [], activeSourceId: null }),
 }))

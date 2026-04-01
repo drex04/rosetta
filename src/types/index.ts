@@ -3,6 +3,14 @@ export interface PropertyData {
   label: string
   range: string       // e.g. "xsd:float" or full URI for ObjectProperty
   kind: 'datatype' | 'object'
+  dataType?: string   // XSD datatype shorthand for inline editing (e.g. "xsd:string")
+}
+
+export interface ClassEditPatch {
+  label?: string
+  uri?: string
+  propertyUri?: string
+  propPatch?: { label: string; dataType: string }
 }
 
 export interface ClassData {
@@ -11,6 +19,9 @@ export interface ClassData {
   prefix: string
   comment?: string
   properties: PropertyData[]
+  editTrigger?: number
+  onCommitEdit?: (nodeId: string, patch: ClassEditPatch) => void
+  onContextMenu?: (nodeId: string, x: number, y: number) => void
 }
 
 export type OntologyNode = import('@xyflow/react').Node<ClassData & Record<string, unknown>, 'classNode'>
