@@ -3,9 +3,10 @@ import { localName } from '@/lib/rdf' // RD-01: import, don't re-implement
 
 export function generateConstruct(
   mapping: Omit<Mapping, 'id' | 'sparqlConstruct' | 'kind'> & { kind?: Mapping['kind'] },
+  sourcePrefix?: string,
 ): string {
   const m = mapping
-  const srcPrefix = derivePrefix(m.sourceClassUri)
+  const srcPrefix = sourcePrefix ?? derivePrefix(m.sourceClassUri)
   const tgtPrefix = derivePrefix(m.targetClassUri)
   const srcClass = localName(m.sourceClassUri)
   const tgtClass = localName(m.targetClassUri)
@@ -23,8 +24,8 @@ export function generateConstruct(
       `PREFIX tgt: <${tgtPrefix}>`,
       ``,
       `CONSTRUCT {`,
-      `  ?target a tgt:${tgtClass} .`,
-      `  ?target tgt:${tgtProp} ?val .`,
+      `  ?source a tgt:${tgtClass} .`,
+      `  ?source tgt:${tgtProp} ?val .`,
       `}`,
       `WHERE {`,
       `  ?source a src:${srcClass} .`,

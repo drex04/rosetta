@@ -2,6 +2,7 @@ import * as N3 from 'n3'
 import type { Source } from '@/store/sourcesStore'
 import type { Mapping, OntologyNode } from '@/types/index'
 import { jsonToInstances } from './shacl/instanceGenerator'
+import { generateConstruct } from './sparql'
 
 // ─── Lazy Comunica engine ─────────────────────────────────────────────────────
 
@@ -57,13 +58,28 @@ export async function executeAllConstructs(
     // Skip empty sources
     if (source.rawData.trim() === '') continue
 
+    // Guard: skip sources with no schema nodes (can't build instance store)
+    if (source.schemaNodes.length === 0) {
+      console.warn(`Source "${source.name}": no schema nodes — skipping`)
+      continue
+    }
+
     const mappings = mappingsBySource[source.id]
     if (!mappings?.length) continue
 
-    // Collect CONSTRUCT queries for this source
+    // Source's actual prefix from schemaNode (used by instanceGenerator as uriBase)
+    const sourcePrefix = source.schemaNodes[0]!.data.prefix
+
+    // Collect CONSTRUCT queries for this source.
+    // For non-sparql kinds, regenerate the query with the source's actual prefix
+    // so the PREFIX line matches the instance store's uriBase exactly.
     const constructQueries = mappings
-      .filter((m) => (m.kind === 'sparql' || m.kind === 'direct') && m.sparqlConstruct?.trim())
-      .map((m) => m.sparqlConstruct)
+      .filter((m) => m.sparqlConstruct?.trim())
+      .map((m): string => {
+        if (m.kind === 'sparql') return m.sparqlConstruct
+        // Regenerate with the correct sourcePrefix to avoid namespace mismatch
+        return generateConstruct(m, sourcePrefix)
+      })
 
     if (!constructQueries.length) continue
 
@@ -71,6 +87,7 @@ export async function executeAllConstructs(
     let instanceStore: N3.Store
     try {
       instanceStore = jsonToInstances(source.rawData, source.schemaNodes)
+      console.debug(`Source "${source.name}": instance store has ${instanceStore.size} quads, prefix="${sourcePrefix}"`)
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Unknown error'
       warnings.push(`Source "${source.name}": failed to parse instances — ${msg}`)
