@@ -15,18 +15,15 @@ import {
   ArrowCounterClockwiseIcon,
   UploadSimpleIcon,
   DownloadSimpleIcon,
-  SpinnerGapIcon,
-  CheckCircleIcon,
+  GithubLogoIcon,
 } from '@phosphor-icons/react'
 import { del } from 'idb-keyval'
 import { useOntologyStore, SEED_TURTLE } from '@/store/ontologyStore'
 import { useSourcesStore, generateSourceId } from '@/store/sourcesStore'
 import { useMappingStore } from '@/store/mappingStore'
-import { cn } from '@/lib/utils'
 import { parseTurtle } from '@/lib/rdf'
 import { jsonToSchema } from '@/lib/jsonToSchema'
 import { generateConstruct } from '@/lib/sparql'
-import { useValidationStore } from '@/store/validationStore'
 import type { ProjectFile } from '@/types/index'
 import sampleNorwegianRaw from '@/data/sample-source-a-norwegian.json?raw'
 import sampleGermanRaw from '@/data/sample-source-b-german.json?raw'
@@ -70,10 +67,6 @@ export function Header() {
   const setTurtleSource = useOntologyStore((s) => s.setTurtleSource)
   const setNodes = useOntologyStore((s) => s.setNodes)
   const setEdges = useOntologyStore((s) => s.setEdges)
-
-  const runValidation = useValidationStore((s) => s.runValidation)
-  const loading = useValidationStore((s) => s.loading)
-  const stale = useValidationStore((s) => s.stale)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [importError, setImportError] = useState<string | null>(null)
@@ -216,28 +209,13 @@ export function Header() {
     >
       {/* Left: brand */}
       <div className="flex items-center gap-3">
-        <span className="text-sm font-semibold tracking-tight text-foreground select-none">
+        <span className="font-mono font-bold tracking-tight text-foreground text-base select-none">
           Rosetta
         </span>
       </div>
 
       {/* Right: project menu + auxiliary buttons */}
       <div className="flex items-center gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          className={cn("h-7 gap-1.5 text-xs", stale && !loading ? "ring-1 ring-amber-400" : "")}
-          onClick={() => { void runValidation() }}
-          disabled={loading}
-          aria-label="Validate"
-        >
-          {loading ? (
-            <SpinnerGapIcon size={13} className="animate-spin" />
-          ) : (
-            <CheckCircleIcon size={13} />
-          )}
-          Validate
-        </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -301,20 +279,27 @@ export function Header() {
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 gap-1.5 text-muted-foreground hover:text-foreground"
+            className="h-7 gap-1 text-muted-foreground/60 hover:text-muted-foreground text-xs px-1.5"
             aria-label="Open help"
           >
             <QuestionIcon size={16} />
-            <span className="text-xs">Help</span>
           </Button>
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 gap-1.5 text-muted-foreground hover:text-foreground"
+            className="h-7 gap-1 text-muted-foreground/60 hover:text-muted-foreground text-xs px-1.5"
             aria-label="About Rosetta"
           >
             <InfoIcon size={16} />
-            <span className="text-xs">About</span>
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 w-7 p-0"
+            aria-label="View source on GitHub"
+            onClick={() => window.open('https://github.com/drex04/rosetta', '_blank', 'noopener,noreferrer')}
+          >
+            <GithubLogoIcon size={14} />
           </Button>
         </div>
       </div>
