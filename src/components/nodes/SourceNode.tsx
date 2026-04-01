@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { Handle, Position } from '@xyflow/react'
 import type { NodeProps } from '@xyflow/react'
 import { CirclesThreeIcon } from '@phosphor-icons/react'
@@ -10,6 +11,34 @@ export function SourceNode({ id, data }: NodeProps<SourceNodeType>) {
 
   // Boolean selector: only this node re-renders when its own highlighted state changes
   const isHighlighted = useValidationStore((s) => s.highlightedCanvasNodeId === id)
+
+  const [editingHeader, setEditingHeader] = useState(false)
+  const [draftLabel, setDraftLabel] = useState('')
+  const [draftUri, setDraftUri] = useState('')
+  const [headerError, setHeaderError] = useState('')
+
+  // Programmatic entry from context menu Rename
+  useEffect(() => {
+    if (!data.editTrigger) return
+    setDraftLabel(data.label)
+    setDraftUri(data.uri)
+    setHeaderError('')
+    setEditingHeader(true)
+  }, [data.editTrigger])
+
+  const commitHeader = () => {
+    if (!draftLabel.trim()) {
+      setHeaderError('Label is required')
+      return false
+    }
+    if (!draftUri.trim().includes(':')) {
+      setHeaderError('URI must contain a colon')
+      return false
+    }
+    data.onCommitEdit?.(id, { label: draftLabel.trim(), uri: draftUri.trim() })
+    setEditingHeader(false)
+    return true
+  }
 
   const handleContextMenu = (e: React.MouseEvent) => {
     if (typeof data.onContextMenu === 'function') {
@@ -43,16 +72,55 @@ export function SourceNode({ id, data }: NodeProps<SourceNodeType>) {
         isConnectable={true}
       />
 
-      <div className="bg-source px-3 py-2 flex items-center gap-2 rounded-t-[4px]">
+      <div
+        className="bg-source px-3 py-2 flex items-center gap-2 rounded-t-[4px]"
+        onDoubleClick={() => {
+          if (!editingHeader) {
+            setDraftLabel(data.label)
+            setDraftUri(data.uri)
+            setHeaderError('')
+            setEditingHeader(true)
+          }
+        }}
+      >
         <CirclesThreeIcon weight="bold" className="text-white shrink-0" size={14} />
-        <div className="flex flex-col min-w-0">
-          <span className="text-white font-semibold leading-tight truncate">
-            {data.label}
-          </span>
-          <span className="text-white/70 text-xs leading-tight font-mono truncate">
-            {shortUri}
-          </span>
-        </div>
+        {editingHeader ? (
+          <div className="flex flex-col gap-1 py-1 nodrag w-full" onMouseDown={e => e.stopPropagation()}>
+            <input
+              autoFocus
+              className="text-white bg-amber-600/80 border border-white/40 rounded px-1 py-0.5 text-sm font-semibold w-full"
+              value={draftLabel}
+              onChange={e => setDraftLabel(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') commitHeader()
+                if (e.key === 'Escape') { setEditingHeader(false); setHeaderError('') }
+              }}
+              onBlur={() => commitHeader()}
+              placeholder="Label"
+            />
+            <input
+              className="text-white/80 bg-amber-600/80 border border-white/40 rounded px-1 py-0.5 text-xs font-mono w-full"
+              value={draftUri}
+              onChange={e => setDraftUri(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') commitHeader()
+                if (e.key === 'Escape') { setEditingHeader(false); setHeaderError('') }
+              }}
+              onBlur={() => commitHeader()}
+              placeholder="URI"
+            />
+            {headerError && <span className="text-red-300 text-xs">{headerError}</span>}
+          </div>
+        ) : (
+          <div className="flex flex-col min-w-0">
+            <span className="text-white font-semibold leading-tight truncate">
+              {data.label}
+            </span>
+            <span className="text-white/70 text-xs leading-tight font-mono truncate">
+              {shortUri}
+            </span>
+          </div>
+        )}
       </div>
 
       {data.properties.length > 0 && (
