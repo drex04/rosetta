@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-type RightTab = 'SRC' | 'ONTO' | 'MAP' | 'OUT' | 'VAL'
+type RightTab = 'INPUT' | 'ONTOLOGY' | 'MAP' | 'OUTPUT' | 'VALIDATE'
 
 interface UiState {
   activeRightTab: RightTab
@@ -11,7 +11,7 @@ interface UiState {
 export const useUiStore = create<UiState>()(
   persist(
     (set) => ({
-      activeRightTab: 'SRC',
+      activeRightTab: 'INPUT',
       setActiveRightTab: (activeRightTab) => set({ activeRightTab }),
     }),
     { name: 'rosetta-ui' }

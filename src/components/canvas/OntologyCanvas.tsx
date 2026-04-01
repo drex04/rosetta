@@ -17,6 +17,7 @@ import { CanvasContextMenu } from './CanvasContextMenu'
 import { NodeContextMenu } from './NodeContextMenu'
 import { AddPropertyDialog } from './AddPropertyDialog'
 import type { OntologyNode, OntologyEdge, SourceNode, PropertyData } from '@/types/index'
+import { toast } from 'sonner'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -465,6 +466,28 @@ function OntologyCanvasInner({ onCanvasChange, onSourceCanvasChange }: OntologyC
         }
       }
     }
+
+    // Build valid URI set from remaining nodes and fire mapping invalidation
+    const ontologyNodes = useOntologyStore.getState().nodes
+    const { sources: updatedSources } = useSourcesStore.getState()
+    const validUris = new Set<string>()
+    for (const n of ontologyNodes) {
+      validUris.add(n.data.uri)
+      for (const p of n.data.properties) validUris.add(p.uri)
+    }
+    for (const src of updatedSources) {
+      for (const n of src.schemaNodes) {
+        validUris.add(n.data.uri)
+        for (const p of n.data.properties) validUris.add(p.uri)
+      }
+    }
+    const count = useMappingStore.getState().removeInvalidMappings(validUris)
+    if (count > 0) {
+      toast(`Removed ${count} invalid mapping(s)`, {
+        action: { label: 'Undo', onClick: () => useMappingStore.getState().undoLastRemoval() },
+        duration: 5000,
+      })
+    }
   }, [removeNode, updateSource])
 
   // ─── Rename handler ────────────────────────────────────────────────────────────
@@ -582,7 +605,9 @@ function OntologyCanvasInner({ onCanvasChange, onSourceCanvasChange }: OntologyC
         onPaneContextMenu={onPaneContextMenu}
         aria-label="Ontology mapping canvas"
       >
-        <MiniMap />
+        <div className="hidden sm:block">
+          <MiniMap />
+        </div>
         <Controls aria-label="Canvas controls" />
         <Background />
       </ReactFlow>

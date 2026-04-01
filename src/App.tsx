@@ -5,6 +5,7 @@ import { SourceSelector } from './components/layout/SourceSelector'
 import { RightPanel } from './components/layout/RightPanel'
 import { OntologyCanvas } from './components/canvas/OntologyCanvas'
 import { ConfirmDialog } from './components/ui/confirm-dialog'
+import { Toaster } from './components/ui/sonner'
 import { useOntologyStore, SEED_TURTLE } from './store/ontologyStore'
 import { useMappingStore } from './store/mappingStore'
 import { subscribeValidationToMappings } from './store/validationStore'
@@ -84,6 +85,7 @@ function App() {
         }}
       />
       <StatusBar saveStatus={saveStatus} />
+      <Toaster />
     </div>
   )
 }

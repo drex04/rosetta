@@ -144,20 +144,29 @@ export function MappingPanel() {
     updateMapping(selectedMappingId, { sparqlConstruct: newValue })
   }
 
-  function handleRegenerate(overrideKind?: Mapping['kind']) {
-    if (selectedMapping === null) return
-    const freshQuery = generateConstruct({
-      sourceId: selectedMapping.sourceId,
-      sourceClassUri: selectedMapping.sourceClassUri,
-      sourcePropUri: selectedMapping.sourcePropUri,
-      targetClassUri: selectedMapping.targetClassUri,
-      targetPropUri: selectedMapping.targetPropUri,
-      sourceHandle: selectedMapping.sourceHandle,
-      targetHandle: selectedMapping.targetHandle,
-      kind: overrideKind ?? selectedMapping.kind,
-    })
-    updateMapping(selectedMapping.id, { sparqlConstruct: freshQuery })
-  }
+  // Auto-regenerate SPARQL when kind-specific fields change (non-sparql kinds only)
+  useEffect(() => {
+    if (!selectedMapping || selectedMapping.kind === 'sparql') return
+    const timer = setTimeout(() => {
+      const newSparql = generateConstruct(selectedMapping)
+      if (newSparql !== selectedMapping.sparqlConstruct) {
+        updateMapping(selectedMapping.id, { sparqlConstruct: newSparql })
+      }
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [
+    selectedMapping?.kind,
+    selectedMapping?.templatePattern,
+    selectedMapping?.constantValue,
+    selectedMapping?.constantType,
+    selectedMapping?.targetDatatype,
+    selectedMapping?.languageTag,
+    selectedMapping?.parentSourceId,
+    selectedMapping?.parentRef,
+    selectedMapping?.childRef,
+    selectedMapping?.sourcePropUri,
+    selectedMapping?.targetPropUri,
+  ])
 
   function reorderGroupMember(
     groupId: string,
@@ -412,15 +421,6 @@ export function MappingPanel() {
                 </span>
               ) : null}
             </div>
-            {!isGroupSelected && (
-              <button
-                type="button"
-                onClick={() => handleRegenerate()}
-                className="text-xs text-muted-foreground hover:text-foreground transition-colors border border-border rounded px-2 py-0.5"
-              >
-                Regenerate
-              </button>
-            )}
           </div>
 
           {/* Kind picker — only for individual mappings */}
@@ -440,7 +440,6 @@ export function MappingPanel() {
                   onChange={(e) => {
                     const newKind = e.target.value as Mapping['kind']
                     updateMapping(selectedMapping.id, { kind: newKind })
-                    handleRegenerate(newKind)
                   }}
                   className="text-xs border border-border rounded px-1.5 py-0.5 bg-background"
                 >
@@ -458,16 +457,22 @@ export function MappingPanel() {
               {['template', 'constant', 'typecast', 'language', 'join'].includes(selectedMapping.kind) && (
                 <div className="shrink-0 flex flex-col gap-1.5 px-3 py-2 border-b border-border bg-muted/5">
                   {selectedMapping.kind === 'template' && (
-                    <div className="flex items-center gap-2">
-                      <label className="text-xs text-muted-foreground w-20 shrink-0">Pattern</label>
-                      <input
-                        className="text-xs border border-border rounded px-1.5 py-0.5 bg-background flex-1 min-w-0"
-                        value={selectedMapping.templatePattern ?? ''}
-                        onChange={(e) =>
-                          updateMapping(selectedMapping.id, { templatePattern: e.target.value })
-                        }
-                        placeholder='"{prop1} {prop2}"'
-                      />
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex gap-4 text-[11px] text-muted-foreground font-mono">
+                        <span>{'{'}prop1{'}'} = {localName(selectedMapping.sourcePropUri)}</span>
+                        <span>{'{'}prop2{'}'} = {localName(selectedMapping.targetPropUri)}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <label className="text-xs text-muted-foreground w-20 shrink-0">Pattern</label>
+                        <input
+                          className="text-xs border border-border rounded px-1.5 py-0.5 bg-background flex-1 min-w-0"
+                          value={selectedMapping.templatePattern ?? ''}
+                          onChange={(e) =>
+                            updateMapping(selectedMapping.id, { templatePattern: e.target.value })
+                          }
+                          placeholder='"{prop1} {prop2}"'
+                        />
+                      </div>
                     </div>
                   )}
                   {selectedMapping.kind === 'constant' && (

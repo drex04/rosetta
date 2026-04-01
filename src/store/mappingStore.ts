@@ -42,6 +42,15 @@ interface MappingState {
   /** Reset all mapping state to empty. */
   reset: () => void
 
+  /**
+   * Remove all mappings whose sourcePropUri or targetPropUri is NOT in validPropertyUris.
+   * Saves removed mappings to _undoBuffer. Returns count of removed mappings.
+   */
+  removeInvalidMappings: (validPropertyUris: Set<string>) => number
+
+  /** Re-insert all mappings from _undoBuffer back into the mappings record and clear the buffer. */
+  undoLastRemoval: () => void
+
   // ─── Group actions ──────────────────────────────────────────────────────────
 
   /**
@@ -66,10 +75,16 @@ interface MappingState {
 
 // ─── Store ────────────────────────────────────────────────────────────────────
 
-export const useMappingStore = create<MappingState>((set, get) => ({
+// Internal extended state (not in public interface)
+interface MappingStateInternal extends MappingState {
+  _undoBuffer: Mapping[]
+}
+
+export const useMappingStore = create<MappingStateInternal>((set, get) => ({
   mappings: {},
   selectedMappingId: null,
   groups: {},
+  _undoBuffer: [],
 
   addMapping: (m) => {
     const state = get()
@@ -269,5 +284,46 @@ export const useMappingStore = create<MappingState>((set, get) => ({
     return Object.values(get().mappings)
       .flat()
       .filter((m) => m.groupId === groupId)
+  },
+
+  removeInvalidMappings: (validPropertyUris) => {
+    const state = get()
+    const invalid: Mapping[] = []
+    const updated: Record<string, Mapping[]> = {}
+    for (const [sourceId, list] of Object.entries(state.mappings)) {
+      const kept: Mapping[] = []
+      for (const m of list) {
+        if (!validPropertyUris.has(m.sourcePropUri) || !validPropertyUris.has(m.targetPropUri)) {
+          invalid.push(m)
+        } else {
+          kept.push(m)
+        }
+      }
+      updated[sourceId] = kept
+    }
+    if (invalid.length === 0) return 0
+    const removedIds = new Set(invalid.map((m) => m.id))
+    set((s) => ({
+      mappings: updated,
+      _undoBuffer: invalid,
+      selectedMappingId: s.selectedMappingId !== null && removedIds.has(s.selectedMappingId)
+        ? null
+        : s.selectedMappingId,
+    }))
+    useValidationStore.getState().setStale(true)
+    return invalid.length
+  },
+
+  undoLastRemoval: () => {
+    const { _undoBuffer } = get()
+    if (_undoBuffer.length === 0) return
+    set((s) => {
+      const restored = { ...s.mappings }
+      for (const m of _undoBuffer) {
+        restored[m.sourceId] = [...(restored[m.sourceId] ?? []), m]
+      }
+      return { mappings: restored, _undoBuffer: [] }
+    })
+    useValidationStore.getState().setStale(true)
   },
 }))
