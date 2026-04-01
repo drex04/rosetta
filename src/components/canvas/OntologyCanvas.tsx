@@ -98,7 +98,7 @@ function OntologyCanvasInner({ onCanvasChange, onSourceCanvasChange }: OntologyC
   // ─── UI state ───────────────────────────────────────────────────────────────
   const [canvasMenu, setCanvasMenu] = useState<ContextMenuState | null>(null)
   const [nodeMenu, setNodeMenu] = useState<NodeMenuState | null>(null)
-  const [addPropFor, setAddPropFor] = useState<{ nodeId: string; nodePrefix: string } | null>(null)
+  const [addPropFor, setAddPropFor] = useState<{ nodeId: string; nodePrefix: string; nodeType: 'classNode' | 'sourceNode' } | null>(null)
   const [edgePicker, setEdgePicker] = useState<EdgePickerState | null>(null)
   const [groupPrompt, setGroupPrompt] = useState<GroupPromptState | null>(null)
 
@@ -633,7 +633,7 @@ function OntologyCanvasInner({ onCanvasChange, onSourceCanvasChange }: OntologyC
           nodeLabel={nodeMenu.nodeLabel}
           nodeType={nodeMenu.nodeType}
           hasMappings={nodeHasMappings(nodeMenu.nodeId)}
-          onAddProperty={() => setAddPropFor({ nodeId: nodeMenu.nodeId, nodePrefix: nodeMenu.nodePrefix })}
+          onAddProperty={() => { setAddPropFor({ nodeId: nodeMenu.nodeId, nodePrefix: nodeMenu.nodePrefix, nodeType: nodeMenu.nodeType }); setNodeMenu(null) }}
           onRename={() => handleRename(nodeMenu.nodeId, nodeMenu.nodeType, nodeMenu.nodeLabel)}
           onDelete={() => handleDeleteNode(nodeMenu.nodeId, nodeMenu.nodeType)}
           onClose={() => setNodeMenu(null)}
@@ -641,11 +641,11 @@ function OntologyCanvasInner({ onCanvasChange, onSourceCanvasChange }: OntologyC
       )}
 
       {/* Add property dialog */}
-      {addPropFor && nodeMenu && (
+      {addPropFor && (
         <AddPropertyDialog
           nodePrefix={addPropFor.nodePrefix}
           onAdd={(property) => {
-            handleAddProperty(addPropFor.nodeId, nodeMenu.nodeType, property)
+            handleAddProperty(addPropFor.nodeId, addPropFor.nodeType, property)
             setAddPropFor(null)
           }}
           onClose={() => setAddPropFor(null)}

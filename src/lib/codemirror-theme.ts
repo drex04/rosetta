@@ -31,4 +31,13 @@ export const lightTheme = EditorView.theme({
   '.cm-scroller': {
     overflow: 'auto',
   },
+  '.cm-selectionBackground': {
+    backgroundColor: '#b4d5fe',
+  },
+  '&.cm-focused .cm-selectionBackground': {
+    backgroundColor: '#90c0fc',
+  },
+  '.cm-cursor': {
+    borderLeftColor: '#000000',
+  },
 })
