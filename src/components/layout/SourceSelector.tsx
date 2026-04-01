@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
+import { PlusIcon } from '@phosphor-icons/react'
 import { useSourcesStore, generateSourceId } from '@/store/sourcesStore'
-import { useValidationStore } from '@/store/validationStore'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 
 interface DeleteTarget {
@@ -15,9 +15,6 @@ export function SourceSelector() {
   const removeSource = useSourcesStore((s) => s.removeSource)
   const setActiveSourceId = useSourcesStore((s) => s.setActiveSourceId)
   const updateSource = useSourcesStore((s) => s.updateSource)
-
-  const validationResults = useValidationStore((s) => s.results)
-  const validationLastRun = useValidationStore((s) => s.lastRun)
 
   // Inline edit state
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -115,12 +112,12 @@ export function SourceSelector() {
   return (
     <>
       <div
-        className="h-9 flex items-center px-3 gap-1.5 border-b border-border bg-muted/40 shrink-0 overflow-x-auto"
+        className="h-9 flex items-center px-3 gap-1.5 border-b border-border bg-background shrink-0 overflow-x-auto"
         role="navigation"
         aria-label="Source selector"
       >
         {sources.length === 0 && (
-          <span className="text-xs text-muted-foreground select-none mr-1">
+          <span className="text-xs text-muted-foreground font-medium select-none mr-1">
             No sources yet
           </span>
         )}
@@ -135,7 +132,7 @@ export function SourceSelector() {
               className={[
                 'flex items-center gap-1 h-6 px-2 rounded-full text-xs font-medium select-none shrink-0 transition-colors',
                 isActive
-                  ? 'bg-amber-500 text-white ring-2 ring-amber-400 ring-offset-1'
+                  ? 'bg-primary/10 text-primary ring-2 ring-primary ring-offset-1'
                   : 'bg-muted text-muted-foreground hover:bg-muted/80',
               ].join(' ')}
             >
@@ -144,7 +141,7 @@ export function SourceSelector() {
                   ref={inputRef}
                   className={[
                     'bg-transparent outline-none border-none text-xs font-medium w-20 min-w-0',
-                    isActive ? 'text-white placeholder:text-amber-200' : 'text-foreground',
+                    isActive ? 'text-primary placeholder:text-primary/50' : 'text-foreground',
                   ].join(' ')}
                   value={editValue}
                   onChange={(e) => setEditValue(e.target.value)}
@@ -156,7 +153,7 @@ export function SourceSelector() {
                 <button
                   className={[
                     'bg-transparent border-none p-0 cursor-pointer text-xs font-medium',
-                    isActive ? 'text-white' : 'text-muted-foreground',
+                    isActive ? 'text-primary' : 'text-muted-foreground',
                   ].join(' ')}
                   onClick={() => setActiveSourceId(source.id)}
                   onDoubleClick={() => {
@@ -174,28 +171,11 @@ export function SourceSelector() {
                 </button>
               )}
 
-              {(() => {
-                const sourceValidation = validationResults[source.id]
-                if (validationLastRun === null || sourceValidation === undefined) {
-                  return (
-                    <span className="text-[10px] text-muted-foreground/50" aria-hidden="true">○</span>
-                  )
-                }
-                if (sourceValidation.length === 0) {
-                  return (
-                    <span className="text-[10px] text-green-500" aria-hidden="true">✓</span>
-                  )
-                }
-                return (
-                  <span className="text-[10px] text-amber-500" aria-hidden="true">⚠</span>
-                )
-              })()}
-
               <button
                 className={[
                   'flex items-center justify-center w-3.5 h-3.5 rounded-full text-[10px] leading-none border-none p-0 cursor-pointer transition-colors',
                   isActive
-                    ? 'text-amber-100 hover:text-white hover:bg-amber-600'
+                    ? 'text-primary/60 hover:text-primary hover:bg-primary/20'
                     : 'text-muted-foreground/60 hover:text-foreground hover:bg-border',
                 ].join(' ')}
                 onClick={(e) => {
@@ -212,11 +192,12 @@ export function SourceSelector() {
         })}
 
         <button
-          className="flex items-center gap-1 h-6 px-2 rounded-full bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground text-xs font-medium border-none cursor-pointer transition-colors shrink-0"
           onClick={handleAddSource}
-          aria-label="Add new source"
+          className="flex items-center gap-1 shrink-0 text-xs px-2 py-0.5 rounded border border-dashed border-border text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+          aria-label="Add source"
         >
-          + Add Source
+          <PlusIcon size={12} />
+          Add Source
         </button>
       </div>
 
