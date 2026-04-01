@@ -107,8 +107,29 @@ export function SourcePanel({ onSourceEditorChange, resetSourceSchema }: SourceP
   const turtleViewRef = useRef<EditorView | null>(null)
   const isUpdatingTurtleFromStore = useRef(false)
 
-  // ── Turtle preview open state ─────────────────────────────────────────────────
-  const [showTurtle, setShowTurtle] = useState(true)
+  // ── RDFS pane resize state ────────────────────────────────────────────────────
+  const [rdfsHeight, setRdfsHeight] = useState(200)
+  const isDraggingRdfs = useRef(false)
+  const dragStartY = useRef(0)
+  const dragStartHeight = useRef(0)
+
+  function handleRdfsPointerDown(e: React.PointerEvent) {
+    isDraggingRdfs.current = true
+    dragStartY.current = e.clientY
+    dragStartHeight.current = rdfsHeight
+    e.currentTarget.setPointerCapture(e.pointerId)
+  }
+  function handleRdfsPointerMove(e: React.PointerEvent) {
+    if (!isDraggingRdfs.current) return
+    const delta = dragStartY.current - e.clientY
+    setRdfsHeight(Math.max(80, Math.min(600, dragStartHeight.current + delta)))
+  }
+  function handleRdfsPointerUp() {
+    isDraggingRdfs.current = false
+  }
+
+  // ── RDFS pane show/collapse state ─────────────────────────────────────────────
+  const [showRdfs, setShowRdfs] = useState(true)
 
   // ── Current dataFormat (tracked locally for editor remount key) ───────────────
   const [dataFormat, setDataFormat] = useState<'json' | 'xml'>(source?.dataFormat ?? 'json')
@@ -293,7 +314,7 @@ export function SourcePanel({ onSourceEditorChange, resetSourceSchema }: SourceP
 
   // ── Mount Turtle editor (editable when onSourceEditorChange provided) ────────
   useEffect(() => {
-    if (!showTurtle) return
+    if (!showRdfs) return
     if (turtleContainerRef.current === null) return
 
     const isEditable = onSourceEditorChange !== undefined
@@ -325,7 +346,7 @@ export function SourcePanel({ onSourceEditorChange, resetSourceSchema }: SourceP
       view.destroy()
       turtleViewRef.current = null
     }
-  }, [showTurtle, source?.id])  // eslint-disable-line react-hooks/exhaustive-deps
+  }, [showRdfs, source?.id])  // eslint-disable-line react-hooks/exhaustive-deps
   // Re-mount turtle editor when section is opened or source switches
 
   // ── Update Turtle editor when lastTurtle changes ──────────────────────────────
@@ -346,7 +367,11 @@ export function SourcePanel({ onSourceEditorChange, resetSourceSchema }: SourceP
   if (!source) {
     return (
       <div className="flex items-center justify-center h-full p-6 text-center">
-        <p className="text-sm text-muted-foreground">Add a source above to get started</p>
+        <div className="flex flex-col gap-1.5">
+          <p className="text-sm font-medium">Add a source</p>
+          <p className="text-xs text-muted-foreground">Map fields to ontology</p>
+          <p className="text-xs text-muted-foreground">Validate with SHACL</p>
+        </div>
       </div>
     )
   }
@@ -393,17 +418,6 @@ export function SourcePanel({ onSourceEditorChange, resetSourceSchema }: SourceP
           {dataFormat.toUpperCase()}
         </span>
         <div className="flex items-center gap-1">
-          {resetSourceSchema !== undefined && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={resetSourceSchema}
-              title="Reset RDFS schema from source data"
-            >
-              <ArrowCounterClockwiseIcon size={14} />
-              <span className="ml-1">Reset Schema</span>
-            </Button>
-          )}
           <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
             <UploadSimpleIcon size={14} />
             <span className="ml-1">Upload File</span>
@@ -465,22 +479,55 @@ export function SourcePanel({ onSourceEditorChange, resetSourceSchema }: SourceP
         aria-label={`${dataFormat.toUpperCase()} source editor`}
       />
 
-      {/* Collapsible Turtle preview */}
-      <div className="shrink-0 border-t border-border">
-        <button
-          className="w-full flex items-center justify-between px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-muted/40 transition-colors"
-          onClick={() => setShowTurtle((v) => !v)}
-          aria-expanded={showTurtle}
-          aria-controls="turtle-preview"
-        >
-          <span>{onSourceEditorChange !== undefined ? 'RDFS Schema (editable)' : 'Generated RDFS'}</span>
-          <span className="text-[10px]">{showTurtle ? '▲' : '▼'}</span>
-        </button>
-        {showTurtle && (
+      {/* Drag handle — drag up to grow RDFS pane */}
+      <div
+        className="shrink-0 h-1 cursor-row-resize bg-border hover:bg-primary/40 transition-colors"
+        onPointerDown={handleRdfsPointerDown}
+        onPointerMove={handleRdfsPointerMove}
+        onPointerUp={handleRdfsPointerUp}
+        aria-label="Resize RDFS pane"
+      />
+
+      {/* RDFS pane */}
+      <div
+        className="shrink-0 flex flex-col border-t border-border overflow-hidden"
+        style={{ height: rdfsHeight }}
+      >
+        {/* RDFS pane header */}
+        <div className="shrink-0 flex items-center px-3 py-1.5 border-b border-border bg-muted/10">
+          <span className="text-xs font-medium text-muted-foreground">
+            {onSourceEditorChange !== undefined ? 'RDFS Schema (editable)' : 'RDFS Schema'}
+          </span>
+          <div className="flex-1" />
+          {resetSourceSchema !== undefined && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={resetSourceSchema}
+              title="Reset RDFS schema from source data"
+              className="h-6 px-1.5 text-xs"
+            >
+              <ArrowCounterClockwiseIcon size={12} />
+              <span className="ml-1">Reset Schema</span>
+            </Button>
+          )}
+          <button
+            className="ml-1 p-1 rounded text-muted-foreground hover:bg-muted/40 transition-colors text-[10px]"
+            onClick={() => setShowRdfs((v) => !v)}
+            aria-expanded={showRdfs}
+            aria-controls="turtle-preview"
+            aria-label={showRdfs ? 'Collapse RDFS pane' : 'Expand RDFS pane'}
+          >
+            {showRdfs ? '▼' : '▲'}
+          </button>
+        </div>
+
+        {/* RDFS editor */}
+        {showRdfs && (
           <div
             id="turtle-preview"
             ref={turtleContainerRef}
-            className="h-48 overflow-hidden border-t border-border"
+            className="flex-1 overflow-hidden"
             aria-label="Generated Turtle preview"
           />
         )}
