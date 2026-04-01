@@ -1,7 +1,7 @@
 import * as N3 from 'n3'
 import type { Source } from '@/store/sourcesStore'
 import type { Mapping, OntologyNode } from '@/types/index'
-import { jsonToInstances } from './shacl/instanceGenerator'
+import { sourceToInstances } from './shacl/instanceGenerator'
 import { generateConstruct } from './sparql'
 
 // ─── Lazy Comunica engine ─────────────────────────────────────────────────────
@@ -86,7 +86,7 @@ export async function executeAllConstructs(
     // Build instance store from source JSON
     let instanceStore: N3.Store
     try {
-      instanceStore = jsonToInstances(source.rawData, source.schemaNodes)
+      instanceStore = sourceToInstances(source)
       console.debug(`Source "${source.name}": instance store has ${instanceStore.size} quads, prefix="${sourcePrefix}"`)
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Unknown error'

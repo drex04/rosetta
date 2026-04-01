@@ -150,6 +150,10 @@ export function MappingPanel() {
   }
 
   // Auto-regenerate SPARQL when kind-specific fields change (non-sparql kinds only)
+  // Intentional: selectedMapping is omitted as a whole — it is a derived .find() value that
+  // gets a new reference on every render. Listing only the specific fields that drive SPARQL
+  // generation prevents spurious re-runs while still catching every meaningful change.
+  // updateMapping is a stable Zustand action and is safe to include.
   useEffect(() => {
     if (!selectedMapping || selectedMapping.kind === 'sparql') return
     const timer = setTimeout(() => {
@@ -159,7 +163,9 @@ export function MappingPanel() {
       }
     }, 300)
     return () => clearTimeout(timer)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    updateMapping,
     selectedMapping?.kind,
     selectedMapping?.templatePattern,
     selectedMapping?.constantValue,

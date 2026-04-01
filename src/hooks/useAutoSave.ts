@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { get, set } from 'idb-keyval'
-import { useOntologyStore } from '@/store/ontologyStore'
+import { useOntologyStore, SEED_TURTLE } from '@/store/ontologyStore'
 import { useSourcesStore, migrateSource } from '@/store/sourcesStore'
 import { useMappingStore } from '@/store/mappingStore'
 import { parseTurtle } from '@/lib/rdf'
@@ -55,11 +55,21 @@ function isValidGroups(v: unknown): v is Record<string, MappingGroup[]> {
 export function useAutoSave() {
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Guard: block autosave writes until hydration from IDB completes to prevent
+  // seed state from being flushed before the user's saved project is restored.
+  const hydratedRef = useRef(false)
 
   // Load on mount ──────────────────────────────────────────────────────────────
   useEffect(() => {
-    void get<ProjectFile>(IDB_KEY).then(saved => {
-      if (!saved) return
+    void get<ProjectFile>(IDB_KEY).then(async saved => {
+      if (!saved) {
+        // No saved project — load the seed ontology as the starting state.
+        // Await completion so hydratedRef is only set after seed state is in the store,
+        // preventing a race where a subsequent store change saves stale seed data.
+        await useOntologyStore.getState().loadTurtle(SEED_TURTLE)
+        hydratedRef.current = true
+        return
+      }
       try {
         const store = useOntologyStore.getState()
         void parseTurtle(saved.ontology.turtleSource).then(({ nodes, edges }) => {
@@ -104,6 +114,8 @@ export function useAutoSave() {
       } else {
         console.warn('[useAutoSave] Skipping malformed mappings from IDB')
       }
+
+      hydratedRef.current = true
     })
   }, [])
 
@@ -118,6 +130,7 @@ export function useAutoSave() {
 
   // Shared debounced IDB write ─────────────────────────────────────────────────
   function scheduleSave() {
+    if (!hydratedRef.current) return
     if (debounceTimer.current) clearTimeout(debounceTimer.current)
     setSaveStatus('saving')
     debounceTimer.current = setTimeout(() => {

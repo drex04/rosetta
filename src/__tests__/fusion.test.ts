@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import * as N3 from 'n3'
 import { executeAllConstructs } from '../lib/fusion'
 import { compactToJsonLd } from '../lib/jsonldFramer'
-import type { Mapping, SourceNode } from '../types/index'
+import type { Mapping, SourceNodeData } from '../types/index'
 
 // Mock Comunica — avoid loading the ~4MB bundle in tests
 // Use a real class so `new QueryEngine()` works across all tests
@@ -51,7 +51,7 @@ const baseMapping: Mapping = {
   targetHandle: '',
 }
 
-const baseSchemaNode: SourceNode = {
+const baseSchemaNode: SourceNodeData = {
   id: 'sn1',
   type: 'sourceNode',
   position: { x: 0, y: 0 },
@@ -104,6 +104,25 @@ describe('executeAllConstructs', () => {
 
     expect(result.warnings).toBeDefined()
     expect(Array.isArray(result.warnings)).toBe(true)
+  })
+
+  it('Test 3a: XML source participates in fusion (dataFormat xml)', async () => {
+    const xmlSource = {
+      ...baseSource,
+      id: 's1',
+      rawData: '<tracks><track><speed>5.5</speed></track></tracks>',
+      dataFormat: 'xml' as const,
+    }
+    const result = await executeAllConstructs(
+      [xmlSource],
+      { s1: [baseMapping] },
+      [],
+    )
+    // Mock Comunica returns quads regardless of instance store content;
+    // the key assertion is that the pipeline runs without error for an XML source.
+    expect(result).toBeDefined()
+    expect(result.sources.length).toBe(1)
+    expect(result.warnings.filter((w) => w.includes('failed to parse'))).toHaveLength(0)
   })
 
   it('Test 3b: handles source with invalid JSON without throwing', async () => {

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Handle, Position } from '@xyflow/react'
 import type { NodeProps } from '@xyflow/react'
 import { CirclesThreeIcon } from '@phosphor-icons/react'
-import type { SourceNode as SourceNodeType } from '@/types/index'
+import type { SourceNodeData as SourceNodeType } from '@/types/index'
 import { prefixFromUri, shortenUri, shortenRange } from '@/lib/rdf'
 import { useValidationStore } from '@/store/validationStore'
 
@@ -18,13 +18,15 @@ export function SourceNode({ id, data }: NodeProps<SourceNodeType>) {
   const [headerError, setHeaderError] = useState('')
 
   // Programmatic entry from canvas double-click or context menu Rename.
-  // Intentional set-state-in-effect: imperative trigger injected by OntologyCanvas.
+  // Intentional: sync draft only when editTrigger fires, not on every label/uri change —
+  // adding data.label/data.uri as deps would overwrite in-progress edits on external renames.
   useEffect(() => {
     if (!data.editTrigger) return
-    setDraftLabel(data.label)       // eslint-disable-line react-hooks/set-state-in-effect
+    setDraftLabel(data.label)
     setDraftUri(data.uri)
     setHeaderError('')
     setEditingHeader(true)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data.editTrigger])
 
   const commitHeader = () => {

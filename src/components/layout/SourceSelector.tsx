@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { PlusIcon } from '@phosphor-icons/react'
 import { useSourcesStore, generateSourceId } from '@/store/sourcesStore'
+import { useMappingStore } from '@/store/mappingStore'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 
 interface DeleteTarget {
@@ -14,6 +15,7 @@ export function SourceSelector() {
   const addSource = useSourcesStore((s) => s.addSource)
   const removeSource = useSourcesStore((s) => s.removeSource)
   const setActiveSourceId = useSourcesStore((s) => s.setActiveSourceId)
+  const removeMappingsForSource = useMappingStore((s) => s.removeMappingsForSource)
   const updateSource = useSourcesStore((s) => s.updateSource)
 
   // Inline edit state
@@ -75,12 +77,14 @@ export function SourceSelector() {
       // RD-13: non-empty rawData → show confirmation dialog
       setDeleteTarget({ id, name })
     } else {
+      removeMappingsForSource(id)
       removeSource(id)
     }
   }
 
   function confirmDelete() {
     if (deleteTarget) {
+      removeMappingsForSource(deleteTarget.id)
       removeSource(deleteTarget.id)
       setDeleteTarget(null)
     }

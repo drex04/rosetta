@@ -68,11 +68,17 @@ describe('useAutoSave', () => {
   it('auto-save: writes to IDB after 500ms debounce when store changes', async () => {
     mockGet.mockResolvedValue(undefined)
     mockSet.mockResolvedValue(undefined)
+    mockParseTurtle.mockResolvedValue({ nodes: [], edges: [] })
 
     const { useAutoSave } = await import('../hooks/useAutoSave')
     renderHook(() => useAutoSave())
 
-    // Trigger a state change
+    // Flush pending microtasks: IDB get → parseTurtle → hydratedRef = true
+    await act(async () => {
+      await vi.runAllTimersAsync()
+    })
+
+    // Trigger a state change after hydration so the save guard allows it
     act(() => {
       useOntologyStore.getState().setTurtleSource(MOCK_TURTLE)
     })
@@ -147,11 +153,17 @@ describe('useAutoSave', () => {
   it('IDB write failure: saveStatus becomes error when set rejects', async () => {
     mockGet.mockResolvedValue(undefined)
     mockSet.mockRejectedValue(new Error('QuotaExceededError'))
+    mockParseTurtle.mockResolvedValue({ nodes: [], edges: [] })
 
     const { useAutoSave } = await import('../hooks/useAutoSave')
     const { result } = renderHook(() => useAutoSave())
 
-    // Trigger a state change
+    // Flush pending microtasks: IDB get → parseTurtle → hydratedRef = true
+    await act(async () => {
+      await vi.runAllTimersAsync()
+    })
+
+    // Trigger a state change after hydration so the save guard allows it
     act(() => {
       useOntologyStore.getState().setTurtleSource(MOCK_TURTLE)
     })

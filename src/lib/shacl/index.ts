@@ -4,7 +4,7 @@ import type { OntologyNode } from '../../types'
 import type { Mapping } from '../../types'
 import type { Source } from '../../store/sourcesStore'
 import { generateShapes } from './shapesGenerator'
-import { jsonToInstances } from './instanceGenerator'
+import { sourceToInstances } from './instanceGenerator'
 import { executeConstruct } from './constructExecutor'
 import { validateWithShacl, type ViolationRecord } from './validator'
 
@@ -16,7 +16,7 @@ export async function validateSource(
   if (source.schemaNodes.length === 0) return []
 
   const shapesStore = generateShapes(ontologyNodes)
-  const instanceStore = jsonToInstances(source.rawData, source.schemaNodes)
+  const instanceStore = sourceToInstances(source)
   const dataStore = executeConstruct(instanceStore, mappings)
   const violations = await validateWithShacl(dataStore, shapesStore)
 
