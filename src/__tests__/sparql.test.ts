@@ -1,5 +1,4 @@
 import { describe, it, expect } from 'vitest'
-import * as N3 from 'n3'
 import { generateConstruct } from '@/lib/sparql'
 import { executeAllConstructs } from '@/lib/fusion'
 import type { Source } from '@/store/sourcesStore'

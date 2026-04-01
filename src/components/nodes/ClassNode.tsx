@@ -21,14 +21,15 @@ export function ClassNode({ id, data }: NodeProps<OntologyNode>) {
   const [propError, setPropError] = useState('')
 
   // ── editTrigger effect — programmatic entry from canvas double-click / context menu ──
-  // Intentional set-state-in-effect: imperative "start edit" signal from OntologyCanvas.
-  // The double-render is benign — this is the correct pattern for an injected trigger.
+  // Intentional: sync draft only when editTrigger fires, not on every label/uri change —
+  // adding data.label/data.uri as deps would overwrite in-progress edits on external renames.
   useEffect(() => {
     if (!data.editTrigger) return
-    setDraftLabel(data.label)       // eslint-disable-line react-hooks/set-state-in-effect
+    setDraftLabel(data.label)
     setDraftUri(data.uri)
     setHeaderError('')
     setEditingHeader(true)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data.editTrigger])
 
   // ── commitHeader ──────────────────────────────────────────────────────────

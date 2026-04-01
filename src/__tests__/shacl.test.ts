@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest'
 import * as N3 from 'n3'
 import { generateShapes } from '../lib/shacl/shapesGenerator'
-import { jsonToInstances } from '../lib/shacl/instanceGenerator'
+import { jsonToInstances, xmlToInstances } from '../lib/shacl/instanceGenerator'
 import { executeConstruct } from '../lib/shacl/constructExecutor'
 import { validateSource } from '../lib/shacl/index'
 import type { ViolationRecord } from '../lib/shacl/validator'
-import type { OntologyNode, SourceNode, Mapping, OntologyEdge } from '../types'
+import type { OntologyNode, SourceNodeData, Mapping, OntologyEdge } from '../types'
 import type { Source } from '../store/sourcesStore'
 
 const RDF_TYPE = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'
@@ -47,23 +47,23 @@ describe('generateShapes', () => {
 describe('jsonToInstances', () => {
   const URI_BASE = 'http://src_test_#'
 
-  function makeSourceNode(prefix: string): SourceNode {
+  function makeSourceNodeData(prefix: string): SourceNodeData {
     return {
       id: 'n1',
       type: 'sourceNode',
       position: { x: 0, y: 0 },
       data: { uri: prefix + 'Root', label: 'Root', prefix, properties: [] },
-    } as SourceNode
+    } as SourceNodeData
   }
 
   it('produces rdf:type triple for nested class', () => {
-    const store = jsonToInstances('{"tracks":[{"speed":500}]}', [makeSourceNode(URI_BASE)])
+    const store = jsonToInstances('{"tracks":[{"speed":500}]}', [makeSourceNodeData(URI_BASE)])
     const typeTriples = store.getQuads(null, RDF_TYPE, URI_BASE + 'Tracks', null)
     expect(typeTriples.length).toBeGreaterThan(0)
   })
 
   it('produces typed literal for primitive field', () => {
-    const store = jsonToInstances('{"tracks":[{"speed":500}]}', [makeSourceNode(URI_BASE)])
+    const store = jsonToInstances('{"tracks":[{"speed":500}]}', [makeSourceNodeData(URI_BASE)])
     const speedTriples = store.getQuads(null, URI_BASE + 'speed', null, null)
     expect(speedTriples.length).toBeGreaterThan(0)
     const obj = speedTriples[0]!.object
@@ -72,7 +72,45 @@ describe('jsonToInstances', () => {
   })
 
   it('returns empty store for invalid JSON', () => {
-    const store = jsonToInstances('not json', [makeSourceNode(URI_BASE)])
+    const store = jsonToInstances('not json', [makeSourceNodeData(URI_BASE)])
+    expect(store.size).toBe(0)
+  })
+})
+
+describe('xmlToInstances', () => {
+  const URI_BASE = 'http://xmltest_#'
+
+  function makeSchemaNode(prefix: string): SourceNodeData {
+    return {
+      id: 'xn1',
+      type: 'sourceNode',
+      position: { x: 0, y: 0 },
+      data: { uri: prefix + 'Tracks', label: 'Tracks', prefix, properties: [] },
+    } as SourceNodeData
+  }
+
+  it('produces rdf:type triple for the root element', () => {
+    const xml = '<tracks><track><speed>500</speed></track></tracks>'
+    const store = xmlToInstances(xml, [makeSchemaNode(URI_BASE)])
+    const typeTriples = store.getQuads(null, RDF_TYPE, URI_BASE + 'Tracks', null)
+    expect(typeTriples.length).toBeGreaterThan(0)
+  })
+
+  it('produces leaf element as datatype property', () => {
+    const xml = '<tracks><track><speed>500</speed></track></tracks>'
+    const store = xmlToInstances(xml, [makeSchemaNode(URI_BASE)])
+    const speedTriples = store.getQuads(null, URI_BASE + 'speed', null, null)
+    expect(speedTriples.length).toBeGreaterThan(0)
+    expect(speedTriples[0]!.object.termType).toBe('Literal')
+  })
+
+  it('returns empty store for invalid XML', () => {
+    const store = xmlToInstances('<unclosed', [makeSchemaNode(URI_BASE)])
+    expect(store.size).toBe(0)
+  })
+
+  it('returns empty store for empty string', () => {
+    const store = xmlToInstances('', [makeSchemaNode(URI_BASE)])
     expect(store.size).toBe(0)
   })
 })
@@ -99,16 +137,16 @@ function makeMapping(overrides: Partial<Mapping> & { sourceClassUri: string; sou
   } as Mapping
 }
 
-function makeSourceNode(prefix: string): SourceNode {
+function makeSourceNodeData(prefix: string): SourceNodeData {
   return {
     id: 'n1',
     type: 'sourceNode',
     position: { x: 0, y: 0 },
     data: { uri: prefix + 'Root', label: 'Root', prefix, properties: [] },
-  } as SourceNode
+  } as SourceNodeData
 }
 
-function makeSource(overrides: Partial<{ id: string; name: string; order: number; rawData: string; dataFormat: 'json' | 'xml'; schemaNodes: SourceNode[]; schemaEdges: OntologyEdge[] }>): Source {
+function makeSource(overrides: Partial<{ id: string; name: string; order: number; rawData: string; dataFormat: 'json' | 'xml'; schemaNodes: SourceNodeData[]; schemaEdges: OntologyEdge[] }>): Source {
   return {
     id: 'src1',
     name: 'test',
@@ -162,7 +200,7 @@ describe('validateSource', () => {
     const TGT = 'http://tgt_#'
     const source = makeSource({
       rawData: '{"tracks":[{"speed":3.14}]}',
-      schemaNodes: [makeSourceNode(URI_BASE)],
+      schemaNodes: [makeSourceNodeData(URI_BASE)],
     })
     const ontNode = makeOntologyNode(TGT + 'Target', [
       { uri: TGT + 'speed', label: 'speed', range: 'xsd:float', kind: 'datatype' },
@@ -182,7 +220,7 @@ describe('validateSource', () => {
     const TGT = 'http://tgt_#'
     const source = makeSource({
       rawData: '{"tracks":[{"speed":3.14}]}',
-      schemaNodes: [makeSourceNode(URI_BASE)],
+      schemaNodes: [makeSourceNodeData(URI_BASE)],
     })
     const ontNode = makeOntologyNode(TGT + 'Target', [
       { uri: TGT + 'speed', label: 'speed', range: 'xsd:integer', kind: 'datatype' },
@@ -202,7 +240,7 @@ describe('validateSource', () => {
     const TGT = 'http://tgt_#'
     const source = makeSource({
       rawData: '{"tracks":[{"speed":3.14}]}',
-      schemaNodes: [makeSourceNode(URI_BASE)],
+      schemaNodes: [makeSourceNodeData(URI_BASE)],
     })
     const ontNode = makeOntologyNode(TGT + 'Target', [
       { uri: TGT + 'speed', label: 'speed', range: 'xsd:integer', kind: 'datatype' },
@@ -222,7 +260,7 @@ describe('validateSource', () => {
     const TGT = 'http://tgt_#'
     const source = makeSource({
       rawData: '{"tracks":[{"speed":3.14}]}',
-      schemaNodes: [makeSourceNode(URI_BASE)],
+      schemaNodes: [makeSourceNodeData(URI_BASE)],
     })
     const ontNode = makeOntologyNode(TGT + 'Target', [
       { uri: TGT + 'speed', label: 'speed', range: 'xsd:integer', kind: 'datatype' },

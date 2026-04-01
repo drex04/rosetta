@@ -7,7 +7,7 @@ import { RightPanel } from './components/layout/RightPanel'
 import { OntologyCanvas } from './components/canvas/OntologyCanvas'
 import { ConfirmDialog } from './components/ui/confirm-dialog'
 import { Toaster } from './components/ui/sonner'
-import { useOntologyStore, SEED_TURTLE } from './store/ontologyStore'
+import { useOntologyStore } from './store/ontologyStore'
 import { useMappingStore } from './store/mappingStore'
 import { subscribeValidationToMappings } from './store/validationStore'
 import { useOntologySync } from './hooks/useOntologySync'
@@ -18,15 +18,10 @@ import type { OntologyNode, OntologyEdge } from './types/index'
 
 function App() {
   useInvalidateMappings()
-  const loadTurtle = useOntologyStore((s) => s.loadTurtle)
   const { onEditorChange, onCanvasChange, hasPendingEdits, isCanvasSyncPending } = useOntologySync()
   const { onSourceEditorChange, onSourceCanvasChange, resetSourceSchema } = useSourceSync()
   const { saveStatus } = useAutoSave()
   const [pendingSync, setPendingSync] = useState<{ nodes: OntologyNode[]; edges: OntologyEdge[] } | null>(null)
-
-  useEffect(() => {
-    void loadTurtle(SEED_TURTLE)
-  }, [loadTurtle])
 
   useEffect(() => {
     const unsub = subscribeValidationToMappings()
