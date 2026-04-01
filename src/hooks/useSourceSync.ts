@@ -117,8 +117,7 @@ export function useSourceSync() {
 
     try {
       isUpdatingFromCanvas.current = true
-      const uriPrefix = currentSource.name
-      const turtle = await sourceCanvasToTurtle(nodes, edges, uriPrefix)
+      const turtle = await sourceCanvasToTurtle(nodes, edges)
       useSourcesStore.getState().updateSource(currentSourceId, {
         turtleSource: turtle,
         parseError: null,
