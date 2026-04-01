@@ -144,15 +144,53 @@ describe('generateConstruct — new kinds', () => {
     expect(result).toContain('"fr"')
   })
 
-  it('template kind: includes template comment and BIND with STR', () => {
+  it('template kind: includes template comment and BIND with STR (legacy — no templatePattern)', () => {
     const m = {
       ...base,
       kind: 'template' as const,
-      templatePattern: '{first} {last}',
     }
     const result = generateConstruct(m)
     expect(result).toContain('# template:')
-    expect(result).toContain('BIND(STR(?raw) AS ?val)')
+  })
+
+  it('template kind: expands {fieldname} placeholders from templatePattern', () => {
+    const m: Omit<import('@/types').Mapping, 'id' | 'sparqlConstruct'> = {
+      sourceId: 'src-1',
+      sourceClassUri: 'http://example.org/source#Person',
+      sourcePropUri: 'http://example.org/source#firstName',
+      sourceHandle: 'prop_firstName',
+      targetClassUri: 'http://example.org/nato#Operator',
+      targetPropUri: 'http://example.org/nato#fullName',
+      targetHandle: 'target_prop_fullName',
+      kind: 'template' as const,
+      templatePattern: 'Hello {firstName}!',
+    }
+    const result = generateConstruct(m)
+    // Must expand the placeholder — not just output BIND(STR(?raw) AS ?val)
+    expect(result).toContain('CONCAT(')
+    expect(result).toContain('"Hello "')
+    expect(result).toContain('STR(?firstName)')
+    expect(result).toContain('"!"')
+    expect(result).toContain('AS ?val')
+  })
+
+  it('template kind: pattern with only one placeholder produces no CONCAT wrapping', () => {
+    const m: Omit<import('@/types').Mapping, 'id' | 'sparqlConstruct'> = {
+      sourceId: 'src-1',
+      sourceClassUri: 'http://example.org/source#Person',
+      sourcePropUri: 'http://example.org/source#firstName',
+      sourceHandle: 'prop_firstName',
+      targetClassUri: 'http://example.org/nato#Operator',
+      targetPropUri: 'http://example.org/nato#fullName',
+      targetHandle: 'target_prop_fullName',
+      kind: 'template' as const,
+      templatePattern: '{firstName}',
+    }
+    const result = generateConstruct(m)
+    // Single placeholder only — no CONCAT needed, just STR(?)
+    expect(result).toContain('STR(?firstName)')
+    expect(result).toContain('AS ?val')
+    expect(result).not.toContain('CONCAT(')
   })
 
   it('direct kind regression: contains CONSTRUCT and WHERE, no FILTER(false)', () => {
