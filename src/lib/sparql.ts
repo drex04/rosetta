@@ -34,6 +34,46 @@ export function generateConstruct(
   }
 
   if (kind === 'template') {
+    const pattern = m.templatePattern ?? ''
+    // Expand {fieldname} placeholders — each {name} maps to a SPARQL variable ?name
+    // Collect unique field names in order of appearance for the WHERE triple patterns
+    const fieldNames: string[] = []
+    const parts = pattern.split(/(\{[^}]+\})/)
+    const concatArgs: string[] = []
+    for (const part of parts) {
+      const match = part.match(/^\{([^}]+)\}$/)
+      if (match) {
+        const fieldName = match[1]!
+        if (!fieldNames.includes(fieldName)) fieldNames.push(fieldName)
+        concatArgs.push(`STR(?${fieldName})`)
+      } else if (part.length > 0) {
+        concatArgs.push(`"${part}"`)
+      }
+    }
+
+    // If no placeholders or empty pattern, fall back to ?raw
+    if (concatArgs.length === 0 || fieldNames.length === 0) {
+      return [
+        `PREFIX src: <${srcPrefix}>`,
+        `PREFIX tgt: <${tgtPrefix}>`,
+        ``,
+        `CONSTRUCT {`,
+        `  ?target a tgt:${tgtClass} .`,
+        `  ?target tgt:${tgtProp} ?val .`,
+        `}`,
+        `WHERE {`,
+        `  ?source a src:${srcClass} .`,
+        `  ?source src:${srcProp} ?raw .`,
+        `  # template: ${pattern || '{field}'}`,
+        `  BIND(STR(?raw) AS ?val)`,
+        `}`,
+      ].join('\n')
+    }
+
+    const bindExpr =
+      concatArgs.length === 1 ? concatArgs[0]! : `CONCAT(${concatArgs.join(', ')})`
+    const triples = fieldNames.map((f) => `  ?source src:${f} ?${f} .`)
+
     return [
       `PREFIX src: <${srcPrefix}>`,
       `PREFIX tgt: <${tgtPrefix}>`,
@@ -44,9 +84,8 @@ export function generateConstruct(
       `}`,
       `WHERE {`,
       `  ?source a src:${srcClass} .`,
-      `  ?source src:${srcProp} ?raw .`,
-      `  # template: ${m.templatePattern ?? '{field}'}`,
-      `  BIND(STR(?raw) AS ?val)`,
+      ...triples,
+      `  BIND(${bindExpr} AS ?val)`,
       `}`,
     ].join('\n')
   }
@@ -125,7 +164,6 @@ export function generateGroupConstruct(group: MappingGroup, members: Mapping[]):
   const sorted = [...members].sort((a, b) => (a.groupOrder ?? 0) - (b.groupOrder ?? 0))
 
   // Derive prefixes from first member (sorted is non-empty due to early return above)
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const first = sorted[0]!
   const srcPrefix = derivePrefix(first.sourceClassUri)
   const tgtPrefix = derivePrefix(group.targetClassUri)
