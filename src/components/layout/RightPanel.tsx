@@ -1,4 +1,4 @@
-import { useState, useEffect, type MutableRefObject } from 'react'
+import { useState, useEffect, type RefObject } from 'react'
 import { CaretLeftIcon, CaretRightIcon } from '@phosphor-icons/react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { useUiStore } from '@/store/uiStore'
@@ -13,7 +13,7 @@ interface RightPanelProps {
   onEditorChange: (value: string) => void
   onSourceEditorChange?: (turtle: string) => void
   resetSourceSchema?: () => void
-  isCanvasSyncPending?: MutableRefObject<boolean>
+  isCanvasSyncPending?: RefObject<boolean>
 }
 
 export function RightPanel({ onEditorChange, onSourceEditorChange, resetSourceSchema, isCanvasSyncPending }: RightPanelProps) {

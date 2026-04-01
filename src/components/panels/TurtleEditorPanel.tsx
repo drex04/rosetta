@@ -1,4 +1,4 @@
-import { useEffect, useRef, type MutableRefObject } from 'react'
+import { useEffect, useRef, type RefObject } from 'react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { DownloadSimpleIcon } from '@phosphor-icons/react'
@@ -27,7 +27,7 @@ interface TurtleEditorPanelProps {
   parseError?: string | null
   /** Ref set to true during the 100ms canvas→editor debounce window. When true,
    *  user keystrokes are suppressed to prevent overwrite races. */
-  isCanvasSyncPending?: MutableRefObject<boolean>
+  isCanvasSyncPending?: RefObject<boolean>
 }
 
 export function TurtleEditorPanel({ turtleSource, onEditorChange, parseError, isCanvasSyncPending }: TurtleEditorPanelProps) {
