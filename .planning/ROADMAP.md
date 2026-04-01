@@ -40,7 +40,22 @@
 **Requirements:** REQ-58 through REQ-67
 **Exit criteria:** User can upload/paste JSON or XML; source .ttl is editable with live canvas sync; source nodes can be created/deleted/connected on canvas; reset button re-generates schema from raw data; ontology nodes can be created/deleted/connected directly on canvas (context menus + edge drawing); drawing multiple edges to same target auto-groups them with CONCAT/COALESCE/TEMPLATE strategy.
 
-## Phase 9: Onboarding & Demo
+## Phase 9: Bug Fixes & UI/UX Overhaul
+**Goal:** Fix critical bugs (node position jumps, CodeMirror selection, mapping invalidation, Transform & Fuse) and redesign panel UI — tab bar, SOURCE tab layout, button normalization, status indicators, SPARQL error display.
+**Requirements:** REQ-79 through REQ-95
+**Exit criteria:** All 6 bugs fixed and verified; tab bar clearly shows selected state; SOURCE tab has resizable RDFS pane with compact layout; Validate button lives in SHACL tab; MAP tab shows dataTypes; SPARQL errors visible to user; RML/YARRRML previews on OUTPUT tab.
+
+## Phase 10: Canvas Interactions & Panel Integration
+**Goal:** Rich inline editing on canvas nodes/edges/properties, bidirectional canvas↔panel navigation, and mapping edge labels.
+**Requirements:** REQ-96 through REQ-107
+**Exit criteria:** Double-click any node/edge/property to inline-edit; drawing same-type edges creates schema relationships; mapping edges show type labels; clicking canvas elements auto-navigates to relevant panel tab; selecting MAP tab mapping highlights canvas edge.
+
+## Phase 11: SHACL Authoring
+**Goal:** User-authored SHACL shapes with a Turtle editor, example shapes for sample data, and validation against custom shapes.
+**Requirements:** REQ-108 through REQ-110
+**Exit criteria:** SHACL tab has a Turtle editor for shape definitions; example shapes load with sample project; validation runs against user-defined shapes and surfaces results.
+
+## Phase 12: Onboarding & Demo
 **Goal:** Demo-ready product — sample project, guided tour, contextual education, empty states.
 **Requirements:** REQ-68 through REQ-78
 **Exit criteria:** First-time user gets interactive tour; sample NATO project loads with both sources pre-configured; all panels have empty states; About dialog explains the technology.
