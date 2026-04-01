@@ -71,6 +71,8 @@ interface OntologyState {
    *  If patch.uri differs from propertyUri, fires onInvalidateMappings([propertyUri]).
    *  Safe no-op when nodeId or propertyUri does not exist. */
   updateProperty: (nodeId: string, propertyUri: string, patch: Partial<PropertyData>) => void
+  /** Remove the edge with oldId and insert newEdge atomically. No-op if oldId not found. */
+  replaceEdge: (oldId: string, newEdge: OntologyEdge) => void
 }
 
 // ─── Store ────────────────────────────────────────────────────────────────────
@@ -146,6 +148,11 @@ export const useOntologyStore = create<OntologyState>((set, get) => ({
       nodes: s.nodes.map((n) =>
         n.id === nodeId ? { ...n, data: { ...n.data, ...patch } } : n,
       ),
+    })),
+
+  replaceEdge: (oldId, newEdge) =>
+    set((s) => ({
+      edges: [...s.edges.filter((e) => e.id !== oldId), newEdge],
     })),
 
   updateProperty: (nodeId, propertyUri, patch) => {

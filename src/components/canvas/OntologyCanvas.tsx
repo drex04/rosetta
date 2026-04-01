@@ -42,7 +42,9 @@ interface NodeMenuState {
 interface EdgePickerState {
   x: number
   y: number
-  connection: Connection
+  connection: Connection | null  // null in edit mode
+  mode: 'create-onto' | 'create-source' | 'edit'
+  edgeId?: string                // set only in edit mode
 }
 
 interface GroupPromptState {
@@ -85,6 +87,7 @@ function OntologyCanvasInner({ onCanvasChange, onSourceCanvasChange }: OntologyC
   const removeOntologyEdge = useOntologyStore((s) => s.removeEdge)
   const updateNode = useOntologyStore((s) => s.updateNode)
   const updateProperty = useOntologyStore((s) => s.updateProperty)
+  const replaceEdge = useOntologyStore((s) => s.replaceEdge)
   const updateSource = useSourcesStore((s) => s.updateSource)
   const updateSchemaNode = useSourcesStore((s) => s.updateSchemaNode)
   const addMapping = useMappingStore((s) => s.addMapping)
@@ -278,28 +281,13 @@ function OntologyCanvasInner({ onCanvasChange, onSourceCanvasChange }: OntologyC
     // onto→onto: show edge type picker
     if (srcIsOnto && tgtIsOnto) {
       // Use a simple confirm-style choice via a small popover state
-      setEdgePicker({ x: 200, y: 200, connection })
+      setEdgePicker({ x: 200, y: 200, connection, mode: 'create-onto' })
       return
     }
 
-    // source→source: create a subclass-style edge in the active source's schemaEdges
+    // source→source: show edge type picker (REQ-100)
     if (srcIsSource && tgtIsSource) {
-      const { activeSourceId } = useSourcesStore.getState()
-      if (!activeSourceId) return
-      const activeSrc = sources.find((s) => s.id === activeSourceId)
-      if (!activeSrc) return
-      const newEdge: OntologyEdge = {
-        id: `source_edge_${Date.now()}`,
-        source,
-        target,
-        sourceHandle,
-        targetHandle,
-        type: 'subclassEdge',
-        data: { predicate: 'rdfs:subClassOf' },
-      }
-      updateSource(activeSourceId, {
-        schemaEdges: [...activeSrc.schemaEdges, newEdge],
-      })
+      setEdgePicker({ x: 200, y: 200, connection, mode: 'create-source' })
       return
     }
 
@@ -578,35 +566,106 @@ function OntologyCanvasInner({ onCanvasChange, onSourceCanvasChange }: OntologyC
     return false
   }, [mappings])
 
-  // ─── Create ontology edge from picker ─────────────────────────────────────────
-  const createOntologyEdge = useCallback((type: 'subclassEdge' | 'objectPropertyEdge') => {
-    if (!edgePicker) return
-    const { connection } = edgePicker
-    const { source, target, sourceHandle, targetHandle } = connection
+  // ─── Unified edge picker handler (create-onto, create-source, edit) ───────────
+  const handleEdgePickerSelect = useCallback(
+    (type: 'subclassEdge' | 'objectPropertyEdge') => {
+      if (!edgePicker) return
+      const { mode, connection, edgeId } = edgePicker
 
-    if (type === 'subclassEdge') {
-      addOntologyEdge({
-        id: `subclass_${Date.now()}`,
-        source: source ?? '',
-        target: target ?? '',
-        sourceHandle: sourceHandle ?? undefined,
-        targetHandle: targetHandle ?? undefined,
+      const buildSubclassEdge = (id: string, conn: { source: string; target: string; sourceHandle?: string | null; targetHandle?: string | null }): OntologyEdge => ({
+        id,
+        source: conn.source,
+        target: conn.target,
+        sourceHandle: conn.sourceHandle ?? undefined,
+        targetHandle: conn.targetHandle ?? undefined,
         type: 'subclassEdge',
         data: { predicate: 'rdfs:subClassOf' },
       })
-    } else {
-      addOntologyEdge({
-        id: `objprop_${Date.now()}`,
-        source: source ?? '',
-        target: target ?? '',
-        sourceHandle: sourceHandle ?? undefined,
-        targetHandle: targetHandle ?? undefined,
+
+      const buildObjectPropEdge = (id: string, conn: { source: string; target: string; sourceHandle?: string | null; targetHandle?: string | null }): OntologyEdge => ({
+        id,
+        source: conn.source,
+        target: conn.target,
+        sourceHandle: conn.sourceHandle ?? undefined,
+        targetHandle: conn.targetHandle ?? undefined,
         type: 'objectPropertyEdge',
         data: { uri: `onto:relatedTo_${Date.now()}`, label: 'relatedTo', predicate: 'owl:ObjectProperty' },
       })
-    }
-    setEdgePicker(null)
-  }, [edgePicker, addOntologyEdge])
+
+      if (mode === 'create-onto' && connection) {
+        const newEdge = type === 'subclassEdge'
+          ? buildSubclassEdge(`subclass_${Date.now()}`, connection)
+          : buildObjectPropEdge(`objprop_${Date.now()}`, connection)
+        addOntologyEdge(newEdge)
+        // Fix pre-existing sync bug — trigger canvasToTurtle
+        const { nodes: n, edges: e } = useOntologyStore.getState()
+        try { onCanvasChange?.(n, e) } catch { /* toast already handled upstream */ }
+
+      } else if (mode === 'create-source' && connection) {
+        const { activeSourceId, sources } = useSourcesStore.getState()
+        if (!activeSourceId) { setEdgePicker(null); return }
+        const activeSrc = sources.find((s) => s.id === activeSourceId)
+        if (!activeSrc) { setEdgePicker(null); return }
+        const newEdge = type === 'subclassEdge'
+          ? buildSubclassEdge(`source_edge_${Date.now()}`, connection)
+          : buildObjectPropEdge(`source_objprop_${Date.now()}`, connection)
+        updateSource(activeSourceId, { schemaEdges: [...(activeSrc.schemaEdges ?? []), newEdge] })
+        // Sync to source Turtle
+        const updatedSrc = useSourcesStore.getState().sources.find((s) => s.id === activeSourceId)
+        if (updatedSrc) onSourceCanvasChange?.(updatedSrc.schemaNodes, updatedSrc.schemaEdges ?? [])
+
+      } else if (mode === 'edit' && edgeId) {
+        // Find the edge — check ontology store first, then source stores
+        const { edges: ontoEdges } = useOntologyStore.getState()
+        const ontoEdge = ontoEdges.find((e) => e.id === edgeId)
+
+        if (ontoEdge) {
+          const newEdge = type === 'subclassEdge'
+            ? buildSubclassEdge(edgeId, ontoEdge)
+            : buildObjectPropEdge(edgeId, ontoEdge)
+          replaceEdge(edgeId, newEdge)
+          const { nodes: n, edges: e } = useOntologyStore.getState()
+          try { onCanvasChange?.(n, e) } catch { /* toast handled upstream */ }
+        } else {
+          // Check source schema edges
+          const { sources } = useSourcesStore.getState()
+          for (const src of sources) {
+            const srcEdge = src.schemaEdges?.find((e) => e.id === edgeId)
+            if (srcEdge) {
+              const newEdge = type === 'subclassEdge'
+                ? buildSubclassEdge(edgeId, srcEdge)
+                : buildObjectPropEdge(edgeId, srcEdge)
+              updateSource(src.id, {
+                schemaEdges: [...(src.schemaEdges ?? []).filter((e) => e.id !== edgeId), newEdge],
+              })
+              const updatedSrc = useSourcesStore.getState().sources.find((s) => s.id === src.id)
+              if (updatedSrc) onSourceCanvasChange?.(updatedSrc.schemaNodes, updatedSrc.schemaEdges ?? [])
+              break
+            }
+          }
+        }
+      }
+
+      setEdgePicker(null)
+    },
+    [edgePicker, addOntologyEdge, replaceEdge, updateSource, onCanvasChange, onSourceCanvasChange]
+  )
+
+  // ─── Edge double-click → open edge picker in edit mode ──────────────────────
+  const handleEdgeDoubleClick = useCallback(
+    (e: React.MouseEvent, edge: Edge) => {
+      // Only handle schema edges — not mapping edges (those have their own click flow)
+      if (edge.type !== 'subclassEdge' && edge.type !== 'objectPropertyEdge') return
+      setEdgePicker({
+        x: e.clientX,
+        y: e.clientY,
+        connection: null,
+        mode: 'edit',
+        edgeId: edge.id,
+      })
+    },
+    []
+  )
 
   // ─── Edge click → select mapping + switch tab (REQ-103) ──────────────────────
   const handleEdgeClick = useCallback(
@@ -650,6 +709,7 @@ function OntologyCanvasInner({ onCanvasChange, onSourceCanvasChange }: OntologyC
         onEdgesDelete={onEdgesDelete}
         isValidConnection={isValidConnection}
         onEdgeClick={handleEdgeClick}
+        onEdgeDoubleClick={handleEdgeDoubleClick}
         onNodeDoubleClick={handleNodeDoubleClick}
         nodesDraggable={true}
         fitView
@@ -758,16 +818,18 @@ function OntologyCanvasInner({ onCanvasChange, onSourceCanvasChange }: OntologyC
           className="fixed z-50 bg-popover border border-border rounded-lg shadow-xl p-3 flex flex-col gap-1 min-w-[160px]"
           style={{ left: edgePicker.x, top: edgePicker.y }}
         >
-          <p className="text-xs font-semibold text-muted-foreground mb-1 px-1">Edge type</p>
+          <p className="text-xs font-semibold text-muted-foreground mb-1 px-1">
+            {edgePicker.mode === 'edit' ? 'Change edge type' : 'Edge type'}
+          </p>
           <button
             className="text-sm text-left px-2 py-1.5 rounded hover:bg-accent transition-colors"
-            onClick={() => createOntologyEdge('subclassEdge')}
+            onClick={() => handleEdgePickerSelect('subclassEdge')}
           >
             Subclass of
           </button>
           <button
             className="text-sm text-left px-2 py-1.5 rounded hover:bg-accent transition-colors"
-            onClick={() => createOntologyEdge('objectPropertyEdge')}
+            onClick={() => handleEdgePickerSelect('objectPropertyEdge')}
           >
             Object Property
           </button>
