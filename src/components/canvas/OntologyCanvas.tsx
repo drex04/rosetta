@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ReactFlow, ReactFlowProvider, MiniMap, Controls, Background, Panel, applyNodeChanges, useReactFlow } from '@xyflow/react'
 import type { NodeChange, Connection, Edge, Node as RFNode } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
@@ -159,15 +159,35 @@ function OntologyCanvasInner({ onCanvasChange, onSourceCanvasChange }: OntologyC
     }
   }, [])
 
-  // Augment nodes with the onContextMenu and onCommitEdit callbacks
-  const augmentedNodes = nodes.map((n) => ({
-    ...n,
-    data: {
-      ...n.data,
-      onContextMenu: handleNodeContextMenu,
-      onCommitEdit: n.type === 'sourceNode' ? handleCommitSourceEdit : handleCommitOntologyEdit,
-    },
-  }))
+  // ─── onStartEdit — programmatically enters inline edit mode for any node ─────
+  const handleStartEdit = useCallback((nodeId: string) => {
+    const ontNodes = useOntologyStore.getState().nodes
+    if (ontNodes.some((n) => n.id === nodeId)) {
+      setNodes(
+        ontNodes.map((n) =>
+          n.id === nodeId
+            ? { ...n, data: { ...n.data, editTrigger: ((n.data.editTrigger as number) ?? 0) + 1 } }
+            : n,
+        ),
+      )
+      return
+    }
+    const { sources } = useSourcesStore.getState()
+    for (const src of sources) {
+      const srcNode = src.schemaNodes.find((n) => n.id === nodeId)
+      if (srcNode) {
+        updateSource(src.id, {
+          schemaNodes: src.schemaNodes.map((n) =>
+            n.id === nodeId
+              ? { ...n, data: { ...n.data, editTrigger: ((n.data.editTrigger as number) ?? 0) + 1 } }
+              : n,
+          ),
+        })
+        return
+      }
+    }
+  }, [setNodes, updateSource])
+
 
   // ─── onNodesChange ────────────────────────────────────────────────────────────
   const onNodesChange = useCallback(
@@ -356,7 +376,7 @@ function OntologyCanvasInner({ onCanvasChange, onSourceCanvasChange }: OntologyC
         })
       }
     }
-  }, [addMapping, updateSource])
+  }, [addMapping])
 
   // ─── onEdgesDelete ────────────────────────────────────────────────────────────
   const onEdgesDelete = useCallback((deletedEdges: Edge[]) => {
@@ -508,11 +528,11 @@ function OntologyCanvasInner({ onCanvasChange, onSourceCanvasChange }: OntologyC
       try {
         onCanvasChange?.(latestNodes, latestEdges)
       } catch {
-        updateNode(nodeId, preEditNodes.find((n) => n.id === nodeId)?.data ?? {})
+        setNodes(preEditNodes)
         toast.error('Edit failed — Turtle serialization error, changes reverted')
       }
     },
-    [updateNode, updateProperty, onCanvasChange],
+    [setNodes, updateNode, updateProperty, onCanvasChange],
   )
 
   // ─── Commit source edit ────────────────────────────────────────────────────────
@@ -528,6 +548,21 @@ function OntologyCanvasInner({ onCanvasChange, onSourceCanvasChange }: OntologyC
       }
     },
     [updateSchemaNode, onSourceCanvasChange],
+  )
+
+  // ─── Augment nodes with injected callbacks ────────────────────────────────────
+  const augmentedNodes = useMemo(
+    () =>
+      nodes.map((n) => ({
+        ...n,
+        data: {
+          ...n.data,
+          onContextMenu: handleNodeContextMenu,
+          onCommitEdit: n.type === 'sourceNode' ? handleCommitSourceEdit : handleCommitOntologyEdit,
+          onStartEdit: handleStartEdit,
+        },
+      })),
+    [nodes, handleNodeContextMenu, handleCommitSourceEdit, handleCommitOntologyEdit, handleStartEdit],
   )
 
   // ─── Add property to node ──────────────────────────────────────────────────────
@@ -757,14 +792,7 @@ function OntologyCanvasInner({ onCanvasChange, onSourceCanvasChange }: OntologyC
           hasMappings={nodeHasMappings(nodeMenu.nodeId)}
           onAddProperty={() => { setAddPropFor({ nodeId: nodeMenu.nodeId, nodePrefix: nodeMenu.nodePrefix, nodeType: nodeMenu.nodeType }); setNodeMenu(null) }}
           onRename={() => {
-            const nds = useOntologyStore.getState().nodes
-            setNodes(
-              nds.map((n) =>
-                n.id === nodeMenu.nodeId
-                  ? { ...n, data: { ...n.data, editTrigger: ((n.data.editTrigger as number) ?? 0) + 1 } }
-                  : n,
-              ),
-            )
+            handleStartEdit(nodeMenu.nodeId)
             setNodeMenu(null)
           }}
           onDelete={() => handleDeleteNode(nodeMenu.nodeId, nodeMenu.nodeType)}

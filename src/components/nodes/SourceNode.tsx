@@ -17,10 +17,11 @@ export function SourceNode({ id, data }: NodeProps<SourceNodeType>) {
   const [draftUri, setDraftUri] = useState('')
   const [headerError, setHeaderError] = useState('')
 
-  // Programmatic entry from context menu Rename
+  // Programmatic entry from canvas double-click or context menu Rename.
+  // Intentional set-state-in-effect: imperative trigger injected by OntologyCanvas.
   useEffect(() => {
     if (!data.editTrigger) return
-    setDraftLabel(data.label)
+    setDraftLabel(data.label)       // eslint-disable-line react-hooks/set-state-in-effect
     setDraftUri(data.uri)
     setHeaderError('')
     setEditingHeader(true)
