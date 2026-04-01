@@ -151,9 +151,10 @@ export const useOntologyStore = create<OntologyState>((set, get) => ({
     })),
 
   replaceEdge: (oldId, newEdge) =>
-    set((s) => ({
-      edges: [...s.edges.filter((e) => e.id !== oldId), newEdge],
-    })),
+    set((s) => {
+      if (!s.edges.some((e) => e.id === oldId)) return s
+      return { edges: [...s.edges.filter((e) => e.id !== oldId), newEdge] }
+    }),
 
   updateProperty: (nodeId, propertyUri, patch) => {
     const { onInvalidateMappings } = get()

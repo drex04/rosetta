@@ -20,10 +20,12 @@ export function ClassNode({ id, data }: NodeProps<OntologyNode>) {
   const [draftPropType, setDraftPropType] = useState('')
   const [propError, setPropError] = useState('')
 
-  // ── editTrigger effect — programmatic entry from context menu ─────────────
+  // ── editTrigger effect — programmatic entry from canvas double-click / context menu ──
+  // Intentional set-state-in-effect: imperative "start edit" signal from OntologyCanvas.
+  // The double-render is benign — this is the correct pattern for an injected trigger.
   useEffect(() => {
     if (!data.editTrigger) return
-    setDraftLabel(data.label)
+    setDraftLabel(data.label)       // eslint-disable-line react-hooks/set-state-in-effect
     setDraftUri(data.uri)
     setHeaderError('')
     setEditingHeader(true)
