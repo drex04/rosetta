@@ -9,7 +9,7 @@ import type { OntologyNode, OntologyEdge } from '../types/index'
 beforeEach(() => {
   useOntologyStore.setState({ nodes: [], edges: [], turtleSource: '' })
   useSourcesStore.setState({ sources: [], activeSourceId: null })
-  useUiStore.setState({ activeRightTab: 'INPUT' })
+  useUiStore.setState({ activeRightTab: 'SOURCE' })
 })
 
 describe('useOntologyStore', () => {
@@ -106,7 +106,7 @@ describe('useSourcesStore', () => {
 describe('useUiStore', () => {
   it('has correct initial state', () => {
     const state = useUiStore.getState()
-    expect(state.activeRightTab).toBe('INPUT')
+    expect(state.activeRightTab).toBe('SOURCE')
   })
 
   it('setActiveRightTab updates to MAP', () => {
@@ -119,9 +119,9 @@ describe('useUiStore', () => {
     expect(useUiStore.getState().activeRightTab).toBe('OUTPUT')
   })
 
-  it('setActiveRightTab updates back to INPUT', () => {
+  it('setActiveRightTab updates back to SOURCE', () => {
     useUiStore.getState().setActiveRightTab('MAP')
-    useUiStore.getState().setActiveRightTab('INPUT')
-    expect(useUiStore.getState().activeRightTab).toBe('INPUT')
+    useUiStore.getState().setActiveRightTab('SOURCE')
+    expect(useUiStore.getState().activeRightTab).toBe('SOURCE')
   })
 })
