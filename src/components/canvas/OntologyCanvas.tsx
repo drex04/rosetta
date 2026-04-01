@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ReactFlow, ReactFlowProvider, MiniMap, Controls, Background, Panel, applyNodeChanges, useReactFlow } from '@xyflow/react'
-import type { NodeChange, Connection, Edge } from '@xyflow/react'
+import type { NodeChange, Connection, Edge, Node as RFNode } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { useCanvasData } from '../../hooks/useCanvasData'
 import { generateConstruct } from '@/lib/sparql'
 import { useOntologyStore } from '../../store/ontologyStore'
 import { useSourcesStore } from '../../store/sourcesStore'
 import { useMappingStore } from '../../store/mappingStore'
+import { useUiStore } from '../../store/uiStore'
 import { useValidationStore } from '../../store/validationStore'
 import { ClassNode } from '../nodes/ClassNode'
 import { SourceNode as SourceNodeComponent } from '../nodes/SourceNode'
@@ -89,6 +90,8 @@ function OntologyCanvasInner({ onCanvasChange, onSourceCanvasChange }: OntologyC
   const addMapping = useMappingStore((s) => s.addMapping)
   const removeMapping = useMappingStore((s) => s.removeMapping)
   const mappings = useMappingStore((s) => s.mappings)
+  const setSelectedMappingId = useMappingStore((s) => s.setSelectedMappingId)
+  const setActiveRightTab = useUiStore((s) => s.setActiveRightTab)
   const canvasDebounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const sourceCanvasDebounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const rfInstance = useRef<{ fitView: (opts?: { padding?: number; duration?: number }) => void } | null>(null)
@@ -605,6 +608,34 @@ function OntologyCanvasInner({ onCanvasChange, onSourceCanvasChange }: OntologyC
     setEdgePicker(null)
   }, [edgePicker, addOntologyEdge])
 
+  // ─── Edge click → select mapping + switch tab (REQ-103) ──────────────────────
+  const handleEdgeClick = useCallback(
+    (_: React.MouseEvent, edge: Edge) => {
+      if (edge.type === 'mappingEdge') {
+        const mappingId = (edge.data as { mappingId?: string } | undefined)?.mappingId
+        if (mappingId) {
+          setSelectedMappingId(mappingId)
+          setActiveRightTab('MAP')
+        }
+      }
+    },
+    [setSelectedMappingId, setActiveRightTab],
+  )
+
+  // ─── Node double-click → switch panel tab + trigger inline edit ───────────────
+  const handleNodeDoubleClick = useCallback(
+    (_: React.MouseEvent, node: RFNode) => {
+      if (node.type === 'classNode') {
+        setActiveRightTab('ONTOLOGY')
+      } else if (node.type === 'sourceNode') {
+        setActiveRightTab('SOURCE')
+      }
+      const onStartEdit = (node.data as { onStartEdit?: (id: string) => void } | undefined)?.onStartEdit
+      if (typeof onStartEdit === 'function') onStartEdit(node.id)
+    },
+    [setActiveRightTab],
+  )
+
   const activeSourceId = useSourcesStore((s) => s.activeSourceId)
 
   return (
@@ -618,6 +649,8 @@ function OntologyCanvasInner({ onCanvasChange, onSourceCanvasChange }: OntologyC
         onConnect={onConnect}
         onEdgesDelete={onEdgesDelete}
         isValidConnection={isValidConnection}
+        onEdgeClick={handleEdgeClick}
+        onNodeDoubleClick={handleNodeDoubleClick}
         nodesDraggable={true}
         fitView
         onInit={(instance) => { rfInstance.current = instance }}
