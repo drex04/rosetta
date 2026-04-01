@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import * as N3 from 'n3'
 import { executeAllConstructs } from '../lib/fusion'
 import { compactToJsonLd } from '../lib/jsonldFramer'
-import type { Mapping } from '../types/index'
+import type { Mapping, SourceNode } from '../types/index'
 
 // Mock Comunica — avoid loading the ~4MB bundle in tests
 // Use a real class so `new QueryEngine()` works across all tests
@@ -51,12 +51,26 @@ const baseMapping: Mapping = {
   targetHandle: '',
 }
 
+const baseSchemaNode: SourceNode = {
+  id: 'sn1',
+  type: 'sourceNode',
+  position: { x: 0, y: 0 },
+  data: {
+    uri: 'http://src.int/#Track',
+    label: 'Track',
+    prefix: 'http://src.int/#',
+    properties: [
+      { uri: 'http://src.int/#speed', label: 'speed', range: 'xsd:float', kind: 'datatype' },
+    ],
+  },
+}
+
 const baseSource = {
   id: 's1',
   name: 'TestSource',
   rawData: JSON.stringify([{ id: 1, speed: 5.5 }]),
   dataFormat: 'json' as const,
-  schemaNodes: [] as never[],
+  schemaNodes: [baseSchemaNode],
   schemaEdges: [] as never[],
 }
 
