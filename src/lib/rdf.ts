@@ -405,10 +405,13 @@ export function convertToSourceNodes(
   const posById = new Map(existingSourceNodes.map((n) => [n.id, n.position]))
   const posByUri = new Map(existingSourceNodes.map((n) => [n.data.uri, n.position]))
 
-  return ontologyNodes.map((n): SourceNode => {
+  return ontologyNodes.map((n, index): SourceNode => {
+    const posByIndex = existingSourceNodes[index]?.position
+
     const position =
       posById.get(n.id) ??
       posByUri.get(n.data.uri) ??
+      posByIndex ??
       n.position
 
     return {
