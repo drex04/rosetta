@@ -21,7 +21,7 @@ function makeBase(overrides: Partial<Omit<Mapping, 'id'>> = {}): Omit<Mapping, '
 
 // Reset store between tests
 beforeEach(() => {
-  useMappingStore.setState({ mappings: {}, selectedMappingId: null })
+  useMappingStore.setState({ mappings: {}, selectedMappingId: null, groups: {}, _undoStack: [] })
 })
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
@@ -225,6 +225,65 @@ describe('useMappingStore — removeMappingsForSource', () => {
     useMappingStore.getState().addMapping(makeBase({ sourceId: 'src-1' }))
     useMappingStore.getState().removeMappingsForSource('src-unknown')
 
+    expect(useMappingStore.getState().mappings['src-1']).toHaveLength(1)
+  })
+})
+
+describe('useMappingStore — removeInvalidMappings + undoLastRemoval (stack)', () => {
+  it('preserves both batches when removeInvalidMappings fires twice before undo', () => {
+    // Add 3 mappings — we'll invalidate them in two separate batches
+    useMappingStore.getState().addMapping(makeBase({
+      sourcePropUri: 'http://example.org/prop1',
+      targetPropUri: 'http://nato.int/onto#prop1',
+    }))
+    useMappingStore.getState().addMapping(makeBase({
+      sourcePropUri: 'http://example.org/prop2',
+      targetPropUri: 'http://nato.int/onto#prop2',
+    }))
+    useMappingStore.getState().addMapping(makeBase({
+      sourcePropUri: 'http://example.org/prop3',
+      targetPropUri: 'http://nato.int/onto#prop3',
+    }))
+
+    // First invalidation: prop1 and prop2 are valid, prop3 is invalid
+    const validSet1 = new Set([
+      'http://example.org/prop1', 'http://nato.int/onto#prop1',
+      'http://example.org/prop2', 'http://nato.int/onto#prop2',
+    ])
+    const removed1 = useMappingStore.getState().removeInvalidMappings(validSet1)
+    expect(removed1).toBe(1) // prop3 removed
+
+    // Second invalidation: only prop1 is valid now
+    const validSet2 = new Set([
+      'http://example.org/prop1', 'http://nato.int/onto#prop1',
+    ])
+    const removed2 = useMappingStore.getState().removeInvalidMappings(validSet2)
+    expect(removed2).toBe(1) // prop2 removed
+
+    // Only prop1 should remain
+    expect(useMappingStore.getState().mappings['src-1']).toHaveLength(1)
+    expect(useMappingStore.getState().mappings['src-1']![0]!.sourcePropUri).toBe('http://example.org/prop1')
+
+    // First undo should restore prop2 (most recent batch)
+    useMappingStore.getState().undoLastRemoval()
+    expect(useMappingStore.getState().mappings['src-1']).toHaveLength(2)
+    const uris1 = useMappingStore.getState().mappings['src-1']!.map((m) => m.sourcePropUri).sort()
+    expect(uris1).toEqual(['http://example.org/prop1', 'http://example.org/prop2'])
+
+    // Second undo should restore prop3 (first batch — NOT lost)
+    useMappingStore.getState().undoLastRemoval()
+    expect(useMappingStore.getState().mappings['src-1']).toHaveLength(3)
+    const uris2 = useMappingStore.getState().mappings['src-1']!.map((m) => m.sourcePropUri).sort()
+    expect(uris2).toEqual([
+      'http://example.org/prop1',
+      'http://example.org/prop2',
+      'http://example.org/prop3',
+    ])
+  })
+
+  it('undoLastRemoval is a no-op when stack is empty', () => {
+    useMappingStore.getState().addMapping(makeBase())
+    useMappingStore.getState().undoLastRemoval()
     expect(useMappingStore.getState().mappings['src-1']).toHaveLength(1)
   })
 })

@@ -78,9 +78,21 @@ describe('executeAllConstructs', () => {
 
     expect(result.totalQuads).toBe(0)
     expect(result.sources).toEqual([])
+    expect(result.warnings).toEqual([])
   })
 
-  it('Test 3: handles source with invalid JSON without throwing', async () => {
+  it('Test 3: returns warnings array on successful runs (empty when no errors)', async () => {
+    const result = await executeAllConstructs(
+      [baseSource],
+      { s1: [baseMapping] },
+      [],
+    )
+
+    expect(result.warnings).toBeDefined()
+    expect(Array.isArray(result.warnings)).toBe(true)
+  })
+
+  it('Test 3b: handles source with invalid JSON without throwing', async () => {
     const badSource = {
       id: 's1',
       name: 'Bad',

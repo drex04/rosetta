@@ -76,7 +76,6 @@ describe('subscribeValidationToMappings', () => {
     const unsubscribe = subscribeValidationToMappings()
     expect(useValidationStore.getState().stale).toBe(false)
 
-    // Trigger a change in mappingStore
     useMappingStore.getState().addMapping({
       sourceId: 'src-1',
       sourceClassUri: 'http://ex.org/Foo',
@@ -90,6 +89,43 @@ describe('subscribeValidationToMappings', () => {
     })
 
     expect(useValidationStore.getState().stale).toBe(true)
+    unsubscribe()
+  })
+
+  it('sets stale=true when a source is added', () => {
+    const unsubscribe = subscribeValidationToMappings()
+    expect(useValidationStore.getState().stale).toBe(false)
+
+    useSourcesStore.getState().addSource({
+      id: 'src-new',
+      name: 'New Source',
+      order: 0,
+      rawData: '',
+      dataFormat: 'json' as const,
+      schemaNodes: [],
+      schemaEdges: [],
+      turtleSource: '',
+      parseError: null,
+    })
+
+    expect(useValidationStore.getState().stale).toBe(true)
+    unsubscribe()
+  })
+
+  it('does not set stale when only activeSourceId changes', () => {
+    useSourcesStore.setState({
+      sources: [{
+        id: 'src-1', name: 'S1', order: 0, rawData: '', dataFormat: 'json' as const,
+        schemaNodes: [], schemaEdges: [], turtleSource: '', parseError: null,
+      }],
+      activeSourceId: null,
+    })
+    const unsubscribe = subscribeValidationToMappings()
+    expect(useValidationStore.getState().stale).toBe(false)
+
+    useSourcesStore.getState().setActiveSourceId('src-1')
+
+    expect(useValidationStore.getState().stale).toBe(false)
     unsubscribe()
   })
 })
@@ -109,33 +145,39 @@ describe('useValidationStore — runValidation double-click guard', () => {
 })
 
 describe('useValidationStore — runValidation error handling', () => {
-  it('sets error string and loading:false when validateSource throws', async () => {
-    // Add a source so runValidation iterates over it
-    useSourcesStore.setState({
-      sources: [
-        {
-          id: 'src-err',
-          name: 'Error Source',
-          order: 0,
-          rawData: '{}',
-          dataFormat: 'json' as const,
-          schemaNodes: [{ id: 'n1', type: 'sourceNode', position: { x: 0, y: 0 }, data: { uri: 'http://ex.org/Foo', label: 'Foo', properties: [] } }],
-          schemaEdges: [],
-          turtleSource: '',
-          parseError: null,
-        },
-      ],
-      activeSourceId: 'src-err',
+  it('continues validating remaining sources when one source throws', async () => {
+    const makeSource = (id: string, name: string) => ({
+      id, name, order: 0, rawData: '{}', dataFormat: 'json' as const,
+      schemaNodes: [{ id: 'n1', type: 'sourceNode', position: { x: 0, y: 0 }, data: { uri: `http://ex.org/${name}`, label: name, properties: [] } }],
+      schemaEdges: [], turtleSource: '', parseError: null,
     })
 
-    mockValidateSource.mockRejectedValueOnce(new Error('SHACL engine exploded'))
+    useSourcesStore.setState({
+      sources: [makeSource('src-ok', 'OK'), makeSource('src-err', 'Broken'), makeSource('src-ok2', 'AlsoOK')],
+      activeSourceId: 'src-ok',
+    })
+
+    // First source succeeds, second fails, third succeeds
+    mockValidateSource
+      .mockResolvedValueOnce([])
+      .mockRejectedValueOnce(new Error('SHACL engine exploded'))
+      .mockResolvedValueOnce([])
 
     await useValidationStore.getState().runValidation()
 
     const state = useValidationStore.getState()
     expect(state.loading).toBe(false)
-    expect(state.error).toBe('SHACL engine exploded')
+    // Error is reported but doesn't block other results
+    expect(state.error).toContain('Broken')
+    expect(state.error).toContain('SHACL engine exploded')
+    // Both successful sources have results
+    expect(state.results['src-ok']).toEqual([])
+    expect(state.results['src-ok2']).toEqual([])
+    // Failed source has no results entry
+    expect(state.results['src-err']).toBeUndefined()
+    // stale is cleared, lastRun is set
     expect(state.stale).toBe(false)
+    expect(state.lastRun).toBeGreaterThan(0)
   })
 
   it('does not crash when validateSource throws a non-Error', async () => {
@@ -162,7 +204,7 @@ describe('useValidationStore — runValidation error handling', () => {
 
     const state = useValidationStore.getState()
     expect(state.loading).toBe(false)
-    expect(state.error).toBe('Validation failed')
+    expect(state.error).toContain('Validation failed')
   })
 })
 

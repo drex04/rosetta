@@ -76,6 +76,15 @@ function FusedTab() {
         </div>
       )}
 
+      {/* Warnings from failed queries/parsing */}
+      {result && result.warnings.length > 0 && (
+        <div className="shrink-0 px-3 py-2 text-xs text-amber-700 bg-amber-50 dark:text-amber-400 dark:bg-amber-950/30 border-b border-border space-y-0.5">
+          {result.warnings.map((w, i) => (
+            <div key={i}>{w}</div>
+          ))}
+        </div>
+      )}
+
       {/* Source summary */}
       {result && (
         <div className="shrink-0 px-3 py-2 border-b border-border text-xs text-muted-foreground">
