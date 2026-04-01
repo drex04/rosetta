@@ -4,7 +4,7 @@ import { useOntologyStore } from '@/store/ontologyStore'
 import { useSourcesStore, migrateSource } from '@/store/sourcesStore'
 import { useMappingStore } from '@/store/mappingStore'
 import { parseTurtle } from '@/lib/rdf'
-import type { Mapping, ProjectFile } from '@/types/index'
+import type { Mapping, MappingGroup, ProjectFile } from '@/types/index'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -25,6 +25,27 @@ function isValidMappings(v: unknown): v is Record<string, Mapping[]> {
       (arr) =>
         Array.isArray(arr) &&
         arr.every((m) => typeof m === 'object' && m !== null && typeof (m as Mapping).id === 'string'),
+    )
+  )
+}
+
+function isValidGroups(v: unknown): v is Record<string, MappingGroup[]> {
+  return (
+    typeof v === 'object' &&
+    v !== null &&
+    !Array.isArray(v) &&
+    Object.values(v as object).every(
+      (arr) =>
+        Array.isArray(arr) &&
+        arr.every(
+          (g) =>
+            typeof g === 'object' &&
+            g !== null &&
+            typeof (g as MappingGroup).id === 'string' &&
+            typeof (g as MappingGroup).strategy === 'string' &&
+            typeof (g as MappingGroup).targetClassUri === 'string' &&
+            typeof (g as MappingGroup).targetPropUri === 'string',
+        ),
     )
   )
 }
@@ -76,7 +97,8 @@ export function useAutoSave() {
 
       // Restore mappings ───────────────────────────────────────────────────────
       if (isValidMappings(saved.mappings)) {
-        useMappingStore.getState().hydrate(saved.mappings)
+        const groups = isValidGroups(saved.groups) ? saved.groups : undefined
+        useMappingStore.getState().hydrate(saved.mappings, groups)
       } else {
         console.warn('[useAutoSave] Skipping malformed mappings from IDB')
       }
@@ -101,7 +123,7 @@ export function useAutoSave() {
         try {
           const ontologyState = useOntologyStore.getState()
           const sourcesState = useSourcesStore.getState()
-          const mappings = useMappingStore.getState().mappings
+          const { mappings, groups } = useMappingStore.getState()
           const snapshot: ProjectFile = {
             version: 1,
             ontology: {
@@ -113,6 +135,7 @@ export function useAutoSave() {
             sources: sourcesState.sources,
             activeSourceId: sourcesState.activeSourceId,
             mappings,
+            groups,
             timestamp: new Date().toISOString(),
           }
           await set(IDB_KEY, snapshot)

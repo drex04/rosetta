@@ -362,7 +362,7 @@ function OntologyCanvasInner({ onCanvasChange, onSourceCanvasChange }: OntologyC
   const onEdgesDelete = useCallback((deletedEdges: Edge[]) => {
     for (const edge of deletedEdges) {
       if (edge.id.startsWith('mapping_')) {
-        removeMapping(edge.id)
+        removeMapping(edge.id.slice('mapping_'.length))
       } else if (edge.type === 'subclassEdge' || edge.type === 'objectPropertyEdge') {
         // Check if it's in the ontology store
         const ontEdges = useOntologyStore.getState().edges

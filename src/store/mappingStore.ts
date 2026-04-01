@@ -123,10 +123,13 @@ export const useMappingStore = create<MappingState>((set, get) => ({
 
   clearMappingsForSource: (sourceId) => {
     set((s) => {
-      const updated = { ...s.mappings }
-      delete updated[sourceId]
+      const updatedMappings = { ...s.mappings }
+      delete updatedMappings[sourceId]
+      const updatedGroups = { ...s.groups }
+      delete updatedGroups[sourceId]
       return {
-        mappings: updated,
+        mappings: updatedMappings,
+        groups: updatedGroups,
         selectedMappingId: null,
       }
     })

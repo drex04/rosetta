@@ -240,3 +240,39 @@ describe('generateGroupConstruct', () => {
     expect(sparql).toMatch(/src:first\s+\?v0/)
   })
 })
+
+describe('clearMappingsForSource', () => {
+  beforeEach(resetStore)
+
+  it('also removes groups for the source, leaving no orphaned group records', () => {
+    const store = useMappingStore.getState()
+    const SOURCE_ID = 'src-clear-test'
+
+    const m1 = store.addMapping({
+      sourceId: SOURCE_ID,
+      sourceClassUri: 'http://src.test/C',
+      sourcePropUri: 'http://src.test/p1',
+      targetClassUri: 'http://onto.test/C',
+      targetPropUri: 'http://onto.test/p',
+      sourceHandle: 'h1', targetHandle: 'h2',
+      kind: 'direct', sparqlConstruct: '',
+    })
+    const m2 = store.addMapping({
+      sourceId: SOURCE_ID,
+      sourceClassUri: 'http://src.test/C',
+      sourcePropUri: 'http://src.test/p2',
+      targetClassUri: 'http://onto.test/C',
+      targetPropUri: 'http://onto.test/p',
+      sourceHandle: 'h3', targetHandle: 'h2',
+      kind: 'direct', sparqlConstruct: '',
+    })
+    store.createGroup(SOURCE_ID, [m1, m2], 'concat')
+
+    expect(store.getGroupsForSource(SOURCE_ID)).toHaveLength(1)
+
+    store.clearMappingsForSource(SOURCE_ID)
+
+    expect(useMappingStore.getState().getMappingsForSource(SOURCE_ID)).toHaveLength(0)
+    expect(useMappingStore.getState().getGroupsForSource(SOURCE_ID)).toHaveLength(0)
+  })
+})
