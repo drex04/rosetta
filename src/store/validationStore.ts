@@ -37,6 +37,7 @@ export const useValidationStore = create<ValidationState>()((set, get) => ({
     const getMappingsForSource = useMappingStore.getState().getMappingsForSource
 
     const results: Record<string, ViolationRecord[]> = {}
+    const errors: string[] = []
 
     for (const source of sources) {
       try {
@@ -48,12 +49,18 @@ export const useValidationStore = create<ValidationState>()((set, get) => ({
         results[source.id] = violations as ViolationRecord[]
       } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Validation failed'
-        set({ loading: false, error: message })
-        return
+        errors.push(`${source.name}: ${message}`)
       }
     }
 
-    set({ results, loading: false, stale: false, lastRun: Date.now(), highlightedCanvasNodeId: null })
+    set({
+      results,
+      loading: false,
+      stale: false,
+      error: errors.length > 0 ? errors.join('; ') : null,
+      lastRun: Date.now(),
+      highlightedCanvasNodeId: null,
+    })
   },
 
   setStale: (stale) => set({ stale }),
@@ -71,5 +78,13 @@ export const useValidationStore = create<ValidationState>()((set, get) => ({
 }))
 
 export function subscribeValidationToMappings(): () => void {
-  return useMappingStore.subscribe(() => useValidationStore.getState().setStale(true))
+  const unsubMappings = useMappingStore.subscribe(() =>
+    useValidationStore.getState().setStale(true)
+  )
+  const unsubSources = useSourcesStore.subscribe((state, prev) => {
+    if (state.sources !== prev.sources) {
+      useValidationStore.getState().setStale(true)
+    }
+  })
+  return () => { unsubMappings(); unsubSources() }
 }

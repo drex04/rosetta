@@ -1,6 +1,5 @@
 import { create } from 'zustand'
 import type { Mapping, MappingGroup } from '@/types/index'
-import { useValidationStore } from './validationStore'
 import { generateGroupConstruct } from '@/lib/sparql'
 
 // ─── Store interface ──────────────────────────────────────────────────────────
@@ -44,11 +43,11 @@ interface MappingState {
 
   /**
    * Remove all mappings whose sourcePropUri or targetPropUri is NOT in validPropertyUris.
-   * Saves removed mappings to _undoBuffer. Returns count of removed mappings.
+   * Saves removed mappings to _undoStack. Returns count of removed mappings.
    */
   removeInvalidMappings: (validPropertyUris: Set<string>) => number
 
-  /** Re-insert all mappings from _undoBuffer back into the mappings record and clear the buffer. */
+  /** Re-insert the most recent batch from _undoStack and pop it. */
   undoLastRemoval: () => void
 
   // ─── Group actions ──────────────────────────────────────────────────────────
@@ -77,14 +76,14 @@ interface MappingState {
 
 // Internal extended state (not in public interface)
 interface MappingStateInternal extends MappingState {
-  _undoBuffer: Mapping[]
+  _undoStack: Mapping[][]
 }
 
 export const useMappingStore = create<MappingStateInternal>((set, get) => ({
   mappings: {},
   selectedMappingId: null,
   groups: {},
-  _undoBuffer: [],
+  _undoStack: [],
 
   addMapping: (m) => {
     const state = get()
@@ -105,7 +104,6 @@ export const useMappingStore = create<MappingStateInternal>((set, get) => ({
         [m.sourceId]: [...(s.mappings[m.sourceId] ?? []), newMapping],
       },
     }))
-    useValidationStore.getState().setStale(true)
     return id
   },
 
@@ -120,7 +118,7 @@ export const useMappingStore = create<MappingStateInternal>((set, get) => ({
         selectedMappingId: s.selectedMappingId === id ? null : s.selectedMappingId,
       }
     })
-    useValidationStore.getState().setStale(true)
+
   },
 
   updateMapping: (id, patch) => {
@@ -151,7 +149,7 @@ export const useMappingStore = create<MappingStateInternal>((set, get) => ({
         selectedMappingId: null,
       }
     })
-    useValidationStore.getState().setStale(true)
+
   },
 
   removeMappingsForSource: (sourceId) => {
@@ -168,7 +166,7 @@ export const useMappingStore = create<MappingStateInternal>((set, get) => ({
           : s.selectedMappingId
       return { mappings: updatedMappings, groups: updatedGroups, selectedMappingId }
     })
-    useValidationStore.getState().setStale(true)
+
   },
 
   hydrate: (mappings, groups) => set({ mappings, groups: groups ?? {}, selectedMappingId: null }),
@@ -219,7 +217,7 @@ export const useMappingStore = create<MappingStateInternal>((set, get) => ({
       },
     }))
 
-    useValidationStore.getState().setStale(true)
+
     return groupId
   },
 
@@ -275,7 +273,7 @@ export const useMappingStore = create<MappingStateInternal>((set, get) => ({
       }
       return { mappings: updatedMappings, groups: updatedGroups }
     })
-    useValidationStore.getState().setStale(true)
+
   },
 
   getGroupsForSource: (sourceId) => get().groups[sourceId] ?? [],
@@ -305,25 +303,26 @@ export const useMappingStore = create<MappingStateInternal>((set, get) => ({
     const removedIds = new Set(invalid.map((m) => m.id))
     set((s) => ({
       mappings: updated,
-      _undoBuffer: invalid,
+      _undoStack: [...s._undoStack, invalid],
       selectedMappingId: s.selectedMappingId !== null && removedIds.has(s.selectedMappingId)
         ? null
         : s.selectedMappingId,
     }))
-    useValidationStore.getState().setStale(true)
+
     return invalid.length
   },
 
   undoLastRemoval: () => {
-    const { _undoBuffer } = get()
-    if (_undoBuffer.length === 0) return
+    const { _undoStack } = get()
+    if (_undoStack.length === 0) return
+    const batch = _undoStack[_undoStack.length - 1]!
     set((s) => {
       const restored = { ...s.mappings }
-      for (const m of _undoBuffer) {
+      for (const m of batch) {
         restored[m.sourceId] = [...(restored[m.sourceId] ?? []), m]
       }
-      return { mappings: restored, _undoBuffer: [] }
+      return { mappings: restored, _undoStack: s._undoStack.slice(0, -1) }
     })
-    useValidationStore.getState().setStale(true)
+
   },
 }))

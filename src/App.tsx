@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import { Header } from './components/layout/Header'
 import { StatusBar } from './components/layout/StatusBar'
 import { SourceSelector } from './components/layout/SourceSelector'
@@ -58,35 +59,39 @@ function App() {
   )
 
   return (
-    <div className="flex flex-col h-dvh overflow-hidden">
-      <Header />
-      <SourceSelector />
-      <div className="flex flex-1 overflow-hidden">
-        <div className="flex-1 relative">
-          <OntologyCanvas onCanvasChange={handleCanvasChange} onSourceCanvasChange={onSourceCanvasChange} />
+    <ErrorBoundary>
+      <div className="flex flex-col h-dvh overflow-hidden">
+        <Header />
+        <SourceSelector />
+        <div className="flex flex-1 overflow-hidden">
+          <ErrorBoundary>
+            <div className="flex-1 relative">
+              <OntologyCanvas onCanvasChange={handleCanvasChange} onSourceCanvasChange={onSourceCanvasChange} />
+            </div>
+          </ErrorBoundary>
+          <RightPanel
+            onEditorChange={onEditorChange}
+            onSourceEditorChange={onSourceEditorChange}
+            resetSourceSchema={resetSourceSchema}
+          />
         </div>
-        <RightPanel
-          onEditorChange={onEditorChange}
-          onSourceEditorChange={onSourceEditorChange}
-          resetSourceSchema={resetSourceSchema}
+        <ConfirmDialog
+          open={pendingSync !== null}
+          onOpenChange={(o) => { if (!o) setPendingSync(null) }}
+          title="Unsaved editor changes"
+          description="You have unsaved edits in the Turtle editor. Proceeding will overwrite them with the canvas state."
+          cancelLabel="Keep editing"
+          confirmLabel="Proceed"
+          onCancel={() => setPendingSync(null)}
+          onConfirm={() => {
+            if (pendingSync) void onCanvasChange(pendingSync.nodes, pendingSync.edges)
+            setPendingSync(null)
+          }}
         />
+        <StatusBar saveStatus={saveStatus} />
+        <Toaster />
       </div>
-      <ConfirmDialog
-        open={pendingSync !== null}
-        onOpenChange={(o) => { if (!o) setPendingSync(null) }}
-        title="Unsaved editor changes"
-        description="You have unsaved edits in the Turtle editor. Proceeding will overwrite them with the canvas state."
-        cancelLabel="Keep editing"
-        confirmLabel="Proceed"
-        onCancel={() => setPendingSync(null)}
-        onConfirm={() => {
-          if (pendingSync) void onCanvasChange(pendingSync.nodes, pendingSync.edges)
-          setPendingSync(null)
-        }}
-      />
-      <StatusBar saveStatus={saveStatus} />
-      <Toaster />
-    </div>
+    </ErrorBoundary>
   )
 }
 

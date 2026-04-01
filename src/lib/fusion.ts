@@ -21,12 +21,14 @@ export interface FusionSourceResult {
   sourceId: string
   sourceName: string
   quadCount: number
+  error?: string
 }
 
 export interface FusionResult {
   store: N3.Store
   sources: FusionSourceResult[]
   totalQuads: number
+  warnings: string[]
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -43,11 +45,12 @@ export async function executeAllConstructs(
   _ontologyNodes: OntologyNode[],
 ): Promise<FusionResult> {
   if (!sources.length) {
-    return { store: new N3.Store(), sources: [], totalQuads: 0 }
+    return { store: new N3.Store(), sources: [], totalQuads: 0, warnings: [] }
   }
 
   const mergedStore = new N3.Store()
   const sourceSummaries: FusionSourceResult[] = []
+  const warnings: string[] = []
   const engine = await getEngine()
 
   for (const source of sources) {
@@ -68,7 +71,10 @@ export async function executeAllConstructs(
     let instanceStore: N3.Store
     try {
       instanceStore = jsonToInstances(source.rawData, source.schemaNodes)
-    } catch {
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Unknown error'
+      warnings.push(`Source "${source.name}": failed to parse instances — ${msg}`)
+      sourceSummaries.push({ sourceId: source.id, sourceName: source.name, quadCount: 0, error: msg })
       continue
     }
 
@@ -91,8 +97,9 @@ export async function executeAllConstructs(
             subjectSet.add(q.subject.value)
           }
         }
-      } catch {
-        // Skip failed queries silently — bad CONSTRUCT won't block others
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Unknown error'
+        warnings.push(`Source "${source.name}": CONSTRUCT query failed — ${msg}`)
         continue
       }
     }
@@ -120,5 +127,6 @@ export async function executeAllConstructs(
     store: mergedStore,
     sources: sourceSummaries,
     totalQuads: mergedStore.size,
+    warnings,
   }
 }
