@@ -362,7 +362,8 @@ export async function canvasToTurtle(
 export async function sourceCanvasToTurtle(
   nodes: SourceNode[],
   edges: OntologyEdge[],
-  _uriPrefix: string,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _uriPrefix?: string,
 ): Promise<string> {
   // Cast SourceNode[] to OntologyNode[] — same data shape, different type tag.
   // canvasToTurtle only reads .data and .id, so this is safe.

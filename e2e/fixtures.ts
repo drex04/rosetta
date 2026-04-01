@@ -20,6 +20,7 @@ export const test = base.extend<{ freshPage: Page }>({
     })
 
     await page.reload({ waitUntil: 'networkidle' })
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     await use(page)
   },
 })

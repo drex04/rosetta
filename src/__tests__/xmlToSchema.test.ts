@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { xmlToSchema } from '@/lib/xmlToSchema'
-import type { ClassData, ObjectPropertyEdgeData, PropertyData, OntologyEdge } from '@/types/index'
+import type { ClassData, ObjectPropertyEdgeData, PropertyData } from '@/types/index'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
