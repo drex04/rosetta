@@ -81,29 +81,44 @@ export function ValidationPanel() {
           <p className="text-sm text-green-600 p-4">✓ All valid</p>
         ) : (
           sourceResults.map((violation) => (
-            <button
+            <div
               key={violation.id}
-              data-testid="violation-item"
-              data-canvas-node-id={violation.canvasNodeId ?? ''}
-              className={[
-                'border border-border rounded p-2 text-xs text-left w-full',
-                violation.canvasNodeId !== null ? 'cursor-pointer hover:bg-muted/50' : 'cursor-default',
-              ].join(' ')}
-              onClick={() => {
-                if (violation.canvasNodeId !== null) {
-                  setHighlightedCanvasNodeId(violation.canvasNodeId)
-                  setActiveSourceId(violation.sourceId)
-                }
-              }}
+              className="border border-border rounded p-2 text-xs"
             >
-              <div className="font-medium text-foreground">
-                {localName(violation.targetClassUri)}
-                {violation.targetPropUri ? (
-                  <span className="text-muted-foreground"> · {localName(violation.targetPropUri)}</span>
-                ) : null}
-              </div>
-              <div className="text-muted-foreground line-clamp-2 mt-0.5">{violation.message}</div>
-            </button>
+              <button
+                type="button"
+                data-testid="violation-item"
+                data-canvas-node-id={violation.canvasNodeId ?? ''}
+                className={[
+                  'text-xs text-left w-full',
+                  violation.canvasNodeId !== null ? 'cursor-pointer hover:opacity-80' : 'cursor-default',
+                ].join(' ')}
+                onClick={() => {
+                  if (violation.canvasNodeId !== null) {
+                    setHighlightedCanvasNodeId(violation.canvasNodeId)
+                    setActiveSourceId(violation.sourceId)
+                  }
+                }}
+              >
+                <div className="font-medium text-foreground">
+                  {localName(violation.targetClassUri)}
+                  {violation.targetPropUri ? (
+                    <span className="text-muted-foreground"> · {localName(violation.targetPropUri)}</span>
+                  ) : null}
+                </div>
+              </button>
+              <details className="mt-1">
+                <summary className="text-[10px] text-muted-foreground cursor-pointer hover:text-foreground">
+                  violation details
+                </summary>
+                <ul className="mt-1 space-y-0.5">
+                  <li className="text-[10px] text-destructive font-mono pl-2 border-l border-destructive/30">
+                    {violation.message}
+                    {violation.targetPropUri ? ` (path: ${localName(violation.targetPropUri)})` : ''}
+                  </li>
+                </ul>
+              </details>
+            </div>
           ))
         )}
       </div>
