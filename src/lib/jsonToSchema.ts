@@ -3,6 +3,7 @@ import { MarkerType } from '@xyflow/react'
 import type { ClassData, PropertyData, ObjectPropertyEdgeData, SourceNode, OntologyEdge } from '@/types/index'
 import { COLUMN_X_SOURCE, COLUMN_SPACING } from '@/lib/rdf'
 import { applyTreeLayout } from '@/lib/layout'
+import { toPascalCase, xsdRangeShort } from '@/lib/stringUtils'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -38,26 +39,6 @@ function deriveUriPrefix(sourceName: string): string {
   // Lowercase everything
   const lower = sanitized.toLowerCase()
   return `src_${lower}_`
-}
-
-/**
- * Convert a camelCase or lower-camelCase key to PascalCase.
- * No singularization — key is used as-is except first char uppercased.
- * 'radarTracks' → 'RadarTracks', 'Radarspuren' → 'Radarspuren'
- */
-function toPascalCase(key: string): string {
-  if (key.length === 0) return key
-  return key[0]!.toUpperCase() + key.slice(1)
-}
-
-// Abbreviated range for node data (used in PropertyData.range field)
-function xsdRangeShort(value: unknown): string {
-  if (typeof value === 'boolean') return 'xsd:boolean'
-  if (typeof value === 'number') {
-    if (Number.isInteger(value)) return 'xsd:integer'
-    return 'xsd:float'
-  }
-  return 'xsd:string'
 }
 
 // ─── Walker ───────────────────────────────────────────────────────────────────

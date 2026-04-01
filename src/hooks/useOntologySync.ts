@@ -150,8 +150,10 @@ export function useOntologySync() {
       const turtle = await canvasToTurtle(nodes, edges)
       useOntologyStore.getState().setTurtleSource(turtle)
       useOntologyStore.getState().setParseError(null)
-    } catch {
-      // Serialization failed — leave editor unchanged
+    } catch (err) {
+      useOntologyStore.getState().setParseError(
+        `Canvas serialization failed: ${err instanceof Error ? err.message : 'invalid node state'}`
+      )
     } finally {
       isUpdatingFromCanvas.current = false
     }

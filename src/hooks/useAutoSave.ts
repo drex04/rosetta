@@ -78,6 +78,7 @@ export function useAutoSave() {
         })
       } catch {
         console.warn('rosetta: failed to restore project from IDB')
+        setSaveStatus('error')
       }
 
       // Restore sources ────────────────────────────────────────────────────────
@@ -93,6 +94,7 @@ export function useAutoSave() {
         }
       } catch {
         console.warn('rosetta: failed to restore sources from IDB')
+        setSaveStatus('error')
       }
 
       // Restore mappings ───────────────────────────────────────────────────────

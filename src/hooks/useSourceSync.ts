@@ -122,8 +122,10 @@ export function useSourceSync() {
         turtleSource: turtle,
         parseError: null,
       })
-    } catch {
-      // Serialization failed — leave editor unchanged
+    } catch (err) {
+      useSourcesStore.getState().updateSource(currentSourceId, {
+        parseError: `Canvas serialization failed: ${err instanceof Error ? err.message : 'invalid node state'}`,
+      })
     } finally {
       isUpdatingFromCanvas.current = false
     }

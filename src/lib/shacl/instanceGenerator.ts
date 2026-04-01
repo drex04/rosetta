@@ -1,23 +1,11 @@
 import * as N3 from 'n3'
 import type { SourceNode } from '../../types'
+import { toPascalCase, xsdRangeShort } from '@/lib/stringUtils'
 
 const RDF_TYPE = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'
 const XSD = 'http://www.w3.org/2001/XMLSchema#'
 
 const { namedNode, blankNode, literal, quad, defaultGraph } = N3.DataFactory
-
-function toPascalCase(key: string): string {
-  return key.charAt(0).toUpperCase() + key.slice(1)
-}
-
-function xsdRangeShort(value: unknown): string {
-  if (typeof value === 'boolean') return 'xsd:boolean'
-  if (typeof value === 'number') {
-    if (Number.isInteger(value)) return 'xsd:integer'
-    return 'xsd:float'
-  }
-  return 'xsd:string'
-}
 
 function typedLiteral(value: unknown): N3.Literal {
   const range = xsdRangeShort(value)
@@ -33,6 +21,7 @@ function isPlainObject(v: unknown): v is Record<string, unknown> {
 export function jsonToInstances(json: string, schemaNodes: SourceNode[]): N3.Store {
   const store = new N3.Store()
   const uriBase = schemaNodes[0]?.data.prefix ?? ''
+  if (!uriBase) return store
 
   let parsed: unknown
   try {
