@@ -133,7 +133,7 @@ describe('useSourceSync', () => {
       await result.current.onSourceCanvasChange([MOCK_SOURCE_NODE], [MOCK_EDGE])
     })
 
-    expect(mockSourceCanvasToTurtle).toHaveBeenCalledWith([MOCK_SOURCE_NODE], [MOCK_EDGE], 'TestSource')
+    expect(mockSourceCanvasToTurtle).toHaveBeenCalledWith([MOCK_SOURCE_NODE], [MOCK_EDGE])
 
     const updated = useSourcesStore.getState().sources.find((s) => s.id === SOURCE_ID)
     expect(updated?.turtleSource).toBe('@prefix src: <http://src.test/> .\nsrc:Track a owl:Class .')
@@ -187,6 +187,32 @@ describe('useSourceSync', () => {
     const firstSource = useSourcesStore.getState().sources.find((s) => s.id === SOURCE_ID)
     // The first source's schemaNodes should remain unchanged (MOCK_SOURCE_NODE)
     expect(firstSource?.schemaNodes).toEqual([MOCK_SOURCE_NODE])
+  })
+
+  it('(e) canvas change throw → sync guard reset, subsequent calls still process', async () => {
+    const { useSourceSync } = await import('../hooks/useSourceSync')
+
+    // First call throws
+    mockSourceCanvasToTurtle.mockRejectedValueOnce(new Error('serialization failed'))
+    // Second call succeeds
+    mockSourceCanvasToTurtle.mockResolvedValueOnce('@prefix src: <http://src.test/> .\nsrc:Track a owl:Class .')
+
+    const { result } = renderHook(() => useSourceSync())
+
+    // First call — throws inside
+    await act(async () => {
+      await result.current.onSourceCanvasChange([MOCK_SOURCE_NODE], [MOCK_EDGE])
+    })
+
+    // Second call — should NOT be skipped (guard must have been reset)
+    await act(async () => {
+      await result.current.onSourceCanvasChange([MOCK_SOURCE_NODE], [MOCK_EDGE])
+    })
+
+    expect(mockSourceCanvasToTurtle).toHaveBeenCalledTimes(2)
+
+    const updated = useSourcesStore.getState().sources.find((s) => s.id === SOURCE_ID)
+    expect(updated?.turtleSource).toBe('@prefix src: <http://src.test/> .\nsrc:Track a owl:Class .')
   })
 
   it('(d) reset re-generates from rawData and clears mappings', async () => {
