@@ -185,6 +185,50 @@ describe('useMappingStore — clearMappingsForSource', () => {
   })
 })
 
+describe('useMappingStore — removeMappingsForSource', () => {
+  it('removes all mappings AND groups for the given sourceId', () => {
+    const store = useMappingStore.getState()
+
+    // Add mappings for two sources
+    store.addMapping(makeBase({ sourceId: 'src-1' }))
+    store.addMapping(makeBase({ sourceId: 'src-1', sourcePropUri: 'http://example.org/speed' }))
+    store.addMapping(makeBase({ sourceId: 'src-2' }))
+
+    // Add a group for src-1
+    const ids = useMappingStore.getState().mappings['src-1']!.map((m) => m.id)
+    useMappingStore.getState().createGroup('src-1', ids, 'concat')
+
+    expect(useMappingStore.getState().mappings['src-1']).toHaveLength(2)
+    expect(useMappingStore.getState().groups['src-1']).toHaveLength(1)
+
+    // Remove source src-1
+    useMappingStore.getState().removeMappingsForSource('src-1')
+
+    expect(useMappingStore.getState().mappings['src-1']).toBeUndefined()
+    expect(useMappingStore.getState().groups['src-1']).toBeUndefined()
+
+    // src-2 must be untouched
+    expect(useMappingStore.getState().mappings['src-2']).toHaveLength(1)
+  })
+
+  it('clears selectedMappingId when the selected mapping belongs to the removed source', () => {
+    const store = useMappingStore.getState()
+    const id = store.addMapping(makeBase({ sourceId: 'src-1' }))
+    useMappingStore.setState({ selectedMappingId: id })
+
+    useMappingStore.getState().removeMappingsForSource('src-1')
+
+    expect(useMappingStore.getState().selectedMappingId).toBeNull()
+  })
+
+  it('is a no-op for an unknown sourceId', () => {
+    useMappingStore.getState().addMapping(makeBase({ sourceId: 'src-1' }))
+    useMappingStore.getState().removeMappingsForSource('src-unknown')
+
+    expect(useMappingStore.getState().mappings['src-1']).toHaveLength(1)
+  })
+})
+
 describe('useMappingStore — hydrate', () => {
   it('replaces all existing mappings', () => {
     // Add a mapping first so there is pre-existing state

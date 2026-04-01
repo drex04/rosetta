@@ -34,6 +34,9 @@ interface MappingState {
   /** Remove all mappings for a given sourceId (e.g. when format changes). */
   clearMappingsForSource: (sourceId: string) => void
 
+  /** Remove all mappings AND groups for a given sourceId (e.g. when source is deleted). */
+  removeMappingsForSource: (sourceId: string) => void
+
   /** Replace the entire mappings map — used on mount for IDB restore. */
   hydrate: (mappings: Record<string, Mapping[]>, groups?: Record<string, MappingGroup[]>) => void
   /** Reset all mapping state to empty. */
@@ -136,6 +139,23 @@ export const useMappingStore = create<MappingState>((set, get) => ({
     useValidationStore.getState().setStale(true)
   },
 
+  removeMappingsForSource: (sourceId) => {
+    set((s) => {
+      const updatedMappings = { ...s.mappings }
+      delete updatedMappings[sourceId]
+      const updatedGroups = { ...s.groups }
+      delete updatedGroups[sourceId]
+      // Clear selectedMappingId if it belongs to a mapping in the removed source
+      const removedIds = new Set((s.mappings[sourceId] ?? []).map((m) => m.id))
+      const selectedMappingId =
+        s.selectedMappingId !== null && removedIds.has(s.selectedMappingId)
+          ? null
+          : s.selectedMappingId
+      return { mappings: updatedMappings, groups: updatedGroups, selectedMappingId }
+    })
+    useValidationStore.getState().setStale(true)
+  },
+
   hydrate: (mappings, groups) => set({ mappings, groups: groups ?? {}, selectedMappingId: null }),
   reset: () => set({ mappings: {}, groups: {}, selectedMappingId: null }),
 
@@ -205,9 +225,11 @@ export const useMappingStore = create<MappingState>((set, get) => ({
               templatePattern: (merged as { templatePattern?: string }).templatePattern ?? '',
             }
           } else if (strategy === 'coalesce') {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const { templatePattern: _tp, ...rest } = merged as MappingGroup & { templatePattern?: string }
             updated = { ...rest, strategy: 'coalesce' as const }
           } else {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const { templatePattern: _tp, ...rest } = merged as MappingGroup & { templatePattern?: string }
             updated = { ...rest, strategy: 'concat' as const }
           }
