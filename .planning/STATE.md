@@ -3,21 +3,21 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-last_updated: "2026-03-31T19:45:28.423Z"
+last_updated: "2026-04-01T14:03:43.600Z"
 progress:
-  total_phases: 10
-  completed_phases: 7
-  total_plans: 23
-  completed_plans: 19
+  total_phases: 15
+  completed_phases: 10
+  total_plans: 27
+  completed_plans: 26
 ---
 
 # Project State
 
 ## Current Position
 
-- **Phase:** 7
+- **Phase:** 9
 - **Plan:** 0/? (not started)
-- **Status:** Planning
+- **Status:** Ready to plan
 
 ## Phase Status
 
@@ -29,7 +29,12 @@ progress:
 | 4 | Mapping (Per-Source) | complete |
 | 5 | SHACL Validation | complete |
 | 6 | Transform & Fuse | complete |
-| 7 | Onboarding & Polish | not started |
+| 7 | UI Polish & Bug Fixes | complete |
+| 8 | Source & Ontology Editing | complete |
+| 9 | Bug Fixes & UI/UX Overhaul | not started |
+| 10 | Canvas Interactions & Panel Integration | not started |
+| 11 | SHACL Authoring | not started |
+| 12 | Onboarding & Demo | not started |
 
 ## Notes
 
@@ -48,4 +53,11 @@ Phase 6 Plan 01 completed 2026-03-30: Comunica integration, executeAllConstructs
 Phase 6 Plan 02 completed 2026-03-30: Mapping.kind expanded to 7 kinds (direct/template/constant/typecast/language/join/sparql), kind picker UI + kind-specific fields in MappingPanel, OutputPanel Export sub-tab placeholder.
 Phase 6 Plan 03 completed 2026-03-31: rml.ts (inferIterator + generateRml, pure), yarrrml.ts (generateYarrrml, pure), Export sub-tab wired with Download RML + Download YARRRML buttons. Build clean, 149 unit tests pass.
 Phase 6 complete 2026-03-31: All REQ-39 through REQ-50 implemented.
-Next: run `/fh:plan-work` for Phase 7 — Onboarding & Polish.
+Phase 7 Plan 01 completed 2026-03-31: UI polish — rename tabs, SPARQL auto-regen, OUTPUT restructure, undo toast, mobile minimap.
+Phase 7 complete 2026-03-31: All REQ-51 through REQ-57 implemented.
+Phase 8 Plan 01 completed 2026-04-01: XML support, file upload, filetype detection, Source.rawData rename.
+Phase 8 Plan 02 completed 2026-04-01: Bidirectional source Turtle↔canvas sync with reset.
+Phase 8 Plan 03 completed 2026-04-01: Ontology canvas editor — context menus, connectable handles, granular store actions.
+Phase 8 Plan 04 completed 2026-04-01: Mapping groups — CONCAT/COALESCE/TEMPLATE with canvas + MAP tab UI.
+Phase 8 complete 2026-04-01: All REQ-58 through REQ-67 implemented.
+Next: run `/fh:plan-work` for Phase 9 — Bug Fixes & UI/UX Overhaul.
