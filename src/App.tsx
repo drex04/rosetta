@@ -17,7 +17,7 @@ import type { OntologyNode, OntologyEdge } from './types/index'
 
 function App() {
   const loadTurtle = useOntologyStore((s) => s.loadTurtle)
-  const { onEditorChange, onCanvasChange, hasPendingEdits } = useOntologySync()
+  const { onEditorChange, onCanvasChange, hasPendingEdits, isCanvasSyncPending } = useOntologySync()
   const { onSourceEditorChange, onSourceCanvasChange, resetSourceSchema } = useSourceSync()
   const { saveStatus } = useAutoSave()
   const [pendingSync, setPendingSync] = useState<{ nodes: OntologyNode[]; edges: OntologyEdge[] } | null>(null)
@@ -73,6 +73,7 @@ function App() {
             onEditorChange={onEditorChange}
             onSourceEditorChange={onSourceEditorChange}
             resetSourceSchema={resetSourceSchema}
+            isCanvasSyncPending={isCanvasSyncPending}
           />
         </div>
         <ConfirmDialog

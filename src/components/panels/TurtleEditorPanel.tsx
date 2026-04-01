@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, type MutableRefObject } from 'react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { DownloadSimpleIcon } from '@phosphor-icons/react'
@@ -25,9 +25,12 @@ interface TurtleEditorPanelProps {
   turtleSource: string
   onEditorChange: (value: string) => void
   parseError?: string | null
+  /** Ref set to true during the 100ms canvas→editor debounce window. When true,
+   *  user keystrokes are suppressed to prevent overwrite races. */
+  isCanvasSyncPending?: MutableRefObject<boolean>
 }
 
-export function TurtleEditorPanel({ turtleSource, onEditorChange, parseError }: TurtleEditorPanelProps) {
+export function TurtleEditorPanel({ turtleSource, onEditorChange, parseError, isCanvasSyncPending }: TurtleEditorPanelProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const viewRef = useRef<EditorView | null>(null)
   // Track whether a programmatic update is in flight so we don't echo it back
@@ -40,6 +43,9 @@ export function TurtleEditorPanel({ turtleSource, onEditorChange, parseError }: 
     const updateListener = EditorView.updateListener.of((update) => {
       if (!update.docChanged) return
       if (isExternalUpdate.current) return
+      // During the canvas→editor debounce window the editor is logically
+      // read-only: silently drop user keystrokes to prevent overwrite races.
+      if (isCanvasSyncPending?.current) return
       onEditorChange(update.state.doc.toString())
     })
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, type MutableRefObject } from 'react'
 import { CaretLeftIcon, CaretRightIcon } from '@phosphor-icons/react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { useUiStore } from '@/store/uiStore'
@@ -13,9 +13,10 @@ interface RightPanelProps {
   onEditorChange: (value: string) => void
   onSourceEditorChange?: (turtle: string) => void
   resetSourceSchema?: () => void
+  isCanvasSyncPending?: MutableRefObject<boolean>
 }
 
-export function RightPanel({ onEditorChange, onSourceEditorChange, resetSourceSchema }: RightPanelProps) {
+export function RightPanel({ onEditorChange, onSourceEditorChange, resetSourceSchema, isCanvasSyncPending }: RightPanelProps) {
   const { activeRightTab, setActiveRightTab } = useUiStore()
   const turtleSource = useOntologyStore((s) => s.turtleSource)
   const parseError = useOntologyStore((s) => s.parseError)
@@ -124,9 +125,9 @@ export function RightPanel({ onEditorChange, onSourceEditorChange, resetSourceSc
                 <TabsTrigger
                   value="VALIDATE"
                   className="flex-1 text-sm h-7"
-                  aria-label="Validate tab"
+                  aria-label="SHACL validation tab"
                 >
-                  VALIDATE
+                  SHACL
                 </TabsTrigger>
               </TabsList>
               <button
@@ -142,7 +143,7 @@ export function RightPanel({ onEditorChange, onSourceEditorChange, resetSourceSc
                 <SourcePanel onSourceEditorChange={onSourceEditorChange} resetSourceSchema={resetSourceSchema} />
               </TabsContent>
               <TabsContent value="ONTOLOGY" className="h-full m-0">
-                <TurtleEditorPanel turtleSource={turtleSource} onEditorChange={onEditorChange} parseError={parseError} />
+                <TurtleEditorPanel turtleSource={turtleSource} onEditorChange={onEditorChange} parseError={parseError} isCanvasSyncPending={isCanvasSyncPending} />
               </TabsContent>
               <TabsContent value="MAP" className="h-full m-0">
                 <MappingPanel />
