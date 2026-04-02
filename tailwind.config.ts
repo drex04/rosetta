@@ -1,13 +1,10 @@
-import type { Config } from 'tailwindcss'
-import typography from '@tailwindcss/typography'
-import animate from 'tailwindcss-animate'
+import type { Config } from 'tailwindcss';
+import typography from '@tailwindcss/typography';
+import animate from 'tailwindcss-animate';
 
 export default {
   darkMode: ['class'],
-  content: [
-    './index.html',
-    './src/**/*.{ts,tsx}',
-  ],
+  content: ['./index.html', './src/**/*.{ts,tsx}'],
   theme: {
     container: {
       center: true,
@@ -64,4 +61,4 @@ export default {
     },
   },
   plugins: [animate, typography],
-} satisfies Config
+} satisfies Config;

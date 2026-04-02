@@ -6,28 +6,28 @@
 version: 2
 updates:
   # 1. NPM / Typescript / Vite Updates
-  - package-ecosystem: "npm"
-    directory: "/"
+  - package-ecosystem: 'npm'
+    directory: '/'
     schedule:
-      interval: "daily"
+      interval: 'daily'
     open-pull-requests-limit: 10
     groups:
       types:
-        patterns: ["@types/*"]
+        patterns: ['@types/*']
       vite-ecosystem:
-        patterns: ["vite*", "@vitejs/*"]
+        patterns: ['vite*', '@vitejs/*']
     labels:
-      - "dependencies"
-      - "typescript"
+      - 'dependencies'
+      - 'typescript'
 
   # 2. GitHub Actions Updates
-  - package-ecosystem: "github-actions"
-    directory: "/"
+  - package-ecosystem: 'github-actions'
+    directory: '/'
     schedule:
-      interval: "weekly" # Actions don't change as fast as npm packages
+      interval: 'weekly' # Actions don't change as fast as npm packages
     groups:
       actions:
-        patterns: ["*"] # Bundle all action updates into one PR
+        patterns: ['*'] # Bundle all action updates into one PR
     labels:
-      - "ci/cd"
-      - "github-actions"
+      - 'ci/cd'
+      - 'github-actions'

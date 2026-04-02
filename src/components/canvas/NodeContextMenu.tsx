@@ -3,19 +3,19 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu'
+} from '@/components/ui/dropdown-menu';
 
 interface NodeContextMenuProps {
-  x: number
-  y: number
-  nodeId: string
-  nodeLabel: string
-  nodeType: 'classNode' | 'sourceNode'
-  hasMappings: boolean
-  onAddProperty: () => void
-  onRename: () => void
-  onDelete: () => void
-  onClose: () => void
+  x: number;
+  y: number;
+  nodeId: string;
+  nodeLabel: string;
+  nodeType: 'classNode' | 'sourceNode';
+  hasMappings: boolean;
+  onAddProperty: () => void;
+  onRename: () => void;
+  onDelete: () => void;
+  onClose: () => void;
 }
 
 export function NodeContextMenu({
@@ -31,27 +31,42 @@ export function NodeContextMenu({
     if (hasMappings) {
       const confirmed = window.confirm(
         'This node has active mappings. Deleting it will remove those mappings. Continue?',
-      )
-      if (!confirmed) { onClose(); return }
+      );
+      if (!confirmed) {
+        onClose();
+        return;
+      }
     }
-    onDelete()
-    onClose()
+    onDelete();
+    onClose();
   }
 
   return (
     <DropdownMenu
       open
-      onOpenChange={(open) => { if (!open) onClose() }}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
     >
       <DropdownMenuContent
         style={{ position: 'fixed', left: x, top: y }}
         onInteractOutside={onClose}
         onEscapeKeyDown={onClose}
       >
-        <DropdownMenuItem onSelect={() => { onAddProperty(); onClose() }}>
+        <DropdownMenuItem
+          onSelect={() => {
+            onAddProperty();
+            onClose();
+          }}
+        >
           Add Property
         </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => { onRename(); onClose() }}>
+        <DropdownMenuItem
+          onSelect={() => {
+            onRename();
+            onClose();
+          }}
+        >
           Rename
         </DropdownMenuItem>
         <DropdownMenuSeparator />
@@ -63,5 +78,5 @@ export function NodeContextMenu({
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  )
+  );
 }

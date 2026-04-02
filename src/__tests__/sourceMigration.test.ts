@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest'
-import { migrateSource } from '@/store/sourcesStore'
+import { describe, it, expect } from 'vitest';
+import { migrateSource } from '@/store/sourcesStore';
 
 describe('migrateSource (IDB migration)', () => {
   it('copies json → rawData and sets dataFormat when only json field exists', () => {
@@ -10,14 +10,16 @@ describe('migrateSource (IDB migration)', () => {
       json: '[{"id":1}]',
       schemaNodes: [],
       schemaEdges: [],
-    }
+    };
 
-    const result = migrateSource(legacySource as unknown as Record<string, unknown>)
+    const result = migrateSource(
+      legacySource as unknown as Record<string, unknown>,
+    );
 
-    expect(result.rawData).toBe('[{"id":1}]')
-    expect(result.dataFormat).toBe('json')
-    expect('json' in result).toBe(false)
-  })
+    expect(result.rawData).toBe('[{"id":1}]');
+    expect(result.dataFormat).toBe('json');
+    expect('json' in result).toBe(false);
+  });
 
   it('leaves an already-migrated source unchanged', () => {
     const modernSource = {
@@ -28,14 +30,16 @@ describe('migrateSource (IDB migration)', () => {
       dataFormat: 'json' as const,
       schemaNodes: [],
       schemaEdges: [],
-    }
+    };
 
-    const result = migrateSource(modernSource as unknown as Record<string, unknown>)
+    const result = migrateSource(
+      modernSource as unknown as Record<string, unknown>,
+    );
 
-    expect(result.rawData).toBe('[{"id":1}]')
-    expect(result.dataFormat).toBe('json')
-    expect('json' in result).toBe(false)
-  })
+    expect(result.rawData).toBe('[{"id":1}]');
+    expect(result.dataFormat).toBe('json');
+    expect('json' in result).toBe(false);
+  });
 
   it('handles missing json field gracefully (new source with no data)', () => {
     const partialSource = {
@@ -44,12 +48,14 @@ describe('migrateSource (IDB migration)', () => {
       order: 0,
       schemaNodes: [],
       schemaEdges: [],
-    }
+    };
 
-    const result = migrateSource(partialSource as unknown as Record<string, unknown>)
+    const result = migrateSource(
+      partialSource as unknown as Record<string, unknown>,
+    );
 
-    expect(result.rawData).toBe('')
-    expect(result.dataFormat).toBe('json')
-    expect('json' in result).toBe(false)
-  })
-})
+    expect(result.rawData).toBe('');
+    expect(result.dataFormat).toBe('json');
+    expect('json' in result).toBe(false);
+  });
+});

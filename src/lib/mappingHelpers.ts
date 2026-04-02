@@ -1,9 +1,9 @@
-import { localName } from '@/lib/rdf'
-import type { PropertyData } from '@/types/index'
+import { localName } from '@/lib/rdf';
+import type { PropertyData } from '@/types/index';
 
 /** Minimal shape shared by both OntologyNode and SourceNode */
 interface NodeWithProperties {
-  data: { properties: PropertyData[] }
+  data: { properties: PropertyData[] };
 }
 
 /**
@@ -12,10 +12,13 @@ interface NodeWithProperties {
  *
  * Works for both OntologyNode[] and SourceNode[] since both share ClassData.
  */
-export function getPropRange(propUri: string, nodes: NodeWithProperties[]): string {
+export function getPropRange(
+  propUri: string,
+  nodes: NodeWithProperties[],
+): string {
   for (const node of nodes) {
-    const prop = node.data.properties.find((p) => p.uri === propUri)
-    if (prop) return prop.range
+    const prop = node.data.properties.find((p) => p.uri === propUri);
+    if (prop) return prop.range;
   }
-  return localName(propUri)
+  return localName(propUri);
 }
