@@ -1,9 +1,17 @@
-import { BaseEdge, getSmoothStepPath, type EdgeProps, type Edge } from '@xyflow/react'
-import type { SubclassEdgeData } from '@/types/index'
-import { MASTER_BLUE } from './shared'
-import { EdgeLabel } from './EdgeLabel'
+import {
+  BaseEdge,
+  getSmoothStepPath,
+  type EdgeProps,
+  type Edge,
+} from '@xyflow/react';
+import type { SubclassEdgeData } from '@/types/index';
+import { MASTER_BLUE } from './shared';
+import { EdgeLabel } from './EdgeLabel';
 
-type SubclassEdgeType = Edge<SubclassEdgeData & Record<string, unknown>, 'subclassEdge'>
+type SubclassEdgeType = Edge<
+  SubclassEdgeData & Record<string, unknown>,
+  'subclassEdge'
+>;
 
 export function SubclassEdge({
   id,
@@ -22,7 +30,7 @@ export function SubclassEdge({
     targetX,
     targetY,
     targetPosition,
-  })
+  });
 
   return (
     <>
@@ -36,7 +44,9 @@ export function SubclassEdge({
           strokeDasharray: '6 3',
         }}
       />
-      <EdgeLabel labelX={labelX} labelY={labelY}>subClassOf</EdgeLabel>
+      <EdgeLabel labelX={labelX} labelY={labelY}>
+        subClassOf
+      </EdgeLabel>
     </>
-  )
+  );
 }

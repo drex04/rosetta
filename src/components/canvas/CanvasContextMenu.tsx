@@ -2,15 +2,15 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-} from '@/components/ui/dropdown-menu'
+} from '@/components/ui/dropdown-menu';
 
 interface CanvasContextMenuProps {
-  x: number
-  y: number
-  hasActiveSource: boolean
-  onAddClass: () => void
-  onAddSourceClass: () => void
-  onClose: () => void
+  x: number;
+  y: number;
+  hasActiveSource: boolean;
+  onAddClass: () => void;
+  onAddSourceClass: () => void;
+  onClose: () => void;
 }
 
 export function CanvasContextMenu({
@@ -24,11 +24,20 @@ export function CanvasContextMenu({
   return (
     <DropdownMenu
       open
-      onOpenChange={(open) => { if (!open) onClose() }}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
     >
       {/* Invisible anchor positioned at click coords */}
       <div
-        style={{ position: 'fixed', left: x, top: y, width: 0, height: 0, pointerEvents: 'none' }}
+        style={{
+          position: 'fixed',
+          left: x,
+          top: y,
+          width: 0,
+          height: 0,
+          pointerEvents: 'none',
+        }}
         aria-hidden
       />
       <DropdownMenuContent
@@ -37,18 +46,24 @@ export function CanvasContextMenu({
         onEscapeKeyDown={onClose}
       >
         <DropdownMenuItem
-          onSelect={() => { onAddClass(); onClose() }}
+          onSelect={() => {
+            onAddClass();
+            onClose();
+          }}
         >
           Add Class
         </DropdownMenuItem>
         {hasActiveSource && (
           <DropdownMenuItem
-            onSelect={() => { onAddSourceClass(); onClose() }}
+            onSelect={() => {
+              onAddSourceClass();
+              onClose();
+            }}
           >
             Add Source Class
           </DropdownMenuItem>
         )}
       </DropdownMenuContent>
     </DropdownMenu>
-  )
+  );
 }

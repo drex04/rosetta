@@ -1,15 +1,15 @@
-import { describe, it, expect, vi } from 'vitest'
-import type { Source } from '@/store/sourcesStore'
-import type { Mapping } from '@/types/index'
+import { describe, it, expect, vi } from 'vitest';
+import type { Source } from '@/store/sourcesStore';
+import type { Mapping } from '@/types/index';
 
 // ─── Mock inferIterator from @/lib/rml ────────────────────────────────────────
 // rml.ts is built in parallel; we stub it here so tests remain self-contained.
 vi.mock('@/lib/rml', () => ({
   inferIterator: () => '$[*]',
-}))
+}));
 
 // Import after mock is registered
-const { generateYarrrml } = await import('@/lib/yarrrml')
+const { generateYarrrml } = await import('@/lib/yarrrml');
 
 // ─── Test fixture helpers ─────────────────────────────────────────────────────
 
@@ -23,7 +23,7 @@ function makeSource(overrides: Partial<Source> = {}): Source {
     schemaNodes: [],
     schemaEdges: [],
     ...overrides,
-  }
+  };
 }
 
 function makeMapping(overrides: Partial<Mapping> = {}): Mapping {
@@ -39,81 +39,81 @@ function makeMapping(overrides: Partial<Mapping> = {}): Mapping {
     kind: 'direct',
     sparqlConstruct: '',
     ...overrides,
-  }
+  };
 }
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
 describe('generateYarrrml', () => {
   it('1. one source + one direct mapping → output contains mappings:, sources:, po:', () => {
-    const source = makeSource()
-    const mapping = makeMapping()
-    const result = generateYarrrml([source], { src1: [mapping] })
+    const source = makeSource();
+    const mapping = makeMapping();
+    const result = generateYarrrml([source], { src1: [mapping] });
 
-    expect(result).toContain('mappings:')
-    expect(result).toContain('sources:')
-    expect(result).toContain('po:')
-  })
+    expect(result).toContain('mappings:');
+    expect(result).toContain('sources:');
+    expect(result).toContain('po:');
+  });
 
   it('2. kind === sparql → output contains "# requires manual conversion"', () => {
-    const source = makeSource()
-    const mapping = makeMapping({ kind: 'sparql' })
-    const result = generateYarrrml([source], { src1: [mapping] })
+    const source = makeSource();
+    const mapping = makeMapping({ kind: 'sparql' });
+    const result = generateYarrrml([source], { src1: [mapping] });
 
-    expect(result).toContain('# requires manual conversion')
-  })
+    expect(result).toContain('# requires manual conversion');
+  });
 
   it('3. kind === language with languageTag fr → output contains lang=fr', () => {
-    const source = makeSource()
-    const mapping = makeMapping({ kind: 'language', languageTag: 'fr' })
-    const result = generateYarrrml([source], { src1: [mapping] })
+    const source = makeSource();
+    const mapping = makeMapping({ kind: 'language', languageTag: 'fr' });
+    const result = generateYarrrml([source], { src1: [mapping] });
 
-    expect(result).toContain('lang=fr')
-  })
+    expect(result).toContain('lang=fr');
+  });
 
   it('4. empty sources → output contains mappings: but no Map: entries', () => {
-    const result = generateYarrrml([], {})
+    const result = generateYarrrml([], {});
 
-    expect(result).toContain('mappings:')
-    expect(result).not.toContain('Map:')
-  })
+    expect(result).toContain('mappings:');
+    expect(result).not.toContain('Map:');
+  });
 
   it('5. kind === typecast with targetDatatype → output contains datatype=', () => {
-    const source = makeSource()
+    const source = makeSource();
     const mapping = makeMapping({
       kind: 'typecast',
       targetDatatype: 'http://www.w3.org/2001/XMLSchema#integer',
-    })
-    const result = generateYarrrml([source], { src1: [mapping] })
+    });
+    const result = generateYarrrml([source], { src1: [mapping] });
 
-    expect(result).toContain('datatype=')
-  })
+    expect(result).toContain('datatype=');
+  });
 
   it('6. kind === constant → po entry does NOT start with a leading space before <', () => {
-    const source = makeSource()
+    const source = makeSource();
     const mapping = makeMapping({
       kind: 'constant',
       constantValue: 'NATO',
       constantType: 'http://www.w3.org/2001/XMLSchema#string',
-    })
-    const result = generateYarrrml([source], { src1: [mapping] })
+    });
+    const result = generateYarrrml([source], { src1: [mapping] });
 
     // Must not contain [" <  (space before angle bracket in array)
-    expect(result).not.toContain('[" <')
-  })
+    expect(result).not.toContain('[" <');
+  });
 
   it('7. yarrrml.ts does not import js-yaml', async () => {
-    const fs = await import('fs')
-    const path = await import('path')
-    const filePath = path.resolve(__dirname, '../lib/yarrrml.ts')
-    const content = fs.readFileSync(filePath, 'utf-8')
+    const fs = await import('fs');
+    const path = await import('path');
+    const filePath = path.resolve(__dirname, '../lib/yarrrml.ts');
+    const content = fs.readFileSync(filePath, 'utf-8');
 
     // Only check import statements (first ~20 lines) for js-yaml
     const importLines = content
       .split('\n')
       .filter((line) => line.startsWith('import'))
-      .join('\n')
+      .join('\n');
 
-    expect(importLines).not.toContain('js-yaml')
-  })
-})
+    expect(importLines).not.toContain('js-yaml');
+  });
+});

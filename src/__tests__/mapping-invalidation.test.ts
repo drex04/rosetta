@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach } from 'vitest'
-import { useOntologyStore } from '../store/ontologyStore'
-import { useMappingStore } from '../store/mappingStore'
-import type { OntologyNode } from '../types/index'
+import { describe, it, expect, beforeEach } from 'vitest';
+import { useOntologyStore } from '../store/ontologyStore';
+import { useMappingStore } from '../store/mappingStore';
+import type { OntologyNode } from '../types/index';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -21,7 +21,7 @@ function makeNode(id: string, propertyUris: string[]): OntologyNode {
         kind: 'datatype' as const,
       })),
     },
-  }
+  };
 }
 
 /**
@@ -39,108 +39,115 @@ function makeMapping(propUri: string) {
     targetHandle: `target_prop_${propUri.split('#').pop() ?? 'x'}`,
     kind: 'direct' as const,
     sparqlConstruct: '',
-  }
+  };
 }
 
 // ─── Setup ────────────────────────────────────────────────────────────────────
 
 beforeEach(() => {
-  useOntologyStore.setState({ nodes: [], edges: [] })
-  useMappingStore.setState({ mappings: {}, selectedMappingId: null, groups: {}, _undoStack: [] })
-})
+  useOntologyStore.setState({ nodes: [], edges: [] });
+  useMappingStore.setState({
+    mappings: {},
+    selectedMappingId: null,
+    groups: {},
+    _undoStack: [],
+  });
+});
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
 describe('useInvalidateMappings — property deletion', () => {
   it('removes a mapping when the target property URI is deleted from ontology nodes', () => {
-    const propA = 'http://nato.int/onto#speed'
+    const propA = 'http://nato.int/onto#speed';
 
     // Set up ontology with propA
-    useOntologyStore.setState({ nodes: [makeNode('Track', [propA])] })
+    useOntologyStore.setState({ nodes: [makeNode('Track', [propA])] });
 
     // Create a mapping referencing propA
-    const mappingStore = useMappingStore.getState()
-    mappingStore.addMapping(makeMapping(propA))
-    expect(useMappingStore.getState().mappings['src-1']).toHaveLength(1)
+    const mappingStore = useMappingStore.getState();
+    mappingStore.addMapping(makeMapping(propA));
+    expect(useMappingStore.getState().mappings['src-1']).toHaveLength(1);
 
     // Simulate invalidation: remove propA from nodes
-    const currentUris = new Set<string>() // propA no longer present
-    useMappingStore.getState().removeInvalidMappings(currentUris)
+    const currentUris = new Set<string>(); // propA no longer present
+    useMappingStore.getState().removeInvalidMappings(currentUris);
 
-    expect(useMappingStore.getState().mappings['src-1']).toHaveLength(0)
-  })
+    expect(useMappingStore.getState().mappings['src-1']).toHaveLength(0);
+  });
 
   it('keeps a mapping when its target property URI is still in ontology nodes', () => {
-    const propA = 'http://nato.int/onto#speed'
+    const propA = 'http://nato.int/onto#speed';
 
-    useOntologyStore.setState({ nodes: [makeNode('Track', [propA])] })
+    useOntologyStore.setState({ nodes: [makeNode('Track', [propA])] });
 
-    useMappingStore.getState().addMapping(makeMapping(propA))
-    expect(useMappingStore.getState().mappings['src-1']).toHaveLength(1)
+    useMappingStore.getState().addMapping(makeMapping(propA));
+    expect(useMappingStore.getState().mappings['src-1']).toHaveLength(1);
 
     // propA still valid
-    const currentUris = new Set([propA])
-    useMappingStore.getState().removeInvalidMappings(currentUris)
+    const currentUris = new Set([propA]);
+    useMappingStore.getState().removeInvalidMappings(currentUris);
 
-    expect(useMappingStore.getState().mappings['src-1']).toHaveLength(1)
-  })
-})
+    expect(useMappingStore.getState().mappings['src-1']).toHaveLength(1);
+  });
+});
 
 describe('useInvalidateMappings — property rename', () => {
   it('removes a mapping referencing old URI when property is renamed (old URI disappears)', () => {
-    const propA = 'http://nato.int/onto#speed'
-    const propB = 'http://nato.int/onto#velocity'
+    const propA = 'http://nato.int/onto#speed';
+    const propB = 'http://nato.int/onto#velocity';
 
     // Ontology initially has propA
-    useOntologyStore.setState({ nodes: [makeNode('Track', [propA])] })
+    useOntologyStore.setState({ nodes: [makeNode('Track', [propA])] });
 
     // Mapping references propA
-    useMappingStore.getState().addMapping(makeMapping(propA))
-    expect(useMappingStore.getState().mappings['src-1']).toHaveLength(1)
+    useMappingStore.getState().addMapping(makeMapping(propA));
+    expect(useMappingStore.getState().mappings['src-1']).toHaveLength(1);
 
     // Rename: propA → propB (propA disappears, propB appears)
-    useOntologyStore.setState({ nodes: [makeNode('Track', [propB])] })
+    useOntologyStore.setState({ nodes: [makeNode('Track', [propB])] });
 
     // Hook logic: current valid URIs are now {propB}; propA is gone
-    const currentUris = new Set([propB])
-    useMappingStore.getState().removeInvalidMappings(currentUris)
+    const currentUris = new Set([propB]);
+    useMappingStore.getState().removeInvalidMappings(currentUris);
 
-    expect(useMappingStore.getState().mappings['src-1']).toHaveLength(0)
-  })
+    expect(useMappingStore.getState().mappings['src-1']).toHaveLength(0);
+  });
 
   it('removes only the mapping for the renamed property, keeps others', () => {
-    const propA = 'http://nato.int/onto#speed'
-    const propB = 'http://nato.int/onto#velocity'
-    const propC = 'http://nato.int/onto#altitude'
+    const propA = 'http://nato.int/onto#speed';
+    const propB = 'http://nato.int/onto#velocity';
+    const propC = 'http://nato.int/onto#altitude';
 
-    useOntologyStore.setState({ nodes: [makeNode('Track', [propA, propC])] })
+    useOntologyStore.setState({ nodes: [makeNode('Track', [propA, propC])] });
 
-    useMappingStore.getState().addMapping(makeMapping(propA))
-    useMappingStore.getState().addMapping(makeMapping(propC))
-    expect(useMappingStore.getState().mappings['src-1']).toHaveLength(2)
+    useMappingStore.getState().addMapping(makeMapping(propA));
+    useMappingStore.getState().addMapping(makeMapping(propC));
+    expect(useMappingStore.getState().mappings['src-1']).toHaveLength(2);
 
     // propA renamed to propB; propC remains
-    const currentUris = new Set([propB, propC])
-    useMappingStore.getState().removeInvalidMappings(currentUris)
+    const currentUris = new Set([propB, propC]);
+    useMappingStore.getState().removeInvalidMappings(currentUris);
 
-    const remaining = useMappingStore.getState().mappings['src-1'] ?? []
-    expect(remaining).toHaveLength(1)
-    expect(remaining[0]!.targetPropUri).toBe(propC)
-  })
-})
+    const remaining = useMappingStore.getState().mappings['src-1'] ?? [];
+    expect(remaining).toHaveLength(1);
+    expect(remaining[0]!.targetPropUri).toBe(propC);
+  });
+});
 
 describe('useInvalidateMappings — undo', () => {
   it('undoLastRemoval restores the removed mappings', () => {
-    const propA = 'http://nato.int/onto#speed'
+    const propA = 'http://nato.int/onto#speed';
 
-    useOntologyStore.setState({ nodes: [makeNode('Track', [propA])] })
-    useMappingStore.getState().addMapping(makeMapping(propA))
+    useOntologyStore.setState({ nodes: [makeNode('Track', [propA])] });
+    useMappingStore.getState().addMapping(makeMapping(propA));
 
-    useMappingStore.getState().removeInvalidMappings(new Set())
-    expect(useMappingStore.getState().mappings['src-1']).toHaveLength(0)
+    useMappingStore.getState().removeInvalidMappings(new Set());
+    expect(useMappingStore.getState().mappings['src-1']).toHaveLength(0);
 
-    useMappingStore.getState().undoLastRemoval()
-    expect(useMappingStore.getState().mappings['src-1']).toHaveLength(1)
-    expect(useMappingStore.getState().mappings['src-1']![0]!.targetPropUri).toBe(propA)
-  })
-})
+    useMappingStore.getState().undoLastRemoval();
+    expect(useMappingStore.getState().mappings['src-1']).toHaveLength(1);
+    expect(
+      useMappingStore.getState().mappings['src-1']![0]!.targetPropUri,
+    ).toBe(propA);
+  });
+});

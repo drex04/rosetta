@@ -1,16 +1,16 @@
-import { create } from 'zustand'
-import type { SourceNodeData, OntologyEdge, ClassData } from '@/types/index'
+import { create } from 'zustand';
+import type { SourceNodeData, OntologyEdge, ClassData } from '@/types/index';
 
 export interface Source {
-  id: string
-  name: string
-  order: number
-  rawData: string
-  dataFormat: 'json' | 'xml'
-  schemaNodes: SourceNodeData[]
-  schemaEdges: OntologyEdge[]
-  turtleSource: string
-  parseError: string | null
+  id: string;
+  name: string;
+  order: number;
+  rawData: string;
+  dataFormat: 'json' | 'xml';
+  schemaNodes: SourceNodeData[];
+  schemaEdges: OntologyEdge[];
+  turtleSource: string;
+  parseError: string | null;
 }
 
 /**
@@ -19,36 +19,40 @@ export interface Source {
  * Safe to call on already-migrated records.
  */
 export function migrateSource(record: Record<string, unknown>): Source {
-  const migrated = { ...record }
+  const migrated = { ...record };
   if ('json' in migrated && !('rawData' in migrated)) {
-    migrated['rawData'] = migrated['json'] ?? ''
-    migrated['dataFormat'] = 'json'
-    delete migrated['json']
+    migrated['rawData'] = migrated['json'] ?? '';
+    migrated['dataFormat'] = 'json';
+    delete migrated['json'];
   }
   // Ensure fields exist even on brand-new records missing both
-  if (!('rawData' in migrated)) migrated['rawData'] = ''
-  if (!('dataFormat' in migrated)) migrated['dataFormat'] = 'json'
-  if (!('turtleSource' in migrated)) migrated['turtleSource'] = ''
-  if (!('parseError' in migrated)) migrated['parseError'] = null
+  if (!('rawData' in migrated)) migrated['rawData'] = '';
+  if (!('dataFormat' in migrated)) migrated['dataFormat'] = 'json';
+  if (!('turtleSource' in migrated)) migrated['turtleSource'] = '';
+  if (!('parseError' in migrated)) migrated['parseError'] = null;
   // Remove any stale json key
-  delete migrated['json']
-  return migrated as unknown as Source
+  delete migrated['json'];
+  return migrated as unknown as Source;
 }
 
 interface SourcesState {
-  sources: Source[]
-  activeSourceId: string | null
-  setActiveSourceId: (id: string | null) => void
-  addSource: (source: Source) => void
-  removeSource: (id: string) => void
-  updateSource: (id: string, patch: Partial<Source>) => void
+  sources: Source[];
+  activeSourceId: string | null;
+  setActiveSourceId: (id: string | null) => void;
+  addSource: (source: Source) => void;
+  removeSource: (id: string) => void;
+  updateSource: (id: string, patch: Partial<Source>) => void;
   /** Update a schema node's label or URI within a source. Safe no-op when ids don't exist. */
-  updateSchemaNode: (sourceId: string, nodeId: string, patch: Partial<Pick<ClassData, 'label' | 'uri'>>) => void
-  reset: () => void
+  updateSchemaNode: (
+    sourceId: string,
+    nodeId: string,
+    patch: Partial<Pick<ClassData, 'label' | 'uri'>>,
+  ) => void;
+  reset: () => void;
 }
 
 export function generateSourceId(): string {
-  return crypto.randomUUID()
+  return crypto.randomUUID();
 }
 
 export const useSourcesStore = create<SourcesState>((set) => ({
@@ -58,16 +62,16 @@ export const useSourcesStore = create<SourcesState>((set) => ({
   addSource: (source) => set((s) => ({ sources: [...s.sources, source] })),
   removeSource: (id) =>
     set((s) => {
-      const sources = s.sources.filter((src) => src.id !== id)
+      const sources = s.sources.filter((src) => src.id !== id);
       const activeSourceId =
-        s.activeSourceId === id
-          ? (sources[0]?.id ?? null)
-          : s.activeSourceId
-      return { sources, activeSourceId }
+        s.activeSourceId === id ? (sources[0]?.id ?? null) : s.activeSourceId;
+      return { sources, activeSourceId };
     }),
   updateSource: (id, patch) =>
     set((s) => ({
-      sources: s.sources.map((src) => (src.id === id ? { ...src, ...patch } : src)),
+      sources: s.sources.map((src) =>
+        src.id === id ? { ...src, ...patch } : src,
+      ),
     })),
   updateSchemaNode: (sourceId, nodeId, patch) =>
     set((s) => ({
@@ -83,4 +87,4 @@ export const useSourcesStore = create<SourcesState>((set) => ({
       ),
     })),
   reset: () => set({ sources: [], activeSourceId: null }),
-}))
+}));

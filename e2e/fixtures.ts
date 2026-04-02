@@ -1,4 +1,4 @@
-import { test as base, type Page } from '@playwright/test'
+import { test as base, type Page } from '@playwright/test';
 
 /**
  * freshPage fixture — navigates to '/', wipes IndexedDB and localStorage,
@@ -6,23 +6,25 @@ import { test as base, type Page } from '@playwright/test'
  */
 export const test = base.extend<{ freshPage: Page }>({
   freshPage: async ({ page }, use) => {
-    await page.goto('/')
+    await page.goto('/');
 
     // Clear persisted state
     await page.evaluate(() => {
       // idb-keyval uses the default 'keyval' store in 'keyval-store' database.
       // The key used by the app is 'rosetta-project'.
-      const deleteRequest = indexedDB.deleteDatabase('keyval-store')
-      deleteRequest.onerror = () => { /* ignore */ }
+      const deleteRequest = indexedDB.deleteDatabase('keyval-store');
+      deleteRequest.onerror = () => {
+        /* ignore */
+      };
 
       // Zustand persist key for uiStore
-      localStorage.removeItem('rosetta-ui')
-    })
+      localStorage.removeItem('rosetta-ui');
+    });
 
-    await page.reload({ waitUntil: 'networkidle' })
+    await page.reload({ waitUntil: 'networkidle' });
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    await use(page)
+    await use(page);
   },
-})
+});
 
-export { expect } from '@playwright/test'
+export { expect } from '@playwright/test';

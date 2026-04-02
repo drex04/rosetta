@@ -1,9 +1,17 @@
-import { BaseEdge, getSmoothStepPath, type EdgeProps, type Edge } from '@xyflow/react'
-import type { ObjectPropertyEdgeData } from '@/types/index'
-import { MASTER_BLUE } from './shared'
-import { EdgeLabel } from './EdgeLabel'
+import {
+  BaseEdge,
+  getSmoothStepPath,
+  type EdgeProps,
+  type Edge,
+} from '@xyflow/react';
+import type { ObjectPropertyEdgeData } from '@/types/index';
+import { MASTER_BLUE } from './shared';
+import { EdgeLabel } from './EdgeLabel';
 
-type ObjectPropertyEdgeType = Edge<ObjectPropertyEdgeData & Record<string, unknown>, 'objectPropertyEdge'>
+type ObjectPropertyEdgeType = Edge<
+  ObjectPropertyEdgeData & Record<string, unknown>,
+  'objectPropertyEdge'
+>;
 
 export function ObjectPropertyEdge({
   id,
@@ -23,7 +31,7 @@ export function ObjectPropertyEdge({
     targetX,
     targetY,
     targetPosition,
-  })
+  });
 
   return (
     <>
@@ -36,7 +44,9 @@ export function ObjectPropertyEdge({
           strokeWidth: 2,
         }}
       />
-      <EdgeLabel labelX={labelX} labelY={labelY}>{data?.label ?? ''}</EdgeLabel>
+      <EdgeLabel labelX={labelX} labelY={labelY}>
+        {data?.label ?? ''}
+      </EdgeLabel>
     </>
-  )
+  );
 }

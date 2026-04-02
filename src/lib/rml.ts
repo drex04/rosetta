@@ -1,6 +1,6 @@
-import { localName } from '@/lib/rdf'
-import type { Source } from '@/store/sourcesStore'
-import type { Mapping } from '@/types/index'
+import { localName } from '@/lib/rdf';
+import type { Source } from '@/store/sourcesStore';
+import type { Mapping } from '@/types/index';
 
 // ─── inferIterator ────────────────────────────────────────────────────────────
 
@@ -9,30 +9,30 @@ import type { Mapping } from '@/types/index'
  * Returns a safe fallback of `$[*]` if the JSON is invalid or empty.
  */
 export function inferIterator(jsonString: string): string {
-  if (jsonString.trim() === '') return '$[*]'
+  if (jsonString.trim() === '') return '$[*]';
 
-  let parsed: unknown
+  let parsed: unknown;
   try {
-    parsed = JSON.parse(jsonString)
+    parsed = JSON.parse(jsonString);
   } catch {
-    return '$[*]'
+    return '$[*]';
   }
 
   // Guard: null or non-object primitives
-  if (parsed === null || typeof parsed !== 'object') return '$'
+  if (parsed === null || typeof parsed !== 'object') return '$';
 
   // Array root
-  if (Array.isArray(parsed)) return '$[*]'
+  if (Array.isArray(parsed)) return '$[*]';
 
   // Plain object — find first key whose value is an array
-  const obj = parsed as Record<string, unknown>
+  const obj = parsed as Record<string, unknown>;
   for (const [key, value] of Object.entries(obj)) {
     if (Array.isArray(value)) {
-      return `$.${key}[*]`
+      return `$.${key}[*]`;
     }
   }
 
-  return '$'
+  return '$';
 }
 
 // ─── deriveSubjectTemplate ────────────────────────────────────────────────────
@@ -47,26 +47,31 @@ function deriveSubjectTemplate(
   classUri: string,
   uriPrefix: string,
 ): string {
-  const node = schemaNodes.find((n) => (n.data as { uri: string }).uri === classUri)
+  const node = schemaNodes.find(
+    (n) => (n.data as { uri: string }).uri === classUri,
+  );
   if (!node) {
-    return `http://example.org/${localName(classUri)}/{index}`
+    return `http://example.org/${localName(classUri)}/{index}`;
   }
 
-  const properties = (node.data as { properties: Array<{ uri: string }> }).properties
+  const properties = (node.data as { properties: Array<{ uri: string }> })
+    .properties;
 
   if (!properties || properties.length === 0) {
-    return `http://example.org/${localName(classUri)}/{index}`
+    return `http://example.org/${localName(classUri)}/{index}`;
   }
 
   // Find property whose localName contains 'id' or 'key' (case-insensitive)
   const idProp = properties.find((p) => {
-    const ln = localName(p.uri).toLowerCase()
-    return ln.includes('id') || ln.includes('key')
-  })
+    const ln = localName(p.uri).toLowerCase();
+    return ln.includes('id') || ln.includes('key');
+  });
 
-  const varName = idProp ? localName(idProp.uri) : localName(properties[0]!.uri)
+  const varName = idProp
+    ? localName(idProp.uri)
+    : localName(properties[0]!.uri);
 
-  return `${uriPrefix}{${varName}}`
+  return `${uriPrefix}{${varName}}`;
 }
 
 // ─── generateRml ──────────────────────────────────────────────────────────────
@@ -85,80 +90,94 @@ export function generateRml(
     '@prefix ql: <http://semweb.mmlab.be/ns/ql#> .',
     '@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .',
     '',
-  ]
+  ];
 
   for (const source of sources) {
-    if (source.rawData.trim() === '') continue
+    if (source.rawData.trim() === '') continue;
 
-    const iterator = inferIterator(source.rawData)
-    const mlist = mappingsBySource[source.id] ?? []
+    const iterator = inferIterator(source.rawData);
+    const mlist = mappingsBySource[source.id] ?? [];
 
     // Group mappings by sourceClassUri
-    const byClass = new Map<string, Mapping[]>()
+    const byClass = new Map<string, Mapping[]>();
     for (const m of mlist) {
-      const existing = byClass.get(m.sourceClassUri) ?? []
-      existing.push(m)
-      byClass.set(m.sourceClassUri, existing)
+      const existing = byClass.get(m.sourceClassUri) ?? [];
+      existing.push(m);
+      byClass.set(m.sourceClassUri, existing);
     }
 
     for (const [sourceClassUri, mappings] of byClass) {
-      const mapName = `<#${localName(sourceClassUri)}Map>`
-      const sanitizedName = source.name.replace(/[^a-zA-Z0-9]/g, '').toLowerCase()
-      const uriPrefix = `http://src_${sanitizedName}_#`
-      const subjectTemplate = deriveSubjectTemplate(source.schemaNodes, sourceClassUri, uriPrefix)
+      const mapName = `<#${localName(sourceClassUri)}Map>`;
+      const sanitizedName = source.name
+        .replace(/[^a-zA-Z0-9]/g, '')
+        .toLowerCase();
+      const uriPrefix = `http://src_${sanitizedName}_#`;
+      const subjectTemplate = deriveSubjectTemplate(
+        source.schemaNodes,
+        sourceClassUri,
+        uriPrefix,
+      );
 
-      lines.push(`${mapName} a rr:TriplesMap ;`)
-      lines.push(`  rml:logicalSource [`)
-      lines.push(`    rml:source "${source.name}.json" ;`)
-      lines.push(`    rml:referenceFormulation ql:JSONPath ;`)
-      lines.push(`    rml:iterator "${iterator}" ;`)
-      lines.push(`  ] ;`)
-      lines.push(`  rr:subjectMap [`)
-      lines.push(`    rr:template "${subjectTemplate}" ;`)
-      lines.push(`    rr:class <${sourceClassUri}> ;`)
-      lines.push(`  ] ;`)
+      lines.push(`${mapName} a rr:TriplesMap ;`);
+      lines.push(`  rml:logicalSource [`);
+      lines.push(`    rml:source "${source.name}.json" ;`);
+      lines.push(`    rml:referenceFormulation ql:JSONPath ;`);
+      lines.push(`    rml:iterator "${iterator}" ;`);
+      lines.push(`  ] ;`);
+      lines.push(`  rr:subjectMap [`);
+      lines.push(`    rr:template "${subjectTemplate}" ;`);
+      lines.push(`    rr:class <${sourceClassUri}> ;`);
+      lines.push(`  ] ;`);
 
       for (const mapping of mappings) {
         if (mapping.kind === 'sparql' || mapping.kind === 'join') {
-          lines.push(`  # rr:predicateObjectMap [ # requires manual conversion`)
-          lines.push(`  #   rr:predicate <${mapping.targetPropUri}> ;`)
-          lines.push(`  #   rr:objectMap [ rml:reference "..." ] ;`)
-          lines.push(`  # ] ;`)
+          lines.push(
+            `  # rr:predicateObjectMap [ # requires manual conversion`,
+          );
+          lines.push(`  #   rr:predicate <${mapping.targetPropUri}> ;`);
+          lines.push(`  #   rr:objectMap [ rml:reference "..." ] ;`);
+          lines.push(`  # ] ;`);
         } else if (mapping.kind === 'constant') {
-          const val = mapping.constantValue ?? ''
-          const dtype = mapping.constantType ?? 'http://www.w3.org/2001/XMLSchema#string'
-          lines.push(`  rr:predicateObjectMap [`)
-          lines.push(`    rr:predicate <${mapping.targetPropUri}> ;`)
-          lines.push(`    rr:objectMap [ rr:object "${val}"^^<${dtype}> ] ;`)
-          lines.push(`  ] ;`)
+          const val = mapping.constantValue ?? '';
+          const dtype =
+            mapping.constantType ?? 'http://www.w3.org/2001/XMLSchema#string';
+          lines.push(`  rr:predicateObjectMap [`);
+          lines.push(`    rr:predicate <${mapping.targetPropUri}> ;`);
+          lines.push(`    rr:objectMap [ rr:object "${val}"^^<${dtype}> ] ;`);
+          lines.push(`  ] ;`);
         } else if (mapping.kind === 'language') {
-          const ref = localName(mapping.sourcePropUri)
-          const lang = mapping.languageTag ?? 'en'
-          lines.push(`  rr:predicateObjectMap [`)
-          lines.push(`    rr:predicate <${mapping.targetPropUri}> ;`)
-          lines.push(`    rr:objectMap [ rml:reference "${ref}" ; rr:language "${lang}" ] ;`)
-          lines.push(`  ] ;`)
+          const ref = localName(mapping.sourcePropUri);
+          const lang = mapping.languageTag ?? 'en';
+          lines.push(`  rr:predicateObjectMap [`);
+          lines.push(`    rr:predicate <${mapping.targetPropUri}> ;`);
+          lines.push(
+            `    rr:objectMap [ rml:reference "${ref}" ; rr:language "${lang}" ] ;`,
+          );
+          lines.push(`  ] ;`);
         } else if (mapping.kind === 'typecast') {
-          const ref = localName(mapping.sourcePropUri)
-          const dtype = mapping.targetDatatype ?? 'http://www.w3.org/2001/XMLSchema#string'
-          lines.push(`  rr:predicateObjectMap [`)
-          lines.push(`    rr:predicate <${mapping.targetPropUri}> ;`)
-          lines.push(`    rr:objectMap [ rml:reference "${ref}" ; rr:datatype <${dtype}> ] ;`)
-          lines.push(`  ] ;`)
+          const ref = localName(mapping.sourcePropUri);
+          const dtype =
+            mapping.targetDatatype ?? 'http://www.w3.org/2001/XMLSchema#string';
+          lines.push(`  rr:predicateObjectMap [`);
+          lines.push(`    rr:predicate <${mapping.targetPropUri}> ;`);
+          lines.push(
+            `    rr:objectMap [ rml:reference "${ref}" ; rr:datatype <${dtype}> ] ;`,
+          );
+          lines.push(`  ] ;`);
         } else {
           // direct, template, or anything else
-          const ref = localName(mapping.sourcePropUri)
-          lines.push(`  rr:predicateObjectMap [`)
-          lines.push(`    rr:predicate <${mapping.targetPropUri}> ;`)
-          lines.push(`    rr:objectMap [ rml:reference "${ref}" ] ;`)
-          lines.push(`  ] ;`)
+          const ref = localName(mapping.sourcePropUri);
+          lines.push(`  rr:predicateObjectMap [`);
+          lines.push(`    rr:predicate <${mapping.targetPropUri}> ;`);
+          lines.push(`    rr:objectMap [ rml:reference "${ref}" ] ;`);
+          lines.push(`  ] ;`);
         }
       }
 
-      lines.push(` .`)
-      lines.push('')
+      lines.push(` .`);
+      lines.push('');
     }
   }
 
-  return lines.join('\n')
+  return lines.join('\n');
 }

@@ -2,7 +2,9 @@
  * Detects format (JSON or XML) from raw text content.
  * Trims whitespace and inspects the first character.
  */
-export function detectFormatFromContent(text: string): 'json' | 'xml' | 'unknown' {
+export function detectFormatFromContent(
+  text: string,
+): 'json' | 'xml' | 'unknown' {
   const trimmed = text.trim();
   if (trimmed.length === 0) return 'unknown';
   const first = trimmed[0];

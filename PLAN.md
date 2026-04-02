@@ -27,6 +27,7 @@ The user builds their "target" ontology using a visual node-based editor.
 The user can add **multiple sources**, each representing a different system (e.g., a Norwegian radar, a German radar, a British command system). Each source has a user-defined name and its own JSON input.
 
 **Adding sources:**
+
 - Click "Add Source" in the toolbar or source selector. A new source is created with a default name ("Source 1", "Source 2", etc.).
 - The user can **rename** each source to something meaningful (e.g., "Norwegian Radar", "German Radar").
 - Each source has its own JSON input, auto-generated RDFS schema, and set of mappings to the master ontology.
@@ -38,7 +39,7 @@ The user pastes JSON into the active source's JSON input panel (a full-height co
 **JSON → RDFS conversion logic:**
 
 1. **Objects** → `rdfs:Class`. Nested objects create new classes with `owl:ObjectProperty` linking parent to child.
-2. **Arrays of objects** → `owl:ObjectProperty` with the array item type as range, plus an implicit cardinality of 0..*.
+2. **Arrays of objects** → `owl:ObjectProperty` with the array item type as range, plus an implicit cardinality of 0..\*.
 3. **Primitive values** → `owl:DatatypeProperty` with inferred XSD types:
    - `string` → `xsd:string`
    - `number` (integer) → `xsd:integer`
@@ -46,7 +47,7 @@ The user pastes JSON into the active source's JSON input panel (a full-height co
    - `boolean` → `xsd:boolean`
    - ISO 8601 date strings → `xsd:dateTime`
    - `null` → property exists but range is `xsd:anySimpleType`
-4. **Arrays of primitives** → `owl:DatatypeProperty` with cardinality 0..*.
+4. **Arrays of primitives** → `owl:DatatypeProperty` with cardinality 0..\*.
 5. **Class naming:** derived from JSON keys, converted to PascalCase. Properties use camelCase. A configurable base URI prefix (e.g., `http://example.org/source#`) is applied.
 
 The generated schema appears as nodes on the **left side** of the React Flow canvas (only the active source is shown at a time — see UI Layout). The user can rearrange nodes but not structurally edit the source schema (it's derived from the data).
@@ -97,8 +98,8 @@ Before transformation, the app validates that the mapping output from **all sour
    - Cardinality constraints → `sh:minCount` / `sh:maxCount`.
    - Datatype constraints → `sh:datatype`.
    - Object property ranges → `sh:class`.
-3. Run SHACL validation on the candidate output.
-4. Display results:
+4. Run SHACL validation on the candidate output.
+5. Display results:
    - **Pass:** green checkmarks, proceed to transform.
    - **Fail:** list violations with human-readable messages, **grouped by source**. Each violation indicates which source produced the offending data. Highlight the relevant nodes/edges in the visual editor (switching to the relevant source's canvas view). Each violation links back to the specific SHACL constraint and the offending triple.
    - **Per-source status:** show a summary indicator for each source (e.g., "Norwegian Radar: 0 errors", "German Radar: 3 errors") so the user knows which sources need attention.
@@ -167,18 +168,18 @@ Use **IndexedDB** (via `idb-keyval`) to persist all project state automatically.
 
 **Stored data:**
 
-| Key | Content |
-|-----|---------|
-| `project:meta` | Project name, description, creation date, last modified |
-| `project:master-ontology` | Turtle serialization of the master ontology |
-| `project:sources` | Array of source metadata: `[{ id, name, order }]` |
-| `project:source:<id>:json` | The raw JSON pasted by the user for this source |
-| `project:source:<id>:schema` | Turtle serialization of the auto-generated source schema |
+| Key                            | Content                                                                                                                               |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `project:meta`                 | Project name, description, creation date, last modified                                                                               |
+| `project:master-ontology`      | Turtle serialization of the master ontology                                                                                           |
+| `project:sources`              | Array of source metadata: `[{ id, name, order }]`                                                                                     |
+| `project:source:<id>:json`     | The raw JSON pasted by the user for this source                                                                                       |
+| `project:source:<id>:schema`   | Turtle serialization of the auto-generated source schema                                                                              |
 | `project:source:<id>:mappings` | Array of mapping definitions for this source (each with SPARQL CONSTRUCT query + visual edge metadata + groupId for complex mappings) |
-| `project:source:<id>:layout` | React Flow node positions for this source's schema nodes |
-| `project:shacl-shapes` | Generated SHACL shapes (Turtle) |
-| `project:master-layout` | React Flow node positions for the master ontology + viewport |
-| `project:active-source` | ID of the currently selected source |
+| `project:source:<id>:layout`   | React Flow node positions for this source's schema nodes                                                                              |
+| `project:shacl-shapes`         | Generated SHACL shapes (Turtle)                                                                                                       |
+| `project:master-layout`        | React Flow node positions for the master ontology + viewport                                                                          |
+| `project:active-source`        | ID of the currently selected source                                                                                                   |
 
 **Auto-save:** Debounced save on every state change (500ms debounce). A small status indicator shows "Saved" / "Saving..." in the UI.
 
@@ -284,11 +285,13 @@ IndexedDB keys can be namespaced by project ID (`project:<id>:master-ontology`) 
 ```
 
 **Header:**
+
 - App name/logo on the left.
 - "About" link (opens About page/dialog explaining ontology mapping and the tool's purpose).
 - "Help Tour" button (re-launches the interactive walkthrough).
 
 **Source Selector (above the canvas):**
+
 - A dropdown or horizontal pill/tab bar listing all sources by name.
 - Each source shows a status indicator: ✓ (mapped & valid), ⚠ (has mappings but validation errors), ○ (no mappings yet).
 - The active source is highlighted. Switching sources updates both the canvas (left side) and the SRC/MAP tabs in the right panel.
@@ -296,12 +299,14 @@ IndexedDB keys can be namespaced by project ID (`project:<id>:master-ontology`) 
 - Source names are editable inline (double-click to rename).
 
 **Right panel tabs (left to right):**
+
 - **SRC** — Source JSON input panel **for the active source**. Shows the source name at the top (editable). Paste JSON here; also shows the auto-generated source RDFS schema as read-only Turtle below the JSON.
 - **MASTER** — Turtle editor for master ontology (bidirectional sync with canvas). Below the editable Turtle editor, a read-only collapsible section shows the ontology serialized as JSON-LD and RDF/XML (toggle between formats via a dropdown). This tab is independent of which source is active — the master ontology is shared.
 - **MAP** — SPARQL CONSTRUCT editor (YASGUI) **scoped to the active source**. Lists all mappings for this source (simple + complex) with their SPARQL. Clicking a mapping highlights its edges on the canvas. A summary header shows "Mappings for: Norwegian Radar" to make the scoping clear.
 - **OUT** — **Fused** transformed JSON output from **all sources** + download button. Shows a summary of which sources contributed data (e.g., "Fused from: Norwegian Radar (12 tracks), German Radar (8 tracks)").
 
 **Canvas layout:**
+
 - Active source's schema nodes on the **left** (amber/orange color scheme). Only the currently selected source's nodes are visible.
 - Master ontology nodes on the **right** (blue/indigo color scheme). Always visible regardless of which source is selected.
 - Mapping edges rendered as dashed green lines between the active source and the master ontology. Simple mappings use single dashed lines; complex mapping groups use double-dashed lines with a "SPARQL" badge. Only the active source's mappings are shown.
@@ -315,6 +320,7 @@ IndexedDB keys can be namespaced by project ID (`project:<id>:master-ontology`) 
 ### Custom Nodes
 
 **ClassNode:**
+
 - Header with class name (editable).
 - URI shown in smaller text below.
 - Expandable body listing datatype properties (name, XSD type, cardinality).
@@ -323,6 +329,7 @@ IndexedDB keys can be namespaced by project ID (`project:<id>:master-ontology`) 
 - "Add property" button (master ontology only).
 
 **LiteralNode (optional):**
+
 - Small node representing a standalone datatype property not yet attached to a class.
 - Used during ontology construction before the user assigns it.
 
@@ -494,12 +501,12 @@ To convert the transformed RDF back to clean JSON:
 import * as jsonld from 'jsonld';
 
 const frame = {
-  "@context": {
-    "name": "http://example.org/master#name",
-    "email": "http://example.org/master#email",
+  '@context': {
+    name: 'http://example.org/master#name',
+    email: 'http://example.org/master#email',
     // ... derived from master ontology
   },
-  "@type": "http://example.org/master#Person"
+  '@type': 'http://example.org/master#Person',
 };
 
 const output = await jsonld.frame(rdfAsJsonLd, frame);
@@ -600,8 +607,8 @@ Properties of RadarSystem:
     {
       "ziel_id": "B-1187",
       "position": {
-        "breite": 52.5200,
-        "laenge": 13.4050,
+        "breite": 52.52,
+        "laenge": 13.405,
         "hoehe_m": 9753
       },
       "geschwindigkeit_kmh": 833,
@@ -658,6 +665,7 @@ Accessible from the header "About" link. Opens a shadcn `Dialog` or `Sheet` with
 2. **The Semantic Web Approach** — "Semantic Web technologies (OWL, RDF, SPARQL) were designed to solve exactly this kind of problem: making data from different sources understandable to each other. Instead of writing brittle one-off format converters, you define ontologies (formal data models) and declarative mappings between them. If a new nation joins the coalition with a new system, you only need to create one new mapping — from their schema to the shared ontology."
 
 3. **The Workflow** — Visual diagram (simple SVG) showing:
+
    ```
    Nation A's JSON  ──→  RDF Schema A  ──→  Mapping A  ──┐
                                                           │
@@ -667,6 +675,7 @@ Accessible from the header "About" link. Opens a shadcn `Dialog` or `Sheet` with
                                                           ↑
    Master Ontology  ←──────── (shared model) ─────────────┘
    ```
+
    With a note: "Each nation's data is independently mapped to the shared ontology, then fused into a single operational picture. This tool lets you perform each step visually, or by directly editing the underlying Semantic Web representations."
 
 4. **Key Concepts** — Brief glossary with defense-relevant framing:
@@ -698,6 +707,7 @@ When the canvas or panels are empty, show helpful placeholder content with defen
 ## Development Phases
 
 ### Phase 1: Foundation
+
 - Set up Vite + React + TypeScript project.
 - Install and configure shadcn/ui with Tailwind CSS.
 - Install and configure React Flow with custom ClassNode and edge types.
@@ -708,12 +718,14 @@ When the canvas or panels are empty, show helpful placeholder content with defen
 - Implement IndexedDB persistence with auto-save (per-source keys).
 
 ### Phase 2: RDF Backbone
+
 - Integrate N3.js for RDF parsing/serialization.
 - Build the Turtle code editor panel with CodeMirror.
 - Implement bidirectional sync between canvas and code editor.
 - Implement export/import of `.onto-mapper.json` project files.
 
 ### Phase 3: JSON Import (Multi-Source)
+
 - Build the SRC tab with a CodeMirror JSON editor scoped to the active source.
 - Implement JSON → RDFS schema converter (with per-source URI prefixes).
 - Display the active source's generated schema on the left side of the canvas; swap when source selector changes.
@@ -722,6 +734,7 @@ When the canvas or panels are empty, show helpful placeholder content with defen
 - Ensure switching sources preserves each source's node positions independently.
 
 ### Phase 4: Mapping (Per-Source)
+
 - Implement simple mapping edge creation (drag from active source node to master ontology node).
 - Auto-generate SPARQL CONSTRUCT queries for simple mappings, scoped to the active source.
 - Integrate YASGUI for the SPARQL CONSTRUCT editor, scoped to the active source's mappings.
@@ -730,6 +743,7 @@ When the canvas or panels are empty, show helpful placeholder content with defen
 - Ensure mapping edges are stored per-source and only rendered for the active source.
 
 ### Phase 5: Validation (All Sources)
+
 - Implement SHACL shape auto-generation from master ontology.
 - Integrate rdf-validate-shacl.
 - Run validation across all sources: execute each source's mappings, merge candidate triples, validate against SHACL shapes.
@@ -737,6 +751,7 @@ When the canvas or panels are empty, show helpful placeholder content with defen
 - Clicking a validation error switches to the relevant source and highlights the offending nodes/edges.
 
 ### Phase 6: Transform & Fuse
+
 - Wire up Comunica to execute each source's CONSTRUCT queries against its own RDF data.
 - Merge all resulting triples from all sources into a single unified RDF graph (data fusion).
 - Add source provenance annotations to output triples.
@@ -745,6 +760,7 @@ When the canvas or panels are empty, show helpful placeholder content with defen
 - Implement download functionality.
 
 ### Phase 7: Onboarding & Polish
+
 - Build the interactive walkthrough tour with react-joyride.
 - Create the sample project bundle.
 - Add contextual info tooltips to all key UI elements.
@@ -757,6 +773,7 @@ When the canvas or panels are empty, show helpful placeholder content with defen
 - Comprehensive error handling and loading states.
 
 ---
+
 ---
 
 # Appendix: Future Reasoning Extension (NOT IN SCOPE FOR MVP)
@@ -826,6 +843,7 @@ docker run -p 3030:3030 stain/jena-fuseki \
 ```
 
 Jena supports configurable reasoning levels:
+
 - `RDFS` — subclass, subproperty, domain, range inference.
 - `OWL_MINI` — adds transitivity, symmetry, inverse properties.
 - `OWL` — full OWL-DL reasoning (slow for large ontologies).

@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { detectFormatFromContent, detectFormatFromFile } from '../lib/detectFormat';
+import {
+  detectFormatFromContent,
+  detectFormatFromFile,
+} from '../lib/detectFormat';
 
 describe('detectFormatFromContent', () => {
   it('detects JSON object', () => {
@@ -19,7 +22,9 @@ describe('detectFormatFromContent', () => {
   });
 
   it('detects XML with leading whitespace', () => {
-    expect(detectFormatFromContent('  \n<?xml version="1.0"?><root/>')).toBe('xml');
+    expect(detectFormatFromContent('  \n<?xml version="1.0"?><root/>')).toBe(
+      'xml',
+    );
   });
 
   it('returns unknown for empty string', () => {

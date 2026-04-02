@@ -1,10 +1,11 @@
-import { EditorView } from '@codemirror/view'
+import { EditorView } from '@codemirror/view';
 
 export const lightTheme = EditorView.theme({
   '&': {
     height: '100%',
     fontSize: '12px',
-    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+    fontFamily:
+      'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
     backgroundColor: '#ffffff',
   },
   '.cm-content': {
@@ -40,4 +41,4 @@ export const lightTheme = EditorView.theme({
   '.cm-cursor': {
     borderLeftColor: '#000000',
   },
-})
+});

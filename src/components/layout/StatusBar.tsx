@@ -1,48 +1,61 @@
-import { useState, useEffect } from 'react'
-import { CircleNotchIcon, CheckCircleIcon, WarningIcon } from '@phosphor-icons/react'
-import type { SaveStatus } from '@/hooks/useAutoSave'
+import { useState, useEffect } from 'react';
+import {
+  CircleNotchIcon,
+  CheckCircleIcon,
+  WarningIcon,
+} from '@phosphor-icons/react';
+import type { SaveStatus } from '@/hooks/useAutoSave';
 
 interface StatusBarProps {
-  saveStatus: SaveStatus
+  saveStatus: SaveStatus;
 }
 
 export function StatusBar({ saveStatus }: StatusBarProps) {
-  const [savingVisible, setSavingVisible] = useState(false)
+  const [savingVisible, setSavingVisible] = useState(false);
 
   useEffect(() => {
     if (saveStatus === 'saving') {
-      const timer = setTimeout(() => setSavingVisible(true), 400)
+      const timer = setTimeout(() => setSavingVisible(true), 400);
       return () => {
-        clearTimeout(timer)
-        setSavingVisible(false)
-      }
+        clearTimeout(timer);
+        setSavingVisible(false);
+      };
     }
-  }, [saveStatus])
+  }, [saveStatus]);
 
-  const showSaving = saveStatus === 'saving' && savingVisible
+  const showSaving = saveStatus === 'saving' && savingVisible;
 
   return (
     <footer className="h-6 border-t border-border bg-background flex items-center justify-end px-3 shrink-0">
       <div className="flex items-center">
         {showSaving && (
-          <span className="flex items-center gap-1 text-xs text-foreground px-2 py-0.5 rounded-full bg-muted" aria-live="polite">
+          <span
+            className="flex items-center gap-1 text-xs text-foreground px-2 py-0.5 rounded-full bg-muted"
+            aria-live="polite"
+          >
             <CircleNotchIcon size={16} className="animate-spin" />
             Saving…
           </span>
         )}
         {saveStatus === 'saved' && (
-          <span className="flex items-center gap-1 text-xs text-foreground px-2 py-0.5 rounded-full bg-muted" aria-live="polite">
+          <span
+            className="flex items-center gap-1 text-xs text-foreground px-2 py-0.5 rounded-full bg-muted"
+            aria-live="polite"
+          >
             <CheckCircleIcon size={16} className="text-green-500" />
             Saved
           </span>
         )}
         {saveStatus === 'error' && (
-          <span className="flex items-center gap-1 text-xs text-amber-500 px-2 py-0.5 rounded-full bg-muted" aria-live="polite">
+          <span
+            className="flex items-center gap-1 text-xs text-amber-500 px-2 py-0.5 rounded-full bg-muted"
+            aria-live="polite"
+          >
             <WarningIcon size={16} />
             Save failed
           </span>
         )}
       </div>
     </footer>
-  )
+  );
 }

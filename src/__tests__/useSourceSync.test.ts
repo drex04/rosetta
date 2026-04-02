@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { renderHook, act } from '@testing-library/react'
-import { useSourcesStore } from '../store/sourcesStore'
-import { useMappingStore } from '../store/mappingStore'
-import type { SourceNodeData, OntologyEdge } from '../types/index'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { renderHook, act } from '@testing-library/react';
+import { useSourcesStore } from '../store/sourcesStore';
+import { useMappingStore } from '../store/mappingStore';
+import type { SourceNodeData, OntologyEdge } from '../types/index';
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 
@@ -10,27 +10,31 @@ vi.mock('../lib/rdf', () => ({
   parseTurtle: vi.fn(),
   sourceCanvasToTurtle: vi.fn(),
   convertToSourceNodes: vi.fn(),
-}))
+}));
 
 vi.mock('../lib/jsonToSchema', () => ({
   jsonToSchema: vi.fn(),
-}))
+}));
 
 vi.mock('../lib/xmlToSchema', () => ({
   xmlToSchema: vi.fn(),
-}))
+}));
 
-import { parseTurtle, sourceCanvasToTurtle, convertToSourceNodes } from '../lib/rdf'
-import { jsonToSchema } from '../lib/jsonToSchema'
+import {
+  parseTurtle,
+  sourceCanvasToTurtle,
+  convertToSourceNodes,
+} from '../lib/rdf';
+import { jsonToSchema } from '../lib/jsonToSchema';
 
-const mockParseTurtle = vi.mocked(parseTurtle)
-const mockSourceCanvasToTurtle = vi.mocked(sourceCanvasToTurtle)
-const mockConvertToSourceNodeDatas = vi.mocked(convertToSourceNodes)
-const mockJsonToSchema = vi.mocked(jsonToSchema)
+const mockParseTurtle = vi.mocked(parseTurtle);
+const mockSourceCanvasToTurtle = vi.mocked(sourceCanvasToTurtle);
+const mockConvertToSourceNodeDatas = vi.mocked(convertToSourceNodes);
+const mockJsonToSchema = vi.mocked(jsonToSchema);
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const SOURCE_ID = 'src-001'
+const SOURCE_ID = 'src-001';
 
 const MOCK_SOURCE_NODE: SourceNodeData = {
   id: 'node_Track',
@@ -42,7 +46,7 @@ const MOCK_SOURCE_NODE: SourceNodeData = {
     prefix: 'http://src.test/',
     properties: [],
   },
-}
+};
 
 const MOCK_EDGE: OntologyEdge = {
   id: 'e_subclass',
@@ -50,7 +54,7 @@ const MOCK_EDGE: OntologyEdge = {
   source: 'node_Track',
   target: 'node_Base',
   data: { predicate: 'rdfs:subClassOf' as const },
-}
+};
 
 function seedStore() {
   useSourcesStore.setState({
@@ -68,82 +72,102 @@ function seedStore() {
       },
     ],
     activeSourceId: SOURCE_ID,
-  })
+  });
 }
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
 beforeEach(() => {
-  vi.useFakeTimers()
-  seedStore()
-  mockParseTurtle.mockReset()
-  mockSourceCanvasToTurtle.mockReset()
-  mockConvertToSourceNodeDatas.mockReset()
-  mockJsonToSchema.mockReset()
-})
+  vi.useFakeTimers();
+  seedStore();
+  mockParseTurtle.mockReset();
+  mockSourceCanvasToTurtle.mockReset();
+  mockConvertToSourceNodeDatas.mockReset();
+  mockJsonToSchema.mockReset();
+});
 
 afterEach(() => {
-  vi.useRealTimers()
-})
+  vi.useRealTimers();
+});
 
 describe('useSourceSync', () => {
   it('(a) editor change → nodes update after debounce', async () => {
-    const { useSourceSync } = await import('../hooks/useSourceSync')
+    const { useSourceSync } = await import('../hooks/useSourceSync');
 
     // parseTurtle returns an OntologyNode (classNode type)
-    const ontNode = { ...MOCK_SOURCE_NODE, type: 'classNode' as const }
-    mockParseTurtle.mockResolvedValue({ nodes: [ontNode], edges: [MOCK_EDGE] })
-    mockConvertToSourceNodeDatas.mockReturnValue([MOCK_SOURCE_NODE])
+    const ontNode = { ...MOCK_SOURCE_NODE, type: 'classNode' as const };
+    mockParseTurtle.mockResolvedValue({ nodes: [ontNode], edges: [MOCK_EDGE] });
+    mockConvertToSourceNodeDatas.mockReturnValue([MOCK_SOURCE_NODE]);
 
-    const { result } = renderHook(() => useSourceSync())
+    const { result } = renderHook(() => useSourceSync());
 
     act(() => {
-      result.current.onSourceEditorChange('@prefix src: <http://src.test/> .')
-    })
+      result.current.onSourceEditorChange('@prefix src: <http://src.test/> .');
+    });
 
     // Immediate raw write happens synchronously
-    const storeAfterWrite = useSourcesStore.getState().sources.find((s) => s.id === SOURCE_ID)
-    expect(storeAfterWrite?.turtleSource).toBe('@prefix src: <http://src.test/> .')
+    const storeAfterWrite = useSourcesStore
+      .getState()
+      .sources.find((s) => s.id === SOURCE_ID);
+    expect(storeAfterWrite?.turtleSource).toBe(
+      '@prefix src: <http://src.test/> .',
+    );
 
     // parseTurtle not called yet (debounce pending)
-    expect(mockParseTurtle).not.toHaveBeenCalled()
+    expect(mockParseTurtle).not.toHaveBeenCalled();
 
     // Advance debounce timer
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(700)
-    })
+      await vi.advanceTimersByTimeAsync(700);
+    });
 
-    expect(mockParseTurtle).toHaveBeenCalledWith('@prefix src: <http://src.test/> .')
-    expect(mockConvertToSourceNodeDatas).toHaveBeenCalled()
+    expect(mockParseTurtle).toHaveBeenCalledWith(
+      '@prefix src: <http://src.test/> .',
+    );
+    expect(mockConvertToSourceNodeDatas).toHaveBeenCalled();
 
-    const updated = useSourcesStore.getState().sources.find((s) => s.id === SOURCE_ID)
-    expect(updated?.schemaNodes).toEqual([MOCK_SOURCE_NODE])
-    expect(updated?.schemaEdges).toEqual([MOCK_EDGE])
-    expect(updated?.parseError).toBeNull()
-  })
+    const updated = useSourcesStore
+      .getState()
+      .sources.find((s) => s.id === SOURCE_ID);
+    expect(updated?.schemaNodes).toEqual([MOCK_SOURCE_NODE]);
+    expect(updated?.schemaEdges).toEqual([MOCK_EDGE]);
+    expect(updated?.parseError).toBeNull();
+  });
 
   it('(b) canvas change → turtle updates', async () => {
-    const { useSourceSync } = await import('../hooks/useSourceSync')
+    const { useSourceSync } = await import('../hooks/useSourceSync');
 
-    mockSourceCanvasToTurtle.mockResolvedValue('@prefix src: <http://src.test/> .\nsrc:Track a owl:Class .')
+    mockSourceCanvasToTurtle.mockResolvedValue(
+      '@prefix src: <http://src.test/> .\nsrc:Track a owl:Class .',
+    );
 
-    const { result } = renderHook(() => useSourceSync())
+    const { result } = renderHook(() => useSourceSync());
 
     await act(async () => {
-      await result.current.onSourceCanvasChange([MOCK_SOURCE_NODE], [MOCK_EDGE])
-    })
+      await result.current.onSourceCanvasChange(
+        [MOCK_SOURCE_NODE],
+        [MOCK_EDGE],
+      );
+    });
 
-    expect(mockSourceCanvasToTurtle).toHaveBeenCalledWith([MOCK_SOURCE_NODE], [MOCK_EDGE])
+    expect(mockSourceCanvasToTurtle).toHaveBeenCalledWith(
+      [MOCK_SOURCE_NODE],
+      [MOCK_EDGE],
+    );
 
-    const updated = useSourcesStore.getState().sources.find((s) => s.id === SOURCE_ID)
-    expect(updated?.turtleSource).toBe('@prefix src: <http://src.test/> .\nsrc:Track a owl:Class .')
-    expect(updated?.parseError).toBeNull()
-  })
+    const updated = useSourcesStore
+      .getState()
+      .sources.find((s) => s.id === SOURCE_ID);
+    expect(updated?.turtleSource).toBe(
+      '@prefix src: <http://src.test/> .\nsrc:Track a owl:Class .',
+    );
+    expect(updated?.parseError).toBeNull();
+  });
 
   it('(c) source switch during debounce → discards stale parse', async () => {
-    const { useSourceSync } = await import('../hooks/useSourceSync')
+    const { useSourceSync } = await import('../hooks/useSourceSync');
 
-    const SECOND_SOURCE_ID = 'src-002'
+    const SECOND_SOURCE_ID = 'src-002';
 
     // Add a second source and switch to it during the debounce window
     useSourcesStore.setState((s) => ({
@@ -161,70 +185,86 @@ describe('useSourceSync', () => {
           parseError: null,
         },
       ],
-    }))
+    }));
 
-    mockParseTurtle.mockResolvedValue({ nodes: [], edges: [] })
-    mockConvertToSourceNodeDatas.mockReturnValue([])
+    mockParseTurtle.mockResolvedValue({ nodes: [], edges: [] });
+    mockConvertToSourceNodeDatas.mockReturnValue([]);
 
-    const { result } = renderHook(() => useSourceSync())
+    const { result } = renderHook(() => useSourceSync());
 
     act(() => {
-      result.current.onSourceEditorChange('some turtle')
-    })
+      result.current.onSourceEditorChange('some turtle');
+    });
 
     // Switch source before debounce fires
     act(() => {
-      useSourcesStore.setState({ activeSourceId: SECOND_SOURCE_ID })
-    })
+      useSourcesStore.setState({ activeSourceId: SECOND_SOURCE_ID });
+    });
 
     // Advance timer — the parse should run but the result should be discarded
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(700)
-    })
+      await vi.advanceTimersByTimeAsync(700);
+    });
 
     // parseTurtle may or may not have been called (depends on timer resolution),
     // but crucially the FIRST source's schemaNodes must not have changed
-    const firstSource = useSourcesStore.getState().sources.find((s) => s.id === SOURCE_ID)
+    const firstSource = useSourcesStore
+      .getState()
+      .sources.find((s) => s.id === SOURCE_ID);
     // The first source's schemaNodes should remain unchanged (MOCK_SOURCE_NODE)
-    expect(firstSource?.schemaNodes).toEqual([MOCK_SOURCE_NODE])
-  })
+    expect(firstSource?.schemaNodes).toEqual([MOCK_SOURCE_NODE]);
+  });
 
   it('(e) canvas change throw → sync guard reset, subsequent calls still process', async () => {
-    const { useSourceSync } = await import('../hooks/useSourceSync')
+    const { useSourceSync } = await import('../hooks/useSourceSync');
 
     // First call throws
-    mockSourceCanvasToTurtle.mockRejectedValueOnce(new Error('serialization failed'))
+    mockSourceCanvasToTurtle.mockRejectedValueOnce(
+      new Error('serialization failed'),
+    );
     // Second call succeeds
-    mockSourceCanvasToTurtle.mockResolvedValueOnce('@prefix src: <http://src.test/> .\nsrc:Track a owl:Class .')
+    mockSourceCanvasToTurtle.mockResolvedValueOnce(
+      '@prefix src: <http://src.test/> .\nsrc:Track a owl:Class .',
+    );
 
-    const { result } = renderHook(() => useSourceSync())
+    const { result } = renderHook(() => useSourceSync());
 
     // First call — throws inside
     await act(async () => {
-      await result.current.onSourceCanvasChange([MOCK_SOURCE_NODE], [MOCK_EDGE])
-    })
+      await result.current.onSourceCanvasChange(
+        [MOCK_SOURCE_NODE],
+        [MOCK_EDGE],
+      );
+    });
 
     // Second call — should NOT be skipped (guard must have been reset)
     await act(async () => {
-      await result.current.onSourceCanvasChange([MOCK_SOURCE_NODE], [MOCK_EDGE])
-    })
+      await result.current.onSourceCanvasChange(
+        [MOCK_SOURCE_NODE],
+        [MOCK_EDGE],
+      );
+    });
 
-    expect(mockSourceCanvasToTurtle).toHaveBeenCalledTimes(2)
+    expect(mockSourceCanvasToTurtle).toHaveBeenCalledTimes(2);
 
-    const updated = useSourcesStore.getState().sources.find((s) => s.id === SOURCE_ID)
-    expect(updated?.turtleSource).toBe('@prefix src: <http://src.test/> .\nsrc:Track a owl:Class .')
-  })
+    const updated = useSourcesStore
+      .getState()
+      .sources.find((s) => s.id === SOURCE_ID);
+    expect(updated?.turtleSource).toBe(
+      '@prefix src: <http://src.test/> .\nsrc:Track a owl:Class .',
+    );
+  });
 
   it('(d) reset re-generates from rawData and clears mappings', async () => {
-    const { useSourceSync } = await import('../hooks/useSourceSync')
+    const { useSourceSync } = await import('../hooks/useSourceSync');
 
-    const resultNodes = [MOCK_SOURCE_NODE]
+    const resultNodes = [MOCK_SOURCE_NODE];
     mockJsonToSchema.mockReturnValue({
       nodes: resultNodes,
       edges: [],
       turtle: '@prefix src: <http://src.test/> .',
       warnings: [],
-    })
+    });
 
     // Seed a mapping for this source
     useMappingStore.setState({
@@ -244,23 +284,28 @@ describe('useSourceSync', () => {
           },
         ],
       },
-    })
+    });
 
-    const { result } = renderHook(() => useSourceSync())
+    const { result } = renderHook(() => useSourceSync());
 
     act(() => {
-      result.current.resetSourceSchema()
-    })
+      result.current.resetSourceSchema();
+    });
 
-    expect(mockJsonToSchema).toHaveBeenCalledWith('{"records":[{"id":1}]}', 'TestSource')
+    expect(mockJsonToSchema).toHaveBeenCalledWith(
+      '{"records":[{"id":1}]}',
+      'TestSource',
+    );
 
-    const updated = useSourcesStore.getState().sources.find((s) => s.id === SOURCE_ID)
-    expect(updated?.schemaNodes).toEqual(resultNodes)
-    expect(updated?.turtleSource).toBe('@prefix src: <http://src.test/> .')
-    expect(updated?.parseError).toBeNull()
+    const updated = useSourcesStore
+      .getState()
+      .sources.find((s) => s.id === SOURCE_ID);
+    expect(updated?.schemaNodes).toEqual(resultNodes);
+    expect(updated?.turtleSource).toBe('@prefix src: <http://src.test/> .');
+    expect(updated?.parseError).toBeNull();
 
     // Mappings for this source must be cleared
-    const mappings = useMappingStore.getState().mappings
-    expect(mappings[SOURCE_ID] ?? []).toHaveLength(0)
-  })
-})
+    const mappings = useMappingStore.getState().mappings;
+    expect(mappings[SOURCE_ID] ?? []).toHaveLength(0);
+  });
+});

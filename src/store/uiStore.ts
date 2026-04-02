@@ -1,11 +1,11 @@
-import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
-type RightTab = 'SOURCE' | 'ONTOLOGY' | 'MAP' | 'OUTPUT' | 'VALIDATE'
+type RightTab = 'SOURCE' | 'ONTOLOGY' | 'MAP' | 'OUTPUT' | 'VALIDATE';
 
 interface UiState {
-  activeRightTab: RightTab
-  setActiveRightTab: (tab: RightTab) => void
+  activeRightTab: RightTab;
+  setActiveRightTab: (tab: RightTab) => void;
 }
 
 export const useUiStore = create<UiState>()(
@@ -14,6 +14,6 @@ export const useUiStore = create<UiState>()(
       activeRightTab: 'SOURCE',
       setActiveRightTab: (activeRightTab) => set({ activeRightTab }),
     }),
-    { name: 'rosetta-ui' }
-  )
-)
+    { name: 'rosetta-ui' },
+  ),
+);

@@ -1,10 +1,12 @@
-import { describe, it, expect, beforeEach } from 'vitest'
-import { useMappingStore } from '../store/mappingStore'
-import type { Mapping } from '../types/index'
+import { describe, it, expect, beforeEach } from 'vitest';
+import { useMappingStore } from '../store/mappingStore';
+import type { Mapping } from '../types/index';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function makeBase(overrides: Partial<Omit<Mapping, 'id'>> = {}): Omit<Mapping, 'id'> {
+function makeBase(
+  overrides: Partial<Omit<Mapping, 'id'>> = {},
+): Omit<Mapping, 'id'> {
   return {
     sourceId: 'src-1',
     sourceClassUri: 'http://example.org/TrackReport',
@@ -16,282 +18,331 @@ function makeBase(overrides: Partial<Omit<Mapping, 'id'>> = {}): Omit<Mapping, '
     kind: 'direct',
     sparqlConstruct: '',
     ...overrides,
-  }
+  };
 }
 
 // Reset store between tests
 beforeEach(() => {
-  useMappingStore.setState({ mappings: {}, selectedMappingId: null, groups: {}, _undoStack: [] })
-})
+  useMappingStore.setState({
+    mappings: {},
+    selectedMappingId: null,
+    groups: {},
+    _undoStack: [],
+  });
+});
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
 describe('useMappingStore — addMapping', () => {
   it('returns an id and stores the mapping under sourceId', () => {
-    const store = useMappingStore.getState()
-    const id = store.addMapping(makeBase())
+    const store = useMappingStore.getState();
+    const id = store.addMapping(makeBase());
 
-    expect(typeof id).toBe('string')
-    expect(id.length).toBeGreaterThan(0)
+    expect(typeof id).toBe('string');
+    expect(id.length).toBeGreaterThan(0);
 
-    const list = useMappingStore.getState().mappings['src-1']
-    expect(list).toHaveLength(1)
-    expect(list![0]!.id).toBe(id)
-    expect(list![0]!.sourcePropUri).toBe('http://example.org/trackId')
-  })
+    const list = useMappingStore.getState().mappings['src-1'];
+    expect(list).toHaveLength(1);
+    expect(list![0]!.id).toBe(id);
+    expect(list![0]!.sourcePropUri).toBe('http://example.org/trackId');
+  });
 
   it('is idempotent: duplicate prop pair returns existing id, no new entry (RD-04)', () => {
-    const store = useMappingStore.getState()
-    const id1 = store.addMapping(makeBase())
-    const id2 = useMappingStore.getState().addMapping(makeBase())
+    const store = useMappingStore.getState();
+    const id1 = store.addMapping(makeBase());
+    const id2 = useMappingStore.getState().addMapping(makeBase());
 
-    expect(id1).toBe(id2)
-    expect(useMappingStore.getState().mappings['src-1']).toHaveLength(1)
-  })
+    expect(id1).toBe(id2);
+    expect(useMappingStore.getState().mappings['src-1']).toHaveLength(1);
+  });
 
   it('allows distinct prop pairs for the same sourceId', () => {
-    const store = useMappingStore.getState()
-    store.addMapping(makeBase())
-    useMappingStore.getState().addMapping(makeBase({ sourcePropUri: 'http://example.org/speed' }))
+    const store = useMappingStore.getState();
+    store.addMapping(makeBase());
+    useMappingStore
+      .getState()
+      .addMapping(makeBase({ sourcePropUri: 'http://example.org/speed' }));
 
-    expect(useMappingStore.getState().mappings['src-1']).toHaveLength(2)
-  })
+    expect(useMappingStore.getState().mappings['src-1']).toHaveLength(2);
+  });
 
   it('stores mappings under different sourceId keys independently', () => {
-    useMappingStore.getState().addMapping(makeBase({ sourceId: 'src-1' }))
-    useMappingStore.getState().addMapping(makeBase({ sourceId: 'src-2' }))
+    useMappingStore.getState().addMapping(makeBase({ sourceId: 'src-1' }));
+    useMappingStore.getState().addMapping(makeBase({ sourceId: 'src-2' }));
 
-    expect(useMappingStore.getState().mappings['src-1']).toHaveLength(1)
-    expect(useMappingStore.getState().mappings['src-2']).toHaveLength(1)
-  })
-})
+    expect(useMappingStore.getState().mappings['src-1']).toHaveLength(1);
+    expect(useMappingStore.getState().mappings['src-2']).toHaveLength(1);
+  });
+});
 
 describe('useMappingStore — removeMapping', () => {
   it('removes the mapping with the given id', () => {
-    const id = useMappingStore.getState().addMapping(makeBase())
-    useMappingStore.getState().removeMapping(id)
+    const id = useMappingStore.getState().addMapping(makeBase());
+    useMappingStore.getState().removeMapping(id);
 
-    expect(useMappingStore.getState().mappings['src-1']).toHaveLength(0)
-  })
+    expect(useMappingStore.getState().mappings['src-1']).toHaveLength(0);
+  });
 
   it('clears selectedMappingId when it matches the removed id', () => {
-    const id = useMappingStore.getState().addMapping(makeBase())
-    useMappingStore.setState({ selectedMappingId: id })
+    const id = useMappingStore.getState().addMapping(makeBase());
+    useMappingStore.setState({ selectedMappingId: id });
 
-    useMappingStore.getState().removeMapping(id)
+    useMappingStore.getState().removeMapping(id);
 
-    expect(useMappingStore.getState().selectedMappingId).toBeNull()
-  })
+    expect(useMappingStore.getState().selectedMappingId).toBeNull();
+  });
 
   it('does not clear selectedMappingId when a different mapping is removed', () => {
-    const id1 = useMappingStore.getState().addMapping(makeBase())
+    const id1 = useMappingStore.getState().addMapping(makeBase());
     const id2 = useMappingStore
       .getState()
-      .addMapping(makeBase({ sourcePropUri: 'http://example.org/speed' }))
-    useMappingStore.setState({ selectedMappingId: id1 })
+      .addMapping(makeBase({ sourcePropUri: 'http://example.org/speed' }));
+    useMappingStore.setState({ selectedMappingId: id1 });
 
-    useMappingStore.getState().removeMapping(id2)
+    useMappingStore.getState().removeMapping(id2);
 
-    expect(useMappingStore.getState().selectedMappingId).toBe(id1)
-  })
+    expect(useMappingStore.getState().selectedMappingId).toBe(id1);
+  });
 
   it('is a no-op for an unknown id', () => {
-    useMappingStore.getState().addMapping(makeBase())
-    useMappingStore.getState().removeMapping('does-not-exist')
+    useMappingStore.getState().addMapping(makeBase());
+    useMappingStore.getState().removeMapping('does-not-exist');
 
-    expect(useMappingStore.getState().mappings['src-1']).toHaveLength(1)
-  })
-})
+    expect(useMappingStore.getState().mappings['src-1']).toHaveLength(1);
+  });
+});
 
 describe('useMappingStore — getMappingsForSource', () => {
   it('returns [] for an unknown sourceId', () => {
-    expect(useMappingStore.getState().getMappingsForSource('unknown')).toEqual([])
-  })
+    expect(useMappingStore.getState().getMappingsForSource('unknown')).toEqual(
+      [],
+    );
+  });
 
   it('returns stored mappings for a known sourceId', () => {
-    useMappingStore.getState().addMapping(makeBase())
-    useMappingStore.getState().addMapping(makeBase({ sourcePropUri: 'http://example.org/speed' }))
+    useMappingStore.getState().addMapping(makeBase());
+    useMappingStore
+      .getState()
+      .addMapping(makeBase({ sourcePropUri: 'http://example.org/speed' }));
 
-    const list = useMappingStore.getState().getMappingsForSource('src-1')
-    expect(list).toHaveLength(2)
-  })
-})
+    const list = useMappingStore.getState().getMappingsForSource('src-1');
+    expect(list).toHaveLength(2);
+  });
+});
 
 describe('useMappingStore — updateMapping', () => {
   it('patches only the targeted mapping', () => {
-    const id1 = useMappingStore.getState().addMapping(makeBase())
+    const id1 = useMappingStore.getState().addMapping(makeBase());
     const id2 = useMappingStore
       .getState()
-      .addMapping(makeBase({ sourcePropUri: 'http://example.org/speed' }))
+      .addMapping(makeBase({ sourcePropUri: 'http://example.org/speed' }));
 
-    useMappingStore.getState().updateMapping(id1, { kind: 'sparql', sparqlConstruct: 'CONSTRUCT {}' })
+    useMappingStore
+      .getState()
+      .updateMapping(id1, { kind: 'sparql', sparqlConstruct: 'CONSTRUCT {}' });
 
-    const list = useMappingStore.getState().mappings['src-1']!
-    const updated = list.find((m) => m.id === id1)!
-    const untouched = list.find((m) => m.id === id2)!
+    const list = useMappingStore.getState().mappings['src-1']!;
+    const updated = list.find((m) => m.id === id1)!;
+    const untouched = list.find((m) => m.id === id2)!;
 
-    expect(updated.kind).toBe('sparql')
-    expect(updated.sparqlConstruct).toBe('CONSTRUCT {}')
-    expect(untouched.kind).toBe('direct')
-    expect(untouched.sparqlConstruct).toBe('')
-  })
+    expect(updated.kind).toBe('sparql');
+    expect(updated.sparqlConstruct).toBe('CONSTRUCT {}');
+    expect(untouched.kind).toBe('direct');
+    expect(untouched.sparqlConstruct).toBe('');
+  });
 
   it('does not change the id of the patched mapping', () => {
-    const id = useMappingStore.getState().addMapping(makeBase())
-    useMappingStore.getState().updateMapping(id, { kind: 'sparql' })
+    const id = useMappingStore.getState().addMapping(makeBase());
+    useMappingStore.getState().updateMapping(id, { kind: 'sparql' });
 
-    const list = useMappingStore.getState().mappings['src-1']!
-    expect(list[0]!.id).toBe(id)
-  })
-})
+    const list = useMappingStore.getState().mappings['src-1']!;
+    expect(list[0]!.id).toBe(id);
+  });
+});
 
 describe('useMappingStore — setSelectedMappingId', () => {
   it('sets and clears selectedMappingId', () => {
-    useMappingStore.getState().setSelectedMappingId('abc')
-    expect(useMappingStore.getState().selectedMappingId).toBe('abc')
+    useMappingStore.getState().setSelectedMappingId('abc');
+    expect(useMappingStore.getState().selectedMappingId).toBe('abc');
 
-    useMappingStore.getState().setSelectedMappingId(null)
-    expect(useMappingStore.getState().selectedMappingId).toBeNull()
-  })
-})
+    useMappingStore.getState().setSelectedMappingId(null);
+    expect(useMappingStore.getState().selectedMappingId).toBeNull();
+  });
+});
 
 describe('useMappingStore — clearMappingsForSource', () => {
   it('removes all mappings for the given sourceId, leaving others intact', () => {
-    useMappingStore.getState().addMapping(makeBase({ sourceId: 'src-1' }))
-    useMappingStore.getState().addMapping(makeBase({ sourceId: 'src-1', sourcePropUri: 'http://example.org/speed' }))
-    useMappingStore.getState().addMapping(makeBase({ sourceId: 'src-2' }))
+    useMappingStore.getState().addMapping(makeBase({ sourceId: 'src-1' }));
+    useMappingStore.getState().addMapping(
+      makeBase({
+        sourceId: 'src-1',
+        sourcePropUri: 'http://example.org/speed',
+      }),
+    );
+    useMappingStore.getState().addMapping(makeBase({ sourceId: 'src-2' }));
 
-    useMappingStore.getState().clearMappingsForSource('src-1')
+    useMappingStore.getState().clearMappingsForSource('src-1');
 
-    const state = useMappingStore.getState().mappings
-    expect(state['src-1']).toBeUndefined()
-    expect(state['src-2']).toHaveLength(1)
-  })
+    const state = useMappingStore.getState().mappings;
+    expect(state['src-1']).toBeUndefined();
+    expect(state['src-2']).toHaveLength(1);
+  });
 
   it('clears selectedMappingId when a mapping in that source was selected', () => {
-    const id = useMappingStore.getState().addMapping(makeBase({ sourceId: 'src-1' }))
-    useMappingStore.setState({ selectedMappingId: id })
+    const id = useMappingStore
+      .getState()
+      .addMapping(makeBase({ sourceId: 'src-1' }));
+    useMappingStore.setState({ selectedMappingId: id });
 
-    useMappingStore.getState().clearMappingsForSource('src-1')
+    useMappingStore.getState().clearMappingsForSource('src-1');
 
-    expect(useMappingStore.getState().selectedMappingId).toBeNull()
-  })
+    expect(useMappingStore.getState().selectedMappingId).toBeNull();
+  });
 
   it('is a no-op for an unknown sourceId', () => {
-    useMappingStore.getState().addMapping(makeBase({ sourceId: 'src-1' }))
-    useMappingStore.getState().clearMappingsForSource('src-unknown')
+    useMappingStore.getState().addMapping(makeBase({ sourceId: 'src-1' }));
+    useMappingStore.getState().clearMappingsForSource('src-unknown');
 
-    expect(useMappingStore.getState().mappings['src-1']).toHaveLength(1)
-  })
-})
+    expect(useMappingStore.getState().mappings['src-1']).toHaveLength(1);
+  });
+});
 
 describe('useMappingStore — removeMappingsForSource', () => {
   it('removes all mappings AND groups for the given sourceId', () => {
-    const store = useMappingStore.getState()
+    const store = useMappingStore.getState();
 
     // Add mappings for two sources
-    store.addMapping(makeBase({ sourceId: 'src-1' }))
-    store.addMapping(makeBase({ sourceId: 'src-1', sourcePropUri: 'http://example.org/speed' }))
-    store.addMapping(makeBase({ sourceId: 'src-2' }))
+    store.addMapping(makeBase({ sourceId: 'src-1' }));
+    store.addMapping(
+      makeBase({
+        sourceId: 'src-1',
+        sourcePropUri: 'http://example.org/speed',
+      }),
+    );
+    store.addMapping(makeBase({ sourceId: 'src-2' }));
 
     // Add a group for src-1
-    const ids = useMappingStore.getState().mappings['src-1']!.map((m) => m.id)
-    useMappingStore.getState().createGroup('src-1', ids, 'concat')
+    const ids = useMappingStore.getState().mappings['src-1']!.map((m) => m.id);
+    useMappingStore.getState().createGroup('src-1', ids, 'concat');
 
-    expect(useMappingStore.getState().mappings['src-1']).toHaveLength(2)
-    expect(useMappingStore.getState().groups['src-1']).toHaveLength(1)
+    expect(useMappingStore.getState().mappings['src-1']).toHaveLength(2);
+    expect(useMappingStore.getState().groups['src-1']).toHaveLength(1);
 
     // Remove source src-1
-    useMappingStore.getState().removeMappingsForSource('src-1')
+    useMappingStore.getState().removeMappingsForSource('src-1');
 
-    expect(useMappingStore.getState().mappings['src-1']).toBeUndefined()
-    expect(useMappingStore.getState().groups['src-1']).toBeUndefined()
+    expect(useMappingStore.getState().mappings['src-1']).toBeUndefined();
+    expect(useMappingStore.getState().groups['src-1']).toBeUndefined();
 
     // src-2 must be untouched
-    expect(useMappingStore.getState().mappings['src-2']).toHaveLength(1)
-  })
+    expect(useMappingStore.getState().mappings['src-2']).toHaveLength(1);
+  });
 
   it('clears selectedMappingId when the selected mapping belongs to the removed source', () => {
-    const store = useMappingStore.getState()
-    const id = store.addMapping(makeBase({ sourceId: 'src-1' }))
-    useMappingStore.setState({ selectedMappingId: id })
+    const store = useMappingStore.getState();
+    const id = store.addMapping(makeBase({ sourceId: 'src-1' }));
+    useMappingStore.setState({ selectedMappingId: id });
 
-    useMappingStore.getState().removeMappingsForSource('src-1')
+    useMappingStore.getState().removeMappingsForSource('src-1');
 
-    expect(useMappingStore.getState().selectedMappingId).toBeNull()
-  })
+    expect(useMappingStore.getState().selectedMappingId).toBeNull();
+  });
 
   it('is a no-op for an unknown sourceId', () => {
-    useMappingStore.getState().addMapping(makeBase({ sourceId: 'src-1' }))
-    useMappingStore.getState().removeMappingsForSource('src-unknown')
+    useMappingStore.getState().addMapping(makeBase({ sourceId: 'src-1' }));
+    useMappingStore.getState().removeMappingsForSource('src-unknown');
 
-    expect(useMappingStore.getState().mappings['src-1']).toHaveLength(1)
-  })
-})
+    expect(useMappingStore.getState().mappings['src-1']).toHaveLength(1);
+  });
+});
 
 describe('useMappingStore — removeInvalidMappings + undoLastRemoval (stack)', () => {
   it('preserves both batches when removeInvalidMappings fires twice before undo', () => {
     // Add 3 mappings — we'll invalidate them in two separate batches
-    useMappingStore.getState().addMapping(makeBase({
-      sourcePropUri: 'http://example.org/prop1',
-      targetPropUri: 'http://nato.int/onto#prop1',
-    }))
-    useMappingStore.getState().addMapping(makeBase({
-      sourcePropUri: 'http://example.org/prop2',
-      targetPropUri: 'http://nato.int/onto#prop2',
-    }))
-    useMappingStore.getState().addMapping(makeBase({
-      sourcePropUri: 'http://example.org/prop3',
-      targetPropUri: 'http://nato.int/onto#prop3',
-    }))
+    useMappingStore.getState().addMapping(
+      makeBase({
+        sourcePropUri: 'http://example.org/prop1',
+        targetPropUri: 'http://nato.int/onto#prop1',
+      }),
+    );
+    useMappingStore.getState().addMapping(
+      makeBase({
+        sourcePropUri: 'http://example.org/prop2',
+        targetPropUri: 'http://nato.int/onto#prop2',
+      }),
+    );
+    useMappingStore.getState().addMapping(
+      makeBase({
+        sourcePropUri: 'http://example.org/prop3',
+        targetPropUri: 'http://nato.int/onto#prop3',
+      }),
+    );
 
     // First invalidation: prop1 and prop2 are valid, prop3 is invalid
     const validSet1 = new Set([
-      'http://example.org/prop1', 'http://nato.int/onto#prop1',
-      'http://example.org/prop2', 'http://nato.int/onto#prop2',
-    ])
-    const removed1 = useMappingStore.getState().removeInvalidMappings(validSet1)
-    expect(removed1).toBe(1) // prop3 removed
+      'http://example.org/prop1',
+      'http://nato.int/onto#prop1',
+      'http://example.org/prop2',
+      'http://nato.int/onto#prop2',
+    ]);
+    const removed1 = useMappingStore
+      .getState()
+      .removeInvalidMappings(validSet1);
+    expect(removed1).toBe(1); // prop3 removed
 
     // Second invalidation: only prop1 is valid now
     const validSet2 = new Set([
-      'http://example.org/prop1', 'http://nato.int/onto#prop1',
-    ])
-    const removed2 = useMappingStore.getState().removeInvalidMappings(validSet2)
-    expect(removed2).toBe(1) // prop2 removed
+      'http://example.org/prop1',
+      'http://nato.int/onto#prop1',
+    ]);
+    const removed2 = useMappingStore
+      .getState()
+      .removeInvalidMappings(validSet2);
+    expect(removed2).toBe(1); // prop2 removed
 
     // Only prop1 should remain
-    expect(useMappingStore.getState().mappings['src-1']).toHaveLength(1)
-    expect(useMappingStore.getState().mappings['src-1']![0]!.sourcePropUri).toBe('http://example.org/prop1')
+    expect(useMappingStore.getState().mappings['src-1']).toHaveLength(1);
+    expect(
+      useMappingStore.getState().mappings['src-1']![0]!.sourcePropUri,
+    ).toBe('http://example.org/prop1');
 
     // First undo should restore prop2 (most recent batch)
-    useMappingStore.getState().undoLastRemoval()
-    expect(useMappingStore.getState().mappings['src-1']).toHaveLength(2)
-    const uris1 = useMappingStore.getState().mappings['src-1']!.map((m) => m.sourcePropUri).sort()
-    expect(uris1).toEqual(['http://example.org/prop1', 'http://example.org/prop2'])
+    useMappingStore.getState().undoLastRemoval();
+    expect(useMappingStore.getState().mappings['src-1']).toHaveLength(2);
+    const uris1 = useMappingStore
+      .getState()
+      .mappings['src-1']!.map((m) => m.sourcePropUri)
+      .sort();
+    expect(uris1).toEqual([
+      'http://example.org/prop1',
+      'http://example.org/prop2',
+    ]);
 
     // Second undo should restore prop3 (first batch — NOT lost)
-    useMappingStore.getState().undoLastRemoval()
-    expect(useMappingStore.getState().mappings['src-1']).toHaveLength(3)
-    const uris2 = useMappingStore.getState().mappings['src-1']!.map((m) => m.sourcePropUri).sort()
+    useMappingStore.getState().undoLastRemoval();
+    expect(useMappingStore.getState().mappings['src-1']).toHaveLength(3);
+    const uris2 = useMappingStore
+      .getState()
+      .mappings['src-1']!.map((m) => m.sourcePropUri)
+      .sort();
     expect(uris2).toEqual([
       'http://example.org/prop1',
       'http://example.org/prop2',
       'http://example.org/prop3',
-    ])
-  })
+    ]);
+  });
 
   it('undoLastRemoval is a no-op when stack is empty', () => {
-    useMappingStore.getState().addMapping(makeBase())
-    useMappingStore.getState().undoLastRemoval()
-    expect(useMappingStore.getState().mappings['src-1']).toHaveLength(1)
-  })
-})
+    useMappingStore.getState().addMapping(makeBase());
+    useMappingStore.getState().undoLastRemoval();
+    expect(useMappingStore.getState().mappings['src-1']).toHaveLength(1);
+  });
+});
 
 describe('useMappingStore — hydrate', () => {
   it('replaces all existing mappings', () => {
     // Add a mapping first so there is pre-existing state
-    useMappingStore.getState().addMapping(makeBase({ sourceId: 'src-old' }))
+    useMappingStore.getState().addMapping(makeBase({ sourceId: 'src-old' }));
 
     const hydratedMapping: Mapping = {
       id: 'hydrated-id-1',
@@ -304,25 +355,25 @@ describe('useMappingStore — hydrate', () => {
       targetHandle: 'target_prop_targetProp',
       kind: 'direct',
       sparqlConstruct: '',
-    }
+    };
 
-    useMappingStore.getState().hydrate({ 'src-new': [hydratedMapping] })
+    useMappingStore.getState().hydrate({ 'src-new': [hydratedMapping] });
 
-    const state = useMappingStore.getState().mappings
-    expect(state['src-old']).toBeUndefined()
-    expect(state['src-new']).toHaveLength(1)
-    expect(state['src-new']![0]!.id).toBe('hydrated-id-1')
-  })
+    const state = useMappingStore.getState().mappings;
+    expect(state['src-old']).toBeUndefined();
+    expect(state['src-new']).toHaveLength(1);
+    expect(state['src-new']![0]!.id).toBe('hydrated-id-1');
+  });
 
   it('hydrate with empty object clears all mappings', () => {
     // Add some mappings first
-    useMappingStore.getState().addMapping(makeBase({ sourceId: 'src-1' }))
-    useMappingStore.getState().addMapping(makeBase({ sourceId: 'src-2' }))
+    useMappingStore.getState().addMapping(makeBase({ sourceId: 'src-1' }));
+    useMappingStore.getState().addMapping(makeBase({ sourceId: 'src-2' }));
 
-    expect(Object.keys(useMappingStore.getState().mappings)).toHaveLength(2)
+    expect(Object.keys(useMappingStore.getState().mappings)).toHaveLength(2);
 
-    useMappingStore.getState().hydrate({})
+    useMappingStore.getState().hydrate({});
 
-    expect(useMappingStore.getState().mappings).toEqual({})
-  })
-})
+    expect(useMappingStore.getState().mappings).toEqual({});
+  });
+});
