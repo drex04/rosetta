@@ -8,12 +8,12 @@ React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui (preset: bcivVKZU), Zustand,
 
 ## Commands
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start dev server |
+| Command         | Description      |
+| --------------- | ---------------- |
+| `npm run dev`   | Start dev server |
 | `npm run build` | Production build |
-| `npm run test` | Run tests |
-| `npm run lint` | Lint/format |
+| `npm run test`  | Run tests        |
+| `npm run lint`  | Lint/format      |
 
 ## Architecture
 
@@ -59,3 +59,4 @@ Design tokens and aesthetic direction in `.planning/DESIGN.md`.
 - Type guards for IDB data must validate element shape (e.g. `typeof m.id === 'string'`), not just `Array.isArray`
 - `hydrate` actions must reset related selection state (e.g. `selectedMappingId: null`) to prevent stale pointers after reload
 - Always import `localName` from `src/lib/rdf.ts` — never re-implement; divergence silently breaks handle matching
+- Playwright MCP must use `chromium` (not `chrome`) — this is a Linux ARM64 host where Chrome is unavailable

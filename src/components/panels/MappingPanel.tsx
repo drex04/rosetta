@@ -1,44 +1,48 @@
-import { useEffect, useRef, useState } from 'react'
-import { EditorView, lineNumbers, highlightActiveLine } from '@codemirror/view'
-import { EditorState } from '@codemirror/state'
-import { basicSetup } from 'codemirror'
-import { useMappingStore } from '@/store/mappingStore'
-import { useSourcesStore } from '@/store/sourcesStore'
-import { useOntologyStore } from '@/store/ontologyStore'
-import { localName } from '@/lib/rdf'
-import { getPropRange } from '@/lib/mappingHelpers'
-import { generateConstruct } from '@/lib/sparql'
-import { lightTheme } from '@/lib/codemirror-theme'
-import type { Mapping, MappingGroup } from '@/types/index'
+import { useEffect, useRef, useState } from 'react';
+import { EditorView, lineNumbers, highlightActiveLine } from '@codemirror/view';
+import { EditorState } from '@codemirror/state';
+import { basicSetup } from 'codemirror';
+import { useMappingStore } from '@/store/mappingStore';
+import { useSourcesStore } from '@/store/sourcesStore';
+import { useOntologyStore } from '@/store/ontologyStore';
+import { localName } from '@/lib/rdf';
+import { getPropRange } from '@/lib/mappingHelpers';
+import { generateConstruct } from '@/lib/sparql';
+import { lightTheme } from '@/lib/codemirror-theme';
+import type { Mapping, MappingGroup } from '@/types/index';
 
 // ─── Lint badge helper (RD-05) ────────────────────────────────────────────────
 
 function isValidConstruct(query: string): boolean {
-  const lower = query.toLowerCase()
-  return lower.includes('construct') && lower.includes('where')
+  const lower = query.toLowerCase();
+  return lower.includes('construct') && lower.includes('where');
 }
 
 // ─── SPARQL editor sub-component ──────────────────────────────────────────────
 
 interface SparqlEditorProps {
-  value: string
-  onChange: (value: string) => void
-  readOnly?: boolean
+  value: string;
+  onChange: (value: string) => void;
+  readOnly?: boolean;
 }
 
-function SparqlEditor({ value, onChange, readOnly = false }: SparqlEditorProps) {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const viewRef = useRef<EditorView | null>(null)
-  const isExternalUpdate = useRef(false)
+function SparqlEditor({
+  value,
+  onChange,
+  readOnly = false,
+}: SparqlEditorProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const viewRef = useRef<EditorView | null>(null);
+  const isExternalUpdate = useRef(false);
 
   useEffect(() => {
-    if (containerRef.current === null) return
+    if (containerRef.current === null) return;
 
     const updateListener = EditorView.updateListener.of((update) => {
-      if (!update.docChanged) return
-      if (isExternalUpdate.current) return
-      onChange(update.state.doc.toString())
-    })
+      if (!update.docChanged) return;
+      if (isExternalUpdate.current) return;
+      onChange(update.state.doc.toString());
+    });
 
     const extensions = [
       basicSetup,
@@ -46,46 +50,46 @@ function SparqlEditor({ value, onChange, readOnly = false }: SparqlEditorProps) 
       highlightActiveLine(),
       lightTheme,
       updateListener,
-    ]
+    ];
 
     if (readOnly) {
-      extensions.push(EditorState.readOnly.of(true))
+      extensions.push(EditorState.readOnly.of(true));
     }
 
     const state = EditorState.create({
       doc: value,
       extensions,
-    })
+    });
 
-    const view = new EditorView({ state, parent: containerRef.current })
-    viewRef.current = view
+    const view = new EditorView({ state, parent: containerRef.current });
+    viewRef.current = view;
 
     return () => {
-      view.destroy()
-      viewRef.current = null
-    }
+      view.destroy();
+      viewRef.current = null;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [readOnly]) // Re-mount when readOnly changes
+  }, [readOnly]); // Re-mount when readOnly changes
 
   // Sync external value changes to editor (when not focused)
   useEffect(() => {
-    const view = viewRef.current
-    if (view === null) return
+    const view = viewRef.current;
+    if (view === null) return;
 
-    const currentDoc = view.state.doc.toString()
-    if (currentDoc === value) return
-    if (view.hasFocus) return
+    const currentDoc = view.state.doc.toString();
+    if (currentDoc === value) return;
+    if (view.hasFocus) return;
 
-    isExternalUpdate.current = true
+    isExternalUpdate.current = true;
     view.dispatch({
       changes: {
         from: 0,
         to: view.state.doc.length,
         insert: value,
       },
-    })
-    isExternalUpdate.current = false
-  }, [value])
+    });
+    isExternalUpdate.current = false;
+  }, [value]);
 
   return (
     <div
@@ -93,16 +97,16 @@ function SparqlEditor({ value, onChange, readOnly = false }: SparqlEditorProps) 
       className="flex-1 overflow-hidden"
       aria-label="SPARQL CONSTRUCT editor"
     />
-  )
+  );
 }
 
 // ─── MappingPanel ─────────────────────────────────────────────────────────────
 
 export function MappingPanel() {
-  const activeSourceId = useSourcesStore((s) => s.activeSourceId)
-  const sources = useSourcesStore((s) => s.sources)
-  const ontologyNodes = useOntologyStore((s) => s.nodes)
-  const activeSource = sources.find((src) => src.id === activeSourceId) ?? null
+  const activeSourceId = useSourcesStore((s) => s.activeSourceId);
+  const sources = useSourcesStore((s) => s.sources);
+  const ontologyNodes = useOntologyStore((s) => s.nodes);
+  const activeSource = sources.find((src) => src.id === activeSourceId) ?? null;
   const {
     getMappingsForSource,
     removeMapping,
@@ -113,40 +117,44 @@ export function MappingPanel() {
     getMappingsInGroup,
     updateGroup,
     ungroupMappings,
-  } = useMappingStore()
+  } = useMappingStore();
 
-  const [expandedGroupId, setExpandedGroupId] = useState<string | null>(null)
-  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null)
+  const [expandedGroupId, setExpandedGroupId] = useState<string | null>(null);
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
 
-  const mappings: Mapping[] = activeSourceId !== null ? getMappingsForSource(activeSourceId) : []
-  const groups = activeSourceId !== null ? getGroupsForSource(activeSourceId) : []
+  const mappings: Mapping[] =
+    activeSourceId !== null ? getMappingsForSource(activeSourceId) : [];
+  const groups =
+    activeSourceId !== null ? getGroupsForSource(activeSourceId) : [];
 
-  const ungroupedMappings = mappings.filter((m) => !m.groupId)
+  const ungroupedMappings = mappings.filter((m) => !m.groupId);
 
-  const selectedMapping = mappings.find((m) => m.id === selectedMappingId) ?? null
-  const selectedGroup = groups.find((g) => g.id === selectedGroupId) ?? null
+  const selectedMapping =
+    mappings.find((m) => m.id === selectedMappingId) ?? null;
+  const selectedGroup = groups.find((g) => g.id === selectedGroupId) ?? null;
 
-  const sparqlToShow = selectedGroup?.sparqlConstruct ?? selectedMapping?.sparqlConstruct ?? ''
-  const isGroupSelected = selectedGroup !== null
+  const sparqlToShow =
+    selectedGroup?.sparqlConstruct ?? selectedMapping?.sparqlConstruct ?? '';
+  const isGroupSelected = selectedGroup !== null;
 
   function handleSelectMapping(id: string) {
-    setSelectedMappingId(selectedMappingId === id ? null : id)
-    setSelectedGroupId(null)
+    setSelectedMappingId(selectedMappingId === id ? null : id);
+    setSelectedGroupId(null);
   }
 
   function handleSelectGroup(id: string) {
-    setSelectedGroupId(id)
-    setSelectedMappingId(null)
+    setSelectedGroupId(id);
+    setSelectedMappingId(null);
   }
 
   function handleDeleteMapping(e: React.MouseEvent, id: string) {
-    e.stopPropagation()
-    removeMapping(id)
+    e.stopPropagation();
+    removeMapping(id);
   }
 
   function handleEditorChange(newValue: string) {
-    if (selectedMappingId === null) return
-    updateMapping(selectedMappingId, { sparqlConstruct: newValue })
+    if (selectedMappingId === null) return;
+    updateMapping(selectedMappingId, { sparqlConstruct: newValue });
   }
 
   // Auto-regenerate SPARQL when kind-specific fields change (non-sparql kinds only)
@@ -155,15 +163,15 @@ export function MappingPanel() {
   // generation prevents spurious re-runs while still catching every meaningful change.
   // updateMapping is a stable Zustand action and is safe to include.
   useEffect(() => {
-    if (!selectedMapping || selectedMapping.kind === 'sparql') return
+    if (!selectedMapping || selectedMapping.kind === 'sparql') return;
     const timer = setTimeout(() => {
-      const newSparql = generateConstruct(selectedMapping)
+      const newSparql = generateConstruct(selectedMapping);
       if (newSparql !== selectedMapping.sparqlConstruct) {
-        updateMapping(selectedMapping.id, { sparqlConstruct: newSparql })
+        updateMapping(selectedMapping.id, { sparqlConstruct: newSparql });
       }
-    }, 300)
-    return () => clearTimeout(timer)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, 300);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     updateMapping,
     selectedMapping?.kind,
@@ -177,7 +185,7 @@ export function MappingPanel() {
     selectedMapping?.childRef,
     selectedMapping?.sourcePropUri,
     selectedMapping?.targetPropUri,
-  ])
+  ]);
 
   function reorderGroupMember(
     groupId: string,
@@ -186,30 +194,32 @@ export function MappingPanel() {
     currentIdx: number,
     direction: -1 | 1,
   ) {
-    const swapIdx = currentIdx + direction
-    if (swapIdx < 0 || swapIdx >= members.length) return
+    const swapIdx = currentIdx + direction;
+    if (swapIdx < 0 || swapIdx >= members.length) return;
 
-    const current = members[currentIdx]
-    const swap = members[swapIdx]
-    if (current === undefined || swap === undefined) return
+    const current = members[currentIdx];
+    const swap = members[swapIdx];
+    if (current === undefined || swap === undefined) return;
 
-    const currentOrder = current.groupOrder ?? currentIdx
-    const swapOrder = swap.groupOrder ?? swapIdx
+    const currentOrder = current.groupOrder ?? currentIdx;
+    const swapOrder = swap.groupOrder ?? swapIdx;
 
-    updateMapping(current.id, { groupOrder: swapOrder })
-    updateMapping(swap.id, { groupOrder: currentOrder })
+    updateMapping(current.id, { groupOrder: swapOrder });
+    updateMapping(swap.id, { groupOrder: currentOrder });
 
     // Trigger SPARQL regen for the group after reorder
-    updateGroup(groupId, {})
+    updateGroup(groupId, {});
   }
 
   // ── No source selected ──
   if (activeSourceId === null) {
     return (
       <div className="flex items-center justify-center h-full p-6">
-        <p className="text-xs text-center text-muted-foreground px-4">Select a source tab above to map its fields to ontology classes.</p>
+        <p className="text-xs text-center text-muted-foreground px-4">
+          Select a source tab above to map its fields to ontology classes.
+        </p>
       </div>
-    )
+    );
   }
 
   // ── No mappings yet ──
@@ -220,10 +230,10 @@ export function MappingPanel() {
           Drag from a source property to a master property to create a mapping
         </p>
       </div>
-    )
+    );
   }
 
-  const showEditor = selectedMapping !== null || selectedGroup !== null
+  const showEditor = selectedMapping !== null || selectedGroup !== null;
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -237,10 +247,16 @@ export function MappingPanel() {
               <div
                 role="button"
                 tabIndex={0}
-                onClick={() => setExpandedGroupId(expandedGroupId === group.id ? null : group.id)}
+                onClick={() =>
+                  setExpandedGroupId(
+                    expandedGroupId === group.id ? null : group.id,
+                  )
+                }
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ')
-                    setExpandedGroupId(expandedGroupId === group.id ? null : group.id)
+                    setExpandedGroupId(
+                      expandedGroupId === group.id ? null : group.id,
+                    );
                 }}
                 className="flex items-center justify-between px-3 py-2 cursor-pointer text-xs hover:bg-muted/50 bg-muted/20"
               >
@@ -248,20 +264,22 @@ export function MappingPanel() {
                   <span className="text-muted-foreground">
                     {expandedGroupId === group.id ? '▾' : '▸'}
                   </span>
-                  <span className="text-blue-700 font-mono">{localName(group.targetPropUri)}</span>
-                  <span className="text-[10px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded font-medium uppercase">
+                  <span className="text-blue-700 font-mono">
+                    {localName(group.targetPropUri)}
+                  </span>
+                  <span className="text-xs bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded font-medium uppercase">
                     {group.strategy}({getMappingsInGroup(group.id).length})
                   </span>
                 </span>
                 <button
                   type="button"
                   onClick={(e) => {
-                    e.stopPropagation()
-                    ungroupMappings(group.id)
-                    if (selectedGroupId === group.id) setSelectedGroupId(null)
-                    if (expandedGroupId === group.id) setExpandedGroupId(null)
+                    e.stopPropagation();
+                    ungroupMappings(group.id);
+                    if (selectedGroupId === group.id) setSelectedGroupId(null);
+                    if (expandedGroupId === group.id) setExpandedGroupId(null);
                   }}
-                  className="text-muted-foreground hover:text-destructive text-[10px]"
+                  className="text-muted-foreground hover:text-destructive text-xs"
                   aria-label="Ungroup"
                 >
                   ungroup
@@ -273,7 +291,9 @@ export function MappingPanel() {
                 <div className="px-3 py-2 bg-muted/10 border-t border-border space-y-2">
                   {/* Strategy picker */}
                   <div className="flex items-center gap-2">
-                    <label className="text-xs text-muted-foreground">Strategy</label>
+                    <label className="text-xs text-muted-foreground">
+                      Strategy
+                    </label>
                     <select
                       value={group.strategy}
                       onChange={(e) =>
@@ -292,11 +312,15 @@ export function MappingPanel() {
                   {/* Separator input (concat) */}
                   {group.strategy === 'concat' && (
                     <div className="flex items-center gap-2">
-                      <label className="text-xs text-muted-foreground">Separator</label>
+                      <label className="text-xs text-muted-foreground">
+                        Separator
+                      </label>
                       <input
                         type="text"
                         value={group.separator}
-                        onChange={(e) => updateGroup(group.id, { separator: e.target.value })}
+                        onChange={(e) =>
+                          updateGroup(group.id, { separator: e.target.value })
+                        }
                         className="text-xs border border-border rounded px-1.5 py-0.5 bg-background w-16 font-mono"
                       />
                     </div>
@@ -305,11 +329,24 @@ export function MappingPanel() {
                   {/* Template input (template strategy) */}
                   {group.strategy === 'template' && (
                     <div className="flex items-center gap-2">
-                      <label className="text-xs text-muted-foreground">Template</label>
+                      <label className="text-xs text-muted-foreground">
+                        Template
+                      </label>
                       <input
                         type="text"
-                        value={(group as Extract<MappingGroup, { strategy: 'template' }>).templatePattern}
-                        onChange={(e) => updateGroup(group.id, { templatePattern: e.target.value } as Parameters<typeof updateGroup>[1])}
+                        value={
+                          (
+                            group as Extract<
+                              MappingGroup,
+                              { strategy: 'template' }
+                            >
+                          ).templatePattern
+                        }
+                        onChange={(e) =>
+                          updateGroup(group.id, {
+                            templatePattern: e.target.value,
+                          } as Parameters<typeof updateGroup>[1])
+                        }
                         className="text-xs border border-border rounded px-1.5 py-0.5 bg-background flex-1 font-mono"
                         placeholder="{0}, {1}"
                       />
@@ -318,13 +355,16 @@ export function MappingPanel() {
 
                   {/* Member list with ordering */}
                   <div className="space-y-1">
-                    <span className="text-[10px] text-muted-foreground uppercase tracking-wide">
+                    <span className="text-xs text-muted-foreground uppercase tracking-wide">
                       Members
                     </span>
                     {getMappingsInGroup(group.id)
                       .sort((a, b) => (a.groupOrder ?? 0) - (b.groupOrder ?? 0))
                       .map((m, idx, arr) => (
-                        <div key={m.id} className="flex items-center gap-1 text-xs">
+                        <div
+                          key={m.id}
+                          className="flex items-center gap-1 text-xs"
+                        >
                           <span className="text-amber-700 font-mono flex-1">
                             {localName(m.sourcePropUri)}
                           </span>
@@ -332,7 +372,9 @@ export function MappingPanel() {
                             <button
                               type="button"
                               disabled={idx === 0}
-                              onClick={() => reorderGroupMember(group.id, m.id, arr, idx, -1)}
+                              onClick={() =>
+                                reorderGroupMember(group.id, m.id, arr, idx, -1)
+                              }
                               className="text-muted-foreground hover:text-foreground disabled:opacity-30 px-0.5"
                               aria-label="Move up"
                             >
@@ -341,7 +383,9 @@ export function MappingPanel() {
                             <button
                               type="button"
                               disabled={idx === arr.length - 1}
-                              onClick={() => reorderGroupMember(group.id, m.id, arr, idx, 1)}
+                              onClick={() =>
+                                reorderGroupMember(group.id, m.id, arr, idx, 1)
+                              }
                               className="text-muted-foreground hover:text-foreground disabled:opacity-30 px-0.5"
                               aria-label="Move down"
                             >
@@ -356,7 +400,7 @@ export function MappingPanel() {
                   <button
                     type="button"
                     onClick={() => handleSelectGroup(group.id)}
-                    className="text-[10px] text-muted-foreground hover:text-foreground"
+                    className="text-xs text-muted-foreground hover:text-foreground"
                   >
                     View SPARQL ›
                   </button>
@@ -367,9 +411,15 @@ export function MappingPanel() {
 
           {/* ── Ungrouped mapping rows ── */}
           {ungroupedMappings.map((mapping) => {
-            const isSelected = mapping.id === selectedMappingId
-            const sourceRange = getPropRange(mapping.sourcePropUri, activeSource?.schemaNodes ?? [])
-            const targetRange = getPropRange(mapping.targetPropUri, ontologyNodes)
+            const isSelected = mapping.id === selectedMappingId;
+            const sourceRange = getPropRange(
+              mapping.sourcePropUri,
+              activeSource?.schemaNodes ?? [],
+            );
+            const targetRange = getPropRange(
+              mapping.targetPropUri,
+              ontologyNodes,
+            );
             return (
               <li
                 key={mapping.id}
@@ -377,7 +427,8 @@ export function MappingPanel() {
                 tabIndex={0}
                 onClick={() => handleSelectMapping(mapping.id)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') handleSelectMapping(mapping.id)
+                  if (e.key === 'Enter' || e.key === ' ')
+                    handleSelectMapping(mapping.id);
                 }}
                 className={`flex items-center justify-between px-3 py-2 cursor-pointer text-xs hover:bg-muted/50 transition-colors ${
                   isSelected ? 'bg-muted font-medium' : ''
@@ -387,8 +438,9 @@ export function MappingPanel() {
                   <span className="truncate text-amber-700 font-mono">
                     {localName(mapping.sourcePropUri)}
                   </span>
-                  <span className="text-muted-foreground text-[10px]">
-                    {sourceRange} → {localName(mapping.targetPropUri)} {targetRange}
+                  <span className="text-muted-foreground text-xs">
+                    {sourceRange} → {localName(mapping.targetPropUri)}{' '}
+                    {targetRange}
                   </span>
                 </span>
                 <button
@@ -400,7 +452,7 @@ export function MappingPanel() {
                   ×
                 </button>
               </li>
-            )
+            );
           })}
         </ul>
       </div>
@@ -411,16 +463,16 @@ export function MappingPanel() {
           {/* Editor header */}
           <div className="shrink-0 flex items-center justify-between px-3 py-2 border-b border-border bg-muted/30">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                {isGroupSelected ? 'GROUP SPARQL' : 'SPARQL CONSTRUCT'}
+              <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {isGroupSelected ? 'Group SPARQL' : 'SPARQL Construct'}
               </span>
               {isGroupSelected ? (
-                <span className="text-[10px] px-1.5 py-0.5 rounded font-medium bg-muted text-muted-foreground">
+                <span className="text-xs px-1.5 py-0.5 rounded font-medium bg-muted text-muted-foreground">
                   read-only
                 </span>
               ) : selectedMapping !== null ? (
                 <span
-                  className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                  className={`text-xs px-1.5 py-0.5 rounded font-medium ${
                     isValidConstruct(selectedMapping.sparqlConstruct)
                       ? 'bg-green-100 text-green-700'
                       : 'bg-amber-100 text-amber-700'
@@ -431,7 +483,9 @@ export function MappingPanel() {
                       : 'Missing CONSTRUCT or WHERE keyword'
                   }
                 >
-                  {isValidConstruct(selectedMapping.sparqlConstruct) ? 'valid' : 'incomplete'}
+                  {isValidConstruct(selectedMapping.sparqlConstruct)
+                    ? 'valid'
+                    : 'incomplete'}
                 </span>
               ) : null}
             </div>
@@ -444,7 +498,10 @@ export function MappingPanel() {
                 data-testid="kind-picker"
                 className="shrink-0 flex items-center gap-2 px-3 py-1.5 border-b border-border bg-muted/10"
               >
-                <label className="text-xs text-muted-foreground shrink-0" htmlFor="kind-picker">
+                <label
+                  className="text-xs text-muted-foreground shrink-0"
+                  htmlFor="kind-picker"
+                >
                   Kind
                 </label>
                 <select
@@ -452,8 +509,8 @@ export function MappingPanel() {
                   aria-label="Mapping kind"
                   value={selectedMapping.kind}
                   onChange={(e) => {
-                    const newKind = e.target.value as Mapping['kind']
-                    updateMapping(selectedMapping.id, { kind: newKind })
+                    const newKind = e.target.value as Mapping['kind'];
+                    updateMapping(selectedMapping.id, { kind: newKind });
                   }}
                   className="text-xs border border-border rounded px-1.5 py-0.5 bg-background"
                 >
@@ -468,21 +525,37 @@ export function MappingPanel() {
               </div>
 
               {/* Kind-specific inline fields */}
-              {['template', 'constant', 'typecast', 'language', 'join'].includes(selectedMapping.kind) && (
+              {[
+                'template',
+                'constant',
+                'typecast',
+                'language',
+                'join',
+              ].includes(selectedMapping.kind) && (
                 <div className="shrink-0 flex flex-col gap-1.5 px-3 py-2 border-b border-border bg-muted/5">
                   {selectedMapping.kind === 'template' && (
                     <div className="flex flex-col gap-1.5">
-                      <div className="flex gap-4 text-[11px] text-muted-foreground font-mono">
-                        <span>{'{'}prop1{'}'} = {localName(selectedMapping.sourcePropUri)}</span>
-                        <span>{'{'}prop2{'}'} = {localName(selectedMapping.targetPropUri)}</span>
+                      <div className="flex gap-4 text-xs text-muted-foreground font-mono">
+                        <span>
+                          {'{'}prop1{'}'} ={' '}
+                          {localName(selectedMapping.sourcePropUri)}
+                        </span>
+                        <span>
+                          {'{'}prop2{'}'} ={' '}
+                          {localName(selectedMapping.targetPropUri)}
+                        </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <label className="text-xs text-muted-foreground w-20 shrink-0">Pattern</label>
+                        <label className="text-xs text-muted-foreground w-20 shrink-0">
+                          Pattern
+                        </label>
                         <input
                           className="text-xs border border-border rounded px-1.5 py-0.5 bg-background flex-1 min-w-0"
                           value={selectedMapping.templatePattern ?? ''}
                           onChange={(e) =>
-                            updateMapping(selectedMapping.id, { templatePattern: e.target.value })
+                            updateMapping(selectedMapping.id, {
+                              templatePattern: e.target.value,
+                            })
                           }
                           placeholder='"{prop1} {prop2}"'
                         />
@@ -492,23 +565,31 @@ export function MappingPanel() {
                   {selectedMapping.kind === 'constant' && (
                     <>
                       <div className="flex items-center gap-2">
-                        <label className="text-xs text-muted-foreground w-20 shrink-0">Value</label>
+                        <label className="text-xs text-muted-foreground w-20 shrink-0">
+                          Value
+                        </label>
                         <input
                           className="text-xs border border-border rounded px-1.5 py-0.5 bg-background flex-1 min-w-0"
                           value={selectedMapping.constantValue ?? ''}
                           onChange={(e) =>
-                            updateMapping(selectedMapping.id, { constantValue: e.target.value })
+                            updateMapping(selectedMapping.id, {
+                              constantValue: e.target.value,
+                            })
                           }
                           placeholder="literal value"
                         />
                       </div>
                       <div className="flex items-center gap-2">
-                        <label className="text-xs text-muted-foreground w-20 shrink-0">Datatype</label>
+                        <label className="text-xs text-muted-foreground w-20 shrink-0">
+                          Datatype
+                        </label>
                         <input
                           className="text-xs border border-border rounded px-1.5 py-0.5 bg-background flex-1 min-w-0"
                           value={selectedMapping.constantType ?? ''}
                           onChange={(e) =>
-                            updateMapping(selectedMapping.id, { constantType: e.target.value })
+                            updateMapping(selectedMapping.id, {
+                              constantType: e.target.value,
+                            })
                           }
                           placeholder="xsd:string"
                         />
@@ -517,12 +598,16 @@ export function MappingPanel() {
                   )}
                   {selectedMapping.kind === 'typecast' && (
                     <div className="flex items-center gap-2">
-                      <label className="text-xs text-muted-foreground w-20 shrink-0">Datatype</label>
+                      <label className="text-xs text-muted-foreground w-20 shrink-0">
+                        Datatype
+                      </label>
                       <input
                         className="text-xs border border-border rounded px-1.5 py-0.5 bg-background flex-1 min-w-0"
                         value={selectedMapping.targetDatatype ?? ''}
                         onChange={(e) =>
-                          updateMapping(selectedMapping.id, { targetDatatype: e.target.value })
+                          updateMapping(selectedMapping.id, {
+                            targetDatatype: e.target.value,
+                          })
                         }
                         placeholder="xsd:integer"
                       />
@@ -530,12 +615,16 @@ export function MappingPanel() {
                   )}
                   {selectedMapping.kind === 'language' && (
                     <div className="flex items-center gap-2">
-                      <label className="text-xs text-muted-foreground w-20 shrink-0">Language Tag</label>
+                      <label className="text-xs text-muted-foreground w-20 shrink-0">
+                        Language Tag
+                      </label>
                       <input
                         className="text-xs border border-border rounded px-1.5 py-0.5 bg-background flex-1 min-w-0"
                         value={selectedMapping.languageTag ?? ''}
                         onChange={(e) =>
-                          updateMapping(selectedMapping.id, { languageTag: e.target.value })
+                          updateMapping(selectedMapping.id, {
+                            languageTag: e.target.value,
+                          })
                         }
                         placeholder="en"
                       />
@@ -551,7 +640,9 @@ export function MappingPanel() {
                           className="text-xs border border-border rounded px-1.5 py-0.5 bg-background flex-1 min-w-0"
                           value={selectedMapping.parentSourceId ?? ''}
                           onChange={(e) =>
-                            updateMapping(selectedMapping.id, { parentSourceId: e.target.value })
+                            updateMapping(selectedMapping.id, {
+                              parentSourceId: e.target.value,
+                            })
                           }
                           placeholder="source id"
                         />
@@ -564,7 +655,9 @@ export function MappingPanel() {
                           className="text-xs border border-border rounded px-1.5 py-0.5 bg-background flex-1 min-w-0"
                           value={selectedMapping.parentRef ?? ''}
                           onChange={(e) =>
-                            updateMapping(selectedMapping.id, { parentRef: e.target.value })
+                            updateMapping(selectedMapping.id, {
+                              parentRef: e.target.value,
+                            })
                           }
                           placeholder="property URI"
                         />
@@ -577,7 +670,9 @@ export function MappingPanel() {
                           className="text-xs border border-border rounded px-1.5 py-0.5 bg-background flex-1 min-w-0"
                           value={selectedMapping.childRef ?? ''}
                           onChange={(e) =>
-                            updateMapping(selectedMapping.id, { childRef: e.target.value })
+                            updateMapping(selectedMapping.id, {
+                              childRef: e.target.value,
+                            })
                           }
                           placeholder="property URI"
                         />
@@ -598,5 +693,5 @@ export function MappingPanel() {
         </div>
       )}
     </div>
-  )
+  );
 }

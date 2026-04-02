@@ -1,61 +1,70 @@
-import { useState, useEffect, type RefObject } from 'react'
-import { CaretLeftIcon, CaretRightIcon } from '@phosphor-icons/react'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
-import { useUiStore } from '@/store/uiStore'
-import { useOntologyStore } from '@/store/ontologyStore'
-import { TurtleEditorPanel } from '@/components/panels/TurtleEditorPanel'
-import { SourcePanel } from '@/components/panels/SourcePanel'
-import { MappingPanel } from '@/components/panels/MappingPanel'
-import { OutputPanel } from '@/components/panels/OutputPanel'
-import { ValidationPanel } from '@/components/panels/ValidationPanel'
+import { useState, useEffect, type RefObject } from 'react';
+import { CaretLeftIcon, CaretRightIcon } from '@phosphor-icons/react';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { useUiStore } from '@/store/uiStore';
+import { useOntologyStore } from '@/store/ontologyStore';
+import { TurtleEditorPanel } from '@/components/panels/TurtleEditorPanel';
+import { SourcePanel } from '@/components/panels/SourcePanel';
+import { MappingPanel } from '@/components/panels/MappingPanel';
+import { OutputPanel } from '@/components/panels/OutputPanel';
+import { ValidationPanel } from '@/components/panels/ValidationPanel';
 
 interface RightPanelProps {
-  onEditorChange: (value: string) => void
-  onSourceEditorChange?: (turtle: string) => void
-  resetSourceSchema?: () => void
-  isCanvasSyncPending?: RefObject<boolean>
+  onEditorChange: (value: string) => void;
+  onSourceEditorChange?: (turtle: string) => void;
+  resetSourceSchema?: () => void;
+  isCanvasSyncPending?: RefObject<boolean>;
 }
 
-export function RightPanel({ onEditorChange, onSourceEditorChange, resetSourceSchema, isCanvasSyncPending }: RightPanelProps) {
-  const { activeRightTab, setActiveRightTab } = useUiStore()
-  const turtleSource = useOntologyStore((s) => s.turtleSource)
-  const parseError = useOntologyStore((s) => s.parseError)
-  const [collapsed, setCollapsed] = useState(false)
-  const [width, setWidth] = useState(() => Math.round(window.innerWidth * 0.3))
-  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 640)
+export function RightPanel({
+  onEditorChange,
+  onSourceEditorChange,
+  resetSourceSchema,
+  isCanvasSyncPending,
+}: RightPanelProps) {
+  const { activeRightTab, setActiveRightTab } = useUiStore();
+  const turtleSource = useOntologyStore((s) => s.turtleSource);
+  const parseError = useOntologyStore((s) => s.parseError);
+  const [collapsed, setCollapsed] = useState(false);
+  const [width, setWidth] = useState(() => Math.round(window.innerWidth * 0.3));
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 640);
 
   useEffect(() => {
-    const handler = () => setIsMobile(window.innerWidth < 640)
-    window.addEventListener('resize', handler)
-    return () => window.removeEventListener('resize', handler)
-  }, [])
+    const handler = () => setIsMobile(window.innerWidth < 640);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
 
   function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
-    e.preventDefault()
-    const startX = e.clientX
-    const startWidth = width
+    e.preventDefault();
+    const startX = e.clientX;
+    const startWidth = width;
     function onMove(ev: PointerEvent) {
-      const next = Math.min(Math.round(window.innerWidth * 0.6), Math.max(260, startWidth + startX - ev.clientX))
-      setWidth(next)
+      const next = Math.min(
+        Math.round(window.innerWidth * 0.6),
+        Math.max(260, startWidth + startX - ev.clientX),
+      );
+      setWidth(next);
     }
     function onUp() {
-      document.removeEventListener('pointermove', onMove)
-      document.removeEventListener('pointerup', onUp)
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onUp);
     }
-    document.addEventListener('pointermove', onMove)
-    document.addEventListener('pointerup', onUp)
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onUp);
   }
 
-  let asideClassName = 'relative border-l border-border bg-background flex flex-col overflow-hidden'
-  let asideStyle: React.CSSProperties | undefined
+  let asideClassName =
+    'relative border-l border-border bg-background flex flex-col overflow-hidden';
+  let asideStyle: React.CSSProperties | undefined;
 
   if (collapsed) {
-    asideClassName += ' w-10 shrink-0'
+    asideClassName += ' w-10 shrink-0';
   } else if (isMobile) {
-    asideClassName += ' w-full absolute inset-y-0 right-0 z-20'
+    asideClassName += ' w-full absolute inset-y-0 right-0 z-20';
   } else {
-    asideClassName += ' shrink-0'
-    asideStyle = { width }
+    asideClassName += ' shrink-0';
+    asideStyle = { width };
   }
 
   return (
@@ -73,7 +82,7 @@ export function RightPanel({ onEditorChange, onSourceEditorChange, resetSourceSc
           >
             <CaretLeftIcon size={14} />
           </button>
-          <span className="text-[10px] text-muted-foreground [writing-mode:vertical-rl] rotate-180 select-none mt-1">
+          <span className="text-xs text-muted-foreground [writing-mode:vertical-rl] rotate-180 select-none mt-1">
             {activeRightTab}
           </span>
         </div>
@@ -89,42 +98,46 @@ export function RightPanel({ onEditorChange, onSourceEditorChange, resetSourceSc
           )}
           <Tabs
             value={activeRightTab}
-            onValueChange={(v) => setActiveRightTab(v as 'SOURCE' | 'ONTOLOGY' | 'MAP' | 'OUTPUT' | 'VALIDATE')}
+            onValueChange={(v) =>
+              setActiveRightTab(
+                v as 'SOURCE' | 'ONTOLOGY' | 'MAP' | 'OUTPUT' | 'VALIDATE',
+              )
+            }
             className="flex flex-col h-full gap-0"
           >
-            <div className="border-b border-border px-3 py-2 shrink-0 flex items-center gap-1">
-              <TabsList className="h-8 w-full bg-transparent p-0 gap-1">
+            <div className="border-b border-border px-2 py-1.5 shrink-0 flex items-center gap-1">
+              <TabsList className="h-7 w-full bg-transparent p-0 gap-0.5">
                 <TabsTrigger
                   value="SOURCE"
-                  className="flex-1 text-sm h-7 rounded data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted"
+                  className="flex-1 text-xs h-6 rounded data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted"
                   aria-label="Source tab"
                 >
-                  SOURCE
+                  Source
                 </TabsTrigger>
                 <TabsTrigger
                   value="ONTOLOGY"
-                  className="flex-1 text-sm h-7 rounded data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted"
+                  className="flex-1 text-xs h-6 rounded data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted"
                   aria-label="Ontology tab"
                 >
-                  ONTOLOGY
+                  Ontology
                 </TabsTrigger>
                 <TabsTrigger
                   value="MAP"
-                  className="flex-1 text-sm h-7 rounded data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted"
+                  className="flex-1 text-xs h-6 rounded data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted"
                   aria-label="Mapping tab"
                 >
-                  MAP
+                  Map
                 </TabsTrigger>
                 <TabsTrigger
                   value="OUTPUT"
-                  className="flex-1 text-sm h-7 rounded data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted"
+                  className="flex-1 text-xs h-6 rounded data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted"
                   aria-label="Output tab"
                 >
-                  OUTPUT
+                  Output
                 </TabsTrigger>
                 <TabsTrigger
                   value="VALIDATE"
-                  className="flex-1 text-sm h-7 rounded data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted"
+                  className="flex-1 text-xs h-6 rounded data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted"
                   aria-label="SHACL validation tab"
                 >
                   SHACL
@@ -140,10 +153,18 @@ export function RightPanel({ onEditorChange, onSourceEditorChange, resetSourceSc
             </div>
             <div className="flex-1 overflow-hidden">
               <TabsContent value="SOURCE" className="h-full m-0">
-                <SourcePanel onSourceEditorChange={onSourceEditorChange} resetSourceSchema={resetSourceSchema} />
+                <SourcePanel
+                  onSourceEditorChange={onSourceEditorChange}
+                  resetSourceSchema={resetSourceSchema}
+                />
               </TabsContent>
               <TabsContent value="ONTOLOGY" className="h-full m-0">
-                <TurtleEditorPanel turtleSource={turtleSource} onEditorChange={onEditorChange} parseError={parseError} isCanvasSyncPending={isCanvasSyncPending} />
+                <TurtleEditorPanel
+                  turtleSource={turtleSource}
+                  onEditorChange={onEditorChange}
+                  parseError={parseError}
+                  isCanvasSyncPending={isCanvasSyncPending}
+                />
               </TabsContent>
               <TabsContent value="MAP" className="h-full m-0">
                 <MappingPanel />
@@ -159,5 +180,5 @@ export function RightPanel({ onEditorChange, onSourceEditorChange, resetSourceSc
         </>
       )}
     </aside>
-  )
+  );
 }

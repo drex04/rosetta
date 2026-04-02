@@ -1,15 +1,15 @@
-import * as Dialog from '@radix-ui/react-dialog'
-import { Button } from '@/components/ui/button'
+import * as Dialog from '@radix-ui/react-dialog';
+import { Button } from '@/components/ui/button';
 
 interface ConfirmDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  title: string
-  description: string
-  confirmLabel?: string
-  cancelLabel?: string
-  onConfirm: () => void
-  onCancel: () => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: string;
+  description: string;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  onConfirm: () => void;
+  onCancel: () => void;
 }
 
 export function ConfirmDialog({
@@ -27,7 +27,7 @@ export function ConfirmDialog({
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/40 z-50" />
         <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-lg border border-border bg-background p-6 shadow-lg focus:outline-none">
-          <Dialog.Title className="text-base font-semibold text-foreground mb-2">
+          <Dialog.Title className="text-sm font-medium text-foreground mb-2">
             {title}
           </Dialog.Title>
           <Dialog.Description className="text-sm text-muted-foreground mb-6">
@@ -44,5 +44,5 @@ export function ConfirmDialog({
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
-  )
+  );
 }
