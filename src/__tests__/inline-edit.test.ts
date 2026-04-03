@@ -38,7 +38,6 @@ function makeSource(id: string, nodes: OntologyNode[] = []): Source {
     dataFormat: 'json',
     schemaNodes: nodes as Source['schemaNodes'],
     schemaEdges: [],
-    turtleSource: '',
     parseError: null,
   };
 }

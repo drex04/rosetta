@@ -25,7 +25,6 @@ function makeSource(overrides: Partial<Source> = {}): Source {
     dataFormat: 'json',
     schemaNodes: [],
     schemaEdges: [],
-    turtleSource: '',
     parseError: null,
     ...overrides,
   };

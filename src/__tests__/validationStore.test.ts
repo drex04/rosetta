@@ -109,7 +109,6 @@ describe('subscribeValidationToMappings', () => {
       dataFormat: 'json' as const,
       schemaNodes: [],
       schemaEdges: [],
-      turtleSource: '',
       parseError: null,
     });
 
@@ -128,7 +127,6 @@ describe('subscribeValidationToMappings', () => {
           dataFormat: 'json' as const,
           schemaNodes: [],
           schemaEdges: [],
-          turtleSource: '',
           parseError: null,
         },
       ],
@@ -175,7 +173,6 @@ describe('useValidationStore — runValidation error handling', () => {
         },
       ],
       schemaEdges: [],
-      turtleSource: '',
       parseError: null,
     });
 
@@ -229,7 +226,6 @@ describe('useValidationStore — runValidation error handling', () => {
             },
           ],
           schemaEdges: [],
-          turtleSource: '',
           parseError: null,
         },
       ],
@@ -265,7 +261,6 @@ describe('useValidationStore — runValidation success', () => {
             },
           ],
           schemaEdges: [],
-          turtleSource: '',
           parseError: null,
         },
       ],

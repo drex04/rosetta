@@ -5,7 +5,6 @@ import { lineNumbers, highlightActiveLine } from '@codemirror/view';
 import { basicSetup } from 'codemirror';
 import { json } from '@codemirror/lang-json';
 import { xml } from '@codemirror/lang-xml';
-import { turtle } from 'codemirror-lang-turtle';
 import {
   UploadSimpleIcon,
   ArrowCounterClockwiseIcon,
@@ -76,14 +75,10 @@ function runSchema(value: string, format: 'json' | 'xml', sourceName: string) {
 // ─── SourcePanel ──────────────────────────────────────────────────────────────
 
 interface SourcePanelProps {
-  onSourceEditorChange?: (turtle: string) => void;
   resetSourceSchema?: () => void;
 }
 
-export function SourcePanel({
-  onSourceEditorChange,
-  resetSourceSchema,
-}: SourcePanelProps) {
+export function SourcePanel({ resetSourceSchema }: SourcePanelProps) {
   const sources = useSourcesStore((s) => s.sources);
   const activeSourceId = useSourcesStore((s) => s.activeSourceId);
   const updateSource = useSourcesStore((s) => s.updateSource);
@@ -110,25 +105,6 @@ export function SourcePanel({
         s.id !== source.id && deriveSlug(s.name) === deriveSlug(source.name),
     );
 
-  // ── Last successful turtle (for preview / editing) ───────────────────────────
-  // Prefer store's turtleSource when available (set by useSourceSync).
-  // Fall back to lazy-init derivation for IDB-restored sources that predate
-  // the turtleSource field (migrateSource sets it to '').
-  const [lastTurtle, setLastTurtle] = useState<string>(() => {
-    if (source?.turtleSource) return source.turtleSource;
-    if (!source?.rawData) return '';
-    try {
-      const result = runSchema(
-        source.rawData,
-        source.dataFormat ?? 'json',
-        source.name,
-      );
-      return result.turtle;
-    } catch {
-      return '';
-    }
-  });
-
   // ── File input ref ────────────────────────────────────────────────────────────
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -136,11 +112,6 @@ export function SourcePanel({
   const dataContainerRef = useRef<HTMLDivElement>(null);
   const dataViewRef = useRef<EditorView | null>(null);
   const isUpdatingFromStore = useRef(false);
-
-  // ── CodeMirror refs (Turtle preview) ─────────────────────────────────────────
-  const turtleContainerRef = useRef<HTMLDivElement>(null);
-  const turtleViewRef = useRef<EditorView | null>(null);
-  const isUpdatingTurtleFromStore = useRef(false);
 
   // ── Current dataFormat (tracked locally for editor remount key) ───────────────
   const [dataFormat, setDataFormat] = useState<'json' | 'xml'>(
@@ -180,7 +151,6 @@ export function SourcePanel({
         if (!('format-changed' === banner)) {
           setBanner(result.warnings.length > 0 ? 'warnings' : null);
         }
-        if (result.turtle) setLastTurtle(result.turtle);
         updateSource(sourceId, {
           rawData: value,
           dataFormat: resolvedFormat,
@@ -208,7 +178,6 @@ export function SourcePanel({
       if (banner !== 'format-changed') {
         setBanner(result.warnings.length > 0 ? 'warnings' : null);
       }
-      if (result.turtle) setLastTurtle(result.turtle);
       updateSource(sourceId, {
         rawData: value,
         dataFormat: resolvedFormat,
@@ -264,7 +233,6 @@ export function SourcePanel({
 
       // Generate schema
       const result = runSchema(text, resolvedFormat, source.name);
-      if (result.turtle) setLastTurtle(result.turtle);
       if (resolvedFormat !== source.dataFormat || banner !== 'format-changed') {
         if (result.warnings.length > 0 && banner !== 'format-changed')
           setBanner('warnings');
@@ -333,56 +301,6 @@ export function SourcePanel({
     });
     isUpdatingFromStore.current = false;
   }, [source?.rawData]); // RD-11: effect dependency is source?.rawData
-
-  // ── Mount Turtle editor (editable when onSourceEditorChange provided) ────────
-  useEffect(() => {
-    if (turtleContainerRef.current === null) return;
-
-    const isEditable = onSourceEditorChange !== undefined;
-
-    const updateListener = EditorView.updateListener.of((update) => {
-      if (!update.docChanged) return;
-      if (isUpdatingTurtleFromStore.current) return;
-      if (!isEditable) return;
-      const value = update.state.doc.toString();
-      onSourceEditorChange(value);
-    });
-
-    const state = EditorState.create({
-      doc: lastTurtle,
-      extensions: [
-        basicSetup,
-        lineNumbers(),
-        ...(isEditable ? [highlightActiveLine()] : []),
-        turtle(),
-        lightTheme,
-        ...(isEditable ? [updateListener] : [EditorState.readOnly.of(true)]),
-      ],
-    });
-
-    const view = new EditorView({ state, parent: turtleContainerRef.current });
-    turtleViewRef.current = view;
-
-    return () => {
-      view.destroy();
-      turtleViewRef.current = null;
-    };
-  }, [source?.id]); // eslint-disable-line react-hooks/exhaustive-deps
-  // Re-mount turtle editor when source switches
-
-  // ── Update Turtle editor when lastTurtle changes ──────────────────────────────
-  useEffect(() => {
-    const view = turtleViewRef.current;
-    if (view === null) return;
-    const currentDoc = view.state.doc.toString();
-    if (currentDoc === lastTurtle) return;
-
-    isUpdatingTurtleFromStore.current = true;
-    view.dispatch({
-      changes: { from: 0, to: view.state.doc.length, insert: lastTurtle },
-    });
-    isUpdatingTurtleFromStore.current = false;
-  }, [lastTurtle]);
 
   // ── Empty state ────────────────────────────────────────────────────────────────
   if (!source) {
@@ -510,7 +428,7 @@ export function SourcePanel({
         <div className="flex flex-col gap-3 p-3">
           <Accordion
             type="multiple"
-            defaultValue={['source', 'rdfs']}
+            defaultValue={['source']}
             className="w-full"
           >
             <AccordionItem
@@ -531,30 +449,12 @@ export function SourcePanel({
                 >
                   <UploadSimpleIcon size={14} />
                 </Button>
-              </AccordionTrigger>
-              <AccordionContent className="p-0">
-                {/* key remounts CodeMirror with correct language when format changes */}
-                <div
-                  key={dataFormat}
-                  ref={dataContainerRef}
-                  className="h-64 border-t border-border overflow-hidden"
-                  aria-label={`${dataFormat.toUpperCase()} source editor`}
-                />
-              </AccordionContent>
-            </AccordionItem>
-
-            <AccordionItem
-              value="rdfs"
-              className="border border-border rounded-md"
-            >
-              <AccordionTrigger className="px-3 py-2 text-sm font-medium hover:no-underline [&>svg]:ml-auto">
-                <span className="flex-1 text-left">RDFS Schema</span>
                 {resetSourceSchema !== undefined && (
                   <Button
                     variant="ghost"
                     size="icon"
                     className="h-6 w-6 shrink-0 mr-1"
-                    title="Reset RDFS schema from source data"
+                    title="Reset schema from source data"
                     onClick={(e) => {
                       e.stopPropagation();
                       resetSourceSchema();
@@ -565,11 +465,12 @@ export function SourcePanel({
                 )}
               </AccordionTrigger>
               <AccordionContent className="p-0">
+                {/* key remounts CodeMirror with correct language when format changes */}
                 <div
-                  id="turtle-preview"
-                  ref={turtleContainerRef}
-                  className="h-48 border-t border-border overflow-hidden"
-                  aria-label="Generated Turtle preview"
+                  key={dataFormat}
+                  ref={dataContainerRef}
+                  className="h-64 border-t border-border overflow-hidden"
+                  aria-label={`${dataFormat.toUpperCase()} source editor`}
                 />
               </AccordionContent>
             </AccordionItem>

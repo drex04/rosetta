@@ -74,10 +74,10 @@ describe('simple flat XML', () => {
     expect(cls?.uri).toContain('mysource');
   });
 
-  it('produces a Turtle string', () => {
+  it('produces class nodes', () => {
     const xml = `<Track><id>A1</id></Track>`;
     const result = xmlToSchema(xml, 'TestSource');
-    expect(result.turtle).toContain('owl:Class');
+    expect(result.nodes.length).toBeGreaterThan(0);
   });
 });
 

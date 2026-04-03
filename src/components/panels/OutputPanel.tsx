@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Tabs } from '@/components/ui/tabs';
 import {
   Accordion,
   AccordionContent,
@@ -208,13 +208,13 @@ function ExportTab() {
           Download production ETL mapping files for use with RML processors
           (RMLMapper, Morph-KGC, etc.).
         </p>
-        <Accordion type="multiple" defaultValue={['rml']} className="w-full">
+        <Accordion type="multiple" className="w-full">
           <AccordionItem
             value="rml"
             className="border border-border rounded-md mb-2"
           >
             <AccordionTrigger className="px-3 py-2 text-sm font-medium hover:no-underline [&>svg]:ml-auto">
-              <span className="flex-1 text-left">RML Preview</span>
+              <span className="flex-1 text-left">RML</span>
               <Button
                 variant="ghost"
                 size="icon"
@@ -241,7 +241,7 @@ function ExportTab() {
             className="border border-border rounded-md"
           >
             <AccordionTrigger className="px-3 py-2 text-sm font-medium hover:no-underline [&>svg]:ml-auto">
-              <span className="flex-1 text-left">YARRRML Preview</span>
+              <span className="flex-1 text-left">YARRRML</span>
               <Button
                 variant="ghost"
                 size="icon"
@@ -273,29 +273,11 @@ function ExportTab() {
 
 export function OutputPanel() {
   return (
-    <Tabs defaultValue="fused" className="flex flex-col h-full gap-0">
+    <Tabs className="flex flex-col h-full gap-0">
       <div className="shrink-0 px-3 py-2 border-b border-border">
-        <TabsList className="w-full">
-          <TabsTrigger value="fused" className="flex-1">
-            Fused
-          </TabsTrigger>
-          <TabsTrigger value="export" className="flex-1">
-            Export
-          </TabsTrigger>
-        </TabsList>
-      </div>
-      <TabsContent
-        value="fused"
-        className="flex-1 overflow-hidden m-0 flex flex-col"
-      >
-        <FusedTab />
-      </TabsContent>
-      <TabsContent
-        value="export"
-        className="flex-1 overflow-hidden m-0 flex flex-col"
-      >
         <ExportTab />
-      </TabsContent>
+        <FusedTab />
+      </div>
     </Tabs>
   );
 }

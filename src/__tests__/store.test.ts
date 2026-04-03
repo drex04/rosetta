@@ -84,7 +84,6 @@ describe('useSourcesStore', () => {
       dataFormat: 'json',
       schemaNodes: [],
       schemaEdges: [],
-      turtleSource: '',
       parseError: null,
     };
     useSourcesStore.getState().addSource(source);
@@ -101,7 +100,6 @@ describe('useSourcesStore', () => {
       dataFormat: 'json',
       schemaNodes: [],
       schemaEdges: [],
-      turtleSource: '',
       parseError: null,
     };
     const s2: Source = {
@@ -112,7 +110,6 @@ describe('useSourcesStore', () => {
       dataFormat: 'json',
       schemaNodes: [],
       schemaEdges: [],
-      turtleSource: '',
       parseError: null,
     };
     useSourcesStore.getState().addSource(s1);
@@ -132,7 +129,6 @@ describe('useSourcesStore', () => {
       dataFormat: 'json',
       schemaNodes: [],
       schemaEdges: [],
-      turtleSource: '',
       parseError: null,
     };
     const s2: Source = {
@@ -143,7 +139,6 @@ describe('useSourcesStore', () => {
       dataFormat: 'json',
       schemaNodes: [],
       schemaEdges: [],
-      turtleSource: '',
       parseError: null,
     };
     useSourcesStore.getState().addSource(s1);
@@ -163,7 +158,6 @@ describe('useSourcesStore', () => {
       dataFormat: 'json',
       schemaNodes: [],
       schemaEdges: [],
-      turtleSource: '',
       parseError: null,
     };
     useSourcesStore.getState().addSource(s1);

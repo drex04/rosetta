@@ -107,7 +107,6 @@ export function Header() {
         dataFormat: 'json' as const,
         schemaNodes: resultA.nodes,
         schemaEdges: resultA.edges,
-        turtleSource: resultA.turtle,
         parseError: null,
       },
       {
@@ -118,7 +117,6 @@ export function Header() {
         dataFormat: 'json' as const,
         schemaNodes: resultB.nodes,
         schemaEdges: resultB.edges,
-        turtleSource: resultB.turtle,
         parseError: null,
       },
     ];

@@ -8,7 +8,6 @@ import type {
 import { COLUMN_X_SOURCE, COLUMN_SPACING } from '@/lib/rdf';
 import { applyTreeLayout } from '@/lib/layout';
 import type { SchemaResult } from '@/lib/jsonToSchema';
-import { serializeToTurtle } from '@/lib/rdfSerialize';
 
 export type { SchemaResult };
 
@@ -162,7 +161,6 @@ export function xmlToSchema(
   const empty: SchemaResult = {
     nodes: [],
     edges: [],
-    turtle: '',
     warnings: [],
   };
 
@@ -188,8 +186,6 @@ export function xmlToSchema(
   }
 
   const uriBase = deriveUriPrefix(sourceName);
-  // Derive a short alias for Turtle prefix (strip http://example.org/ and #)
-  const prefixAlias = sourceName.replace(/[^a-zA-Z0-9_]/g, '').toLowerCase();
 
   const ctx: WalkContext = {
     uriBase,
@@ -213,18 +209,9 @@ export function xmlToSchema(
     position: treePositions.get(n.id) ?? n.position,
   }));
 
-  const turtle = serializeToTurtle(
-    ctx.nodes,
-    ctx.edges,
-    uriBase,
-    prefixAlias,
-    ctx.warnings,
-  );
-
   return {
     nodes: ctx.nodes,
     edges: ctx.edges,
-    turtle,
     warnings: ctx.warnings,
   };
 }
