@@ -12,6 +12,13 @@ import {
 } from '@phosphor-icons/react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { useSourcesStore } from '@/store/sourcesStore';
 import { useMappingStore } from '@/store/mappingStore';
 import { jsonToSchema } from '@/lib/jsonToSchema';
@@ -134,30 +141,6 @@ export function SourcePanel({
   const turtleContainerRef = useRef<HTMLDivElement>(null);
   const turtleViewRef = useRef<EditorView | null>(null);
   const isUpdatingTurtleFromStore = useRef(false);
-
-  // ── RDFS pane resize state ────────────────────────────────────────────────────
-  const [rdfsHeight, setRdfsHeight] = useState(200);
-  const isDraggingRdfs = useRef(false);
-  const dragStartY = useRef(0);
-  const dragStartHeight = useRef(0);
-
-  function handleRdfsPointerDown(e: React.PointerEvent) {
-    isDraggingRdfs.current = true;
-    dragStartY.current = e.clientY;
-    dragStartHeight.current = rdfsHeight;
-    e.currentTarget.setPointerCapture(e.pointerId);
-  }
-  function handleRdfsPointerMove(e: React.PointerEvent) {
-    if (!isDraggingRdfs.current) return;
-    const delta = dragStartY.current - e.clientY;
-    setRdfsHeight(Math.max(80, Math.min(600, dragStartHeight.current + delta)));
-  }
-  function handleRdfsPointerUp() {
-    isDraggingRdfs.current = false;
-  }
-
-  // ── RDFS pane show/collapse state ─────────────────────────────────────────────
-  const showRdfs = true;
 
   // ── Current dataFormat (tracked locally for editor remount key) ───────────────
   const [dataFormat, setDataFormat] = useState<'json' | 'xml'>(
@@ -353,7 +336,6 @@ export function SourcePanel({
 
   // ── Mount Turtle editor (editable when onSourceEditorChange provided) ────────
   useEffect(() => {
-    if (!showRdfs) return;
     if (turtleContainerRef.current === null) return;
 
     const isEditable = onSourceEditorChange !== undefined;
@@ -385,8 +367,8 @@ export function SourcePanel({
       view.destroy();
       turtleViewRef.current = null;
     };
-  }, [showRdfs, source?.id]); // eslint-disable-line react-hooks/exhaustive-deps
-  // Re-mount turtle editor when section is opened or source switches
+  }, [source?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Re-mount turtle editor when source switches
 
   // ── Update Turtle editor when lastTurtle changes ──────────────────────────────
   useEffect(() => {
@@ -419,11 +401,11 @@ export function SourcePanel({
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      {/* Toolbar: Source name + format badge + upload + reset buttons */}
-      <div className="shrink-0 flex items-center justify-between px-3 py-1.5 border-b border-border bg-muted/10">
+      {/* Toolbar: Source name + format badge */}
+      <div className="shrink-0 flex items-center gap-2 px-3 py-1.5 border-b border-border bg-muted/10">
         {/* Source name (inline editable) */}
         <input
-          className=" text-sm font-medium bg-transparent border-none outline-none rounded px-1 hover:bg-muted/40 focus:bg-muted/60 transition-colors"
+          className="text-sm font-medium bg-transparent border-none outline-none rounded px-1 hover:bg-muted/40 focus:bg-muted/60 transition-colors"
           value={editName}
           onChange={(e) => setEditName(e.target.value)}
           onBlur={() => {
@@ -444,7 +426,6 @@ export function SourcePanel({
           }}
           aria-label="Source name"
         />
-
         <span
           className={
             'inline-flex items-center rounded px-1.5 py-0.5 text-sm font-medium uppercase tracking-wide ' +
@@ -456,26 +437,18 @@ export function SourcePanel({
         >
           {dataFormat.toUpperCase()}
         </span>
-        <div className="flex items-center gap-1">
-          <Button
-            variant="outline"
-            size="xs"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <UploadSimpleIcon size={12} />
-            Upload File
-          </Button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".json,.xml"
-            className="hidden"
-            onChange={(e) => handleFileUpload(e.target.files?.[0])}
-          />
-        </div>
       </div>
 
-      {/* Banner */}
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".json,.xml"
+        className="hidden"
+        onChange={(e) => handleFileUpload(e.target.files?.[0])}
+      />
+
+      {/* Banners */}
       {banner === 'invalid-json' && (
         <Alert
           variant="destructive"
@@ -532,57 +505,77 @@ export function SourcePanel({
         </Alert>
       )}
 
-      {/* Data editor — key remounts CodeMirror with correct language when format changes */}
-      <div
-        key={dataFormat}
-        ref={dataContainerRef}
-        className="flex-1 overflow-hidden"
-        aria-label={`${dataFormat.toUpperCase()} source editor`}
-      />
-
-      {/* Drag handle — drag up to grow RDFS pane */}
-      <div
-        className="shrink-0 h-1 cursor-row-resize bg-border hover:bg-primary/40 transition-colors"
-        onPointerDown={handleRdfsPointerDown}
-        onPointerMove={handleRdfsPointerMove}
-        onPointerUp={handleRdfsPointerUp}
-        aria-label="Resize RDFS pane"
-      />
-
-      {/* RDFS pane */}
-      <div
-        className="shrink-0 flex flex-col border-t border-border overflow-hidden"
-        style={{ height: rdfsHeight }}
-      >
-        {/* RDFS pane header */}
-        <div className="shrink-0 flex items-center px-3 py-1.5 border-b border-border bg-muted/10">
-          <span className="text-sm font-medium text-muted-foreground">
-            {'RDFS Schema'}
-          </span>
-          <div className="flex-1" />
-          {resetSourceSchema !== undefined && (
-            <Button
-              variant="outline"
-              size="xs"
-              onClick={resetSourceSchema}
-              title="Reset RDFS schema from source data"
+      {/* Accordion sections */}
+      <ScrollArea className="flex-1">
+        <div className="flex flex-col gap-3 p-3">
+          <Accordion
+            type="multiple"
+            defaultValue={['source', 'rdfs']}
+            className="w-full"
+          >
+            <AccordionItem
+              value="source"
+              className="border border-border rounded-md mb-2"
             >
-              <ArrowCounterClockwiseIcon size={12} />
-              Reset Schema
-            </Button>
-          )}
-        </div>
+              <AccordionTrigger className="px-3 py-2 text-sm font-medium hover:no-underline [&>svg]:ml-auto">
+                <span className="flex-1 text-left">Source Data</span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 shrink-0 mr-1"
+                  title="Upload File"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    fileInputRef.current?.click();
+                  }}
+                >
+                  <UploadSimpleIcon size={14} />
+                </Button>
+              </AccordionTrigger>
+              <AccordionContent className="p-0">
+                {/* key remounts CodeMirror with correct language when format changes */}
+                <div
+                  key={dataFormat}
+                  ref={dataContainerRef}
+                  className="h-64 border-t border-border overflow-hidden"
+                  aria-label={`${dataFormat.toUpperCase()} source editor`}
+                />
+              </AccordionContent>
+            </AccordionItem>
 
-        {/* RDFS editor */}
-        {showRdfs && (
-          <div
-            id="turtle-preview"
-            ref={turtleContainerRef}
-            className="flex-1 overflow-hidden"
-            aria-label="Generated Turtle preview"
-          />
-        )}
-      </div>
+            <AccordionItem
+              value="rdfs"
+              className="border border-border rounded-md"
+            >
+              <AccordionTrigger className="px-3 py-2 text-sm font-medium hover:no-underline [&>svg]:ml-auto">
+                <span className="flex-1 text-left">RDFS Schema</span>
+                {resetSourceSchema !== undefined && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 shrink-0 mr-1"
+                    title="Reset RDFS schema from source data"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      resetSourceSchema();
+                    }}
+                  >
+                    <ArrowCounterClockwiseIcon size={14} />
+                  </Button>
+                )}
+              </AccordionTrigger>
+              <AccordionContent className="p-0">
+                <div
+                  id="turtle-preview"
+                  ref={turtleContainerRef}
+                  className="h-48 border-t border-border overflow-hidden"
+                  aria-label="Generated Turtle preview"
+                />
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </div>
+      </ScrollArea>
     </div>
   );
 }

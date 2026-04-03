@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { Header } from './components/layout/Header';
-import { StatusBar } from './components/layout/StatusBar';
 import { SourceSelector } from './components/layout/SourceSelector';
 import { RightPanel } from './components/layout/RightPanel';
 import { OntologyCanvas } from './components/canvas/OntologyCanvas';
@@ -85,6 +84,7 @@ function App() {
             onSourceEditorChange={onSourceEditorChange}
             resetSourceSchema={resetSourceSchema}
             isCanvasSyncPending={isCanvasSyncPending}
+            saveStatus={saveStatus}
           />
         </div>
         <ConfirmDialog
@@ -103,7 +103,6 @@ function App() {
             setPendingSync(null);
           }}
         />
-        <StatusBar saveStatus={saveStatus} />
         <Toaster />
       </div>
     </ErrorBoundary>

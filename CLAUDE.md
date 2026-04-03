@@ -33,6 +33,7 @@ src/
 - Canvas color semantics: amber=source nodes, blue=master ontology, dashed-green=mapping edges — never break these
 - Conventional commits: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`
 - Stage files individually, never `git add .`
+- Default text size is `text-sm`; default shadcn Button size is `size="sm"`
 
 ## Testing
 
