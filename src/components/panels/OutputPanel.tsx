@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
   DownloadSimpleIcon,
@@ -28,7 +29,7 @@ function downloadBlob(content: string, filename: string, mime: string): void {
 
 function FusedJsonViewer({ content }: { content: string }) {
   return (
-    <pre className="flex-1 overflow-auto text-xs px-3 py-2 font-mono text-foreground whitespace-pre-wrap">
+    <pre className="flex-1 overflow-auto text-sm px-3 py-2 font-mono text-foreground whitespace-pre-wrap">
       {content}
     </pre>
   );
@@ -60,20 +61,16 @@ function FusedTab() {
     <div className="flex flex-col flex-1 overflow-hidden">
       {/* Header row */}
       <div className="shrink-0 flex items-center gap-2 px-3 py-2 border-b border-border">
-        <button
-          onClick={() => runFusion()}
-          disabled={loading}
-          className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
-        >
+        <Button size="sm" onClick={() => runFusion()} disabled={loading}>
           {loading ? (
             <CircleNotchIcon size={12} className="animate-spin" />
           ) : (
             <PlayIcon size={12} />
           )}
           Transform &amp; Fuse
-        </button>
+        </Button>
         {stale && !loading && (
-          <span className="text-xs text-amber-600 ml-auto">
+          <span className="text-sm text-muted-foreground ml-auto">
             Results may be stale
           </span>
         )}
@@ -81,23 +78,30 @@ function FusedTab() {
 
       {/* Error */}
       {error && (
-        <div className="shrink-0 px-3 py-2 text-xs text-destructive bg-destructive/10 border-b border-border">
-          {error}
-        </div>
+        <Alert
+          variant="destructive"
+          className="shrink-0 rounded-none border-x-0 text-sm"
+        >
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       )}
 
       {/* Warnings from failed queries/parsing */}
       {result && result.warnings.length > 0 && (
-        <div className="shrink-0 px-3 py-2 text-xs text-amber-700 bg-amber-50 dark:text-amber-400 dark:bg-amber-950/30 border-b border-border space-y-0.5">
-          {result.warnings.map((w, i) => (
-            <div key={i}>{w}</div>
-          ))}
-        </div>
+        <Alert className="shrink-0 rounded-none border-x-0 border-source/40 text-source-text bg-source/5">
+          <AlertDescription>
+            <div className="flex flex-col gap-0.5">
+              {result.warnings.map((w, i) => (
+                <div key={i}>{w}</div>
+              ))}
+            </div>
+          </AlertDescription>
+        </Alert>
       )}
 
       {/* Source summary */}
       {result && (
-        <div className="shrink-0 px-3 py-2 border-b border-border text-xs text-muted-foreground">
+        <div className="shrink-0 px-3 py-2 border-b border-border text-sm text-muted-foreground">
           {result.totalQuads} triples from {result.sources.length} source
           {result.sources.length !== 1 ? 's' : ''}
           {lastRun && ` · ${new Date(lastRun).toLocaleTimeString()}`}
@@ -107,7 +111,9 @@ function FusedTab() {
       {/* Download buttons */}
       {result && (
         <div className="shrink-0 flex gap-2 px-3 py-2 border-b border-border">
-          <button
+          <Button
+            variant="outline"
+            size="xs"
             onClick={() =>
               downloadBlob(
                 JSON.stringify(result.sources, null, 2),
@@ -115,13 +121,14 @@ function FusedTab() {
                 'application/json',
               )
             }
-            className="text-xs flex items-center gap-1 px-2 py-0.5 rounded border border-border hover:bg-muted transition-colors"
           >
             <DownloadSimpleIcon size={12} />
             JSON
-          </button>
+          </Button>
           {jsonLd && (
-            <button
+            <Button
+              variant="outline"
+              size="xs"
               onClick={() =>
                 downloadBlob(
                   JSON.stringify(jsonLd, null, 2),
@@ -129,11 +136,10 @@ function FusedTab() {
                   'application/ld+json',
                 )
               }
-              className="text-xs flex items-center gap-1 px-2 py-0.5 rounded border border-border hover:bg-muted transition-colors"
             >
               <DownloadSimpleIcon size={12} />
               JSON-LD
-            </button>
+            </Button>
           )}
         </div>
       )}
@@ -148,7 +154,7 @@ function FusedTab() {
           )}
         />
       ) : !loading ? (
-        <div className="flex-1 flex items-center justify-center text-xs text-muted-foreground">
+        <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground">
           Click Transform &amp; Fuse to run
         </div>
       ) : null}
@@ -186,7 +192,7 @@ function ExportTab() {
 
   if (!hasMappings) {
     return (
-      <div className="p-4 text-xs text-muted-foreground">
+      <div className="p-4 text-sm text-muted-foreground">
         No mappings defined yet. Create mappings in the MAP tab to export
         RML/YARRRML.
       </div>
@@ -196,25 +202,25 @@ function ExportTab() {
   return (
     <div className="flex flex-col gap-3 p-3">
       {hasSparqlOrJoin && (
-        <div className="flex items-start gap-2 p-2.5 rounded bg-amber-50 border border-amber-200 text-xs text-amber-800">
-          <WarningIcon size={14} className="shrink-0 mt-0.5" />
-          <span>
+        <Alert className="border-source/40 text-source-text bg-source/5">
+          <WarningIcon size={14} className="shrink-0" />
+          <AlertDescription>
             Some mappings use <strong>SPARQL</strong> or <strong>join</strong>{' '}
             kinds and are annotated as <em>requires manual conversion</em> in
             the exported files.
-          </span>
-        </div>
+          </AlertDescription>
+        </Alert>
       )}
       <div className="flex flex-col gap-2">
-        <p className="text-xs text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           Download production ETL mapping files for use with RML processors
           (RMLMapper, Morph-KGC, etc.).
         </p>
-        <details className="border border-border rounded text-xs">
+        <details className="border border-border rounded text-sm">
           <summary className="px-2 py-1.5 cursor-pointer hover:bg-muted font-medium text-muted-foreground select-none">
             RML Preview
           </summary>
-          <pre className="overflow-auto max-h-48 px-3 py-2 font-mono text-xs text-foreground bg-muted/30 border-t border-border whitespace-pre-wrap">
+          <pre className="overflow-auto max-h-48 px-3 py-2 font-mono text-sm text-foreground bg-muted/30 border-t border-border whitespace-pre-wrap">
             {rmlPreview}
           </pre>
         </details>
@@ -227,11 +233,11 @@ function ExportTab() {
           <DownloadSimpleIcon size={12} />
           Download RML (.rml.ttl)
         </Button>
-        <details className="border border-border rounded text-xs">
+        <details className="border border-border rounded text-sm">
           <summary className="px-2 py-1.5 cursor-pointer hover:bg-muted font-medium text-muted-foreground select-none">
             YARRRML Preview
           </summary>
-          <pre className="overflow-auto max-h-48 px-3 py-2 font-mono text-xs text-foreground bg-muted/30 border-t border-border whitespace-pre-wrap">
+          <pre className="overflow-auto max-h-48 px-3 py-2 font-mono text-sm text-foreground bg-muted/30 border-t border-border whitespace-pre-wrap">
             {yarrrmlPreview}
           </pre>
         </details>
@@ -259,17 +265,14 @@ export function OutputPanel() {
       {/* Sub-tab nav */}
       <div className="shrink-0 flex gap-1 px-3 py-2 border-b border-border">
         {(['fused', 'export'] as const).map((t) => (
-          <button
+          <Button
             key={t}
+            size="xs"
+            variant={outTab === t ? 'default' : 'ghost'}
             onClick={() => setOutTab(t)}
-            className={`text-xs px-2 py-0.5 rounded capitalize transition-colors ${
-              outTab === t
-                ? 'bg-primary text-primary-foreground'
-                : 'text-muted-foreground hover:bg-muted'
-            }`}
           >
             {t === 'fused' ? 'Fused' : t.charAt(0).toUpperCase() + t.slice(1)}
-          </button>
+          </Button>
         ))}
       </div>
 

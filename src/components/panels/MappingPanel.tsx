@@ -215,7 +215,7 @@ export function MappingPanel() {
   if (activeSourceId === null) {
     return (
       <div className="flex items-center justify-center h-full p-6">
-        <p className="text-xs text-center text-muted-foreground px-4">
+        <p className="text-sm text-center text-muted-foreground px-4">
           Select a source tab above to map its fields to ontology classes.
         </p>
       </div>
@@ -258,16 +258,16 @@ export function MappingPanel() {
                       expandedGroupId === group.id ? null : group.id,
                     );
                 }}
-                className="flex items-center justify-between px-3 py-2 cursor-pointer text-xs hover:bg-muted/50 bg-muted/20"
+                className="flex items-center justify-between px-3 py-2 cursor-pointer text-sm hover:bg-muted/50 bg-muted/20"
               >
                 <span className="flex items-center gap-1.5">
                   <span className="text-muted-foreground">
                     {expandedGroupId === group.id ? '▾' : '▸'}
                   </span>
-                  <span className="text-blue-700 font-mono">
+                  <span className="text-master font-mono">
                     {localName(group.targetPropUri)}
                   </span>
-                  <span className="text-xs bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded font-medium uppercase">
+                  <span className="text-sm bg-mapping/15 text-mapping px-1.5 py-0.5 rounded font-medium uppercase">
                     {group.strategy}({getMappingsInGroup(group.id).length})
                   </span>
                 </span>
@@ -279,7 +279,7 @@ export function MappingPanel() {
                     if (selectedGroupId === group.id) setSelectedGroupId(null);
                     if (expandedGroupId === group.id) setExpandedGroupId(null);
                   }}
-                  className="text-muted-foreground hover:text-destructive text-xs"
+                  className="text-muted-foreground hover:text-destructive text-sm"
                   aria-label="Ungroup"
                 >
                   ungroup
@@ -288,10 +288,10 @@ export function MappingPanel() {
 
               {/* Expanded group details */}
               {expandedGroupId === group.id && (
-                <div className="px-3 py-2 bg-muted/10 border-t border-border space-y-2">
+                <div className="px-3 py-2 bg-muted/10 border-t border-border flex flex-col gap-2">
                   {/* Strategy picker */}
                   <div className="flex items-center gap-2">
-                    <label className="text-xs text-muted-foreground">
+                    <label className="text-sm text-muted-foreground">
                       Strategy
                     </label>
                     <select
@@ -301,7 +301,7 @@ export function MappingPanel() {
                           strategy: e.target.value as MappingGroup['strategy'],
                         })
                       }
-                      className="text-xs border border-border rounded px-1.5 py-0.5 bg-background"
+                      className="text-sm border border-border rounded px-1.5 py-0.5 bg-background"
                     >
                       <option value="concat">concat</option>
                       <option value="coalesce">coalesce</option>
@@ -312,7 +312,7 @@ export function MappingPanel() {
                   {/* Separator input (concat) */}
                   {group.strategy === 'concat' && (
                     <div className="flex items-center gap-2">
-                      <label className="text-xs text-muted-foreground">
+                      <label className="text-sm text-muted-foreground">
                         Separator
                       </label>
                       <input
@@ -321,7 +321,7 @@ export function MappingPanel() {
                         onChange={(e) =>
                           updateGroup(group.id, { separator: e.target.value })
                         }
-                        className="text-xs border border-border rounded px-1.5 py-0.5 bg-background w-16 font-mono"
+                        className="text-sm border border-border rounded px-1.5 py-0.5 bg-background w-16 font-mono"
                       />
                     </div>
                   )}
@@ -329,7 +329,7 @@ export function MappingPanel() {
                   {/* Template input (template strategy) */}
                   {group.strategy === 'template' && (
                     <div className="flex items-center gap-2">
-                      <label className="text-xs text-muted-foreground">
+                      <label className="text-sm text-muted-foreground">
                         Template
                       </label>
                       <input
@@ -347,15 +347,15 @@ export function MappingPanel() {
                             templatePattern: e.target.value,
                           } as Parameters<typeof updateGroup>[1])
                         }
-                        className="text-xs border border-border rounded px-1.5 py-0.5 bg-background flex-1 font-mono"
+                        className="text-sm border border-border rounded px-1.5 py-0.5 bg-background flex-1 font-mono"
                         placeholder="{0}, {1}"
                       />
                     </div>
                   )}
 
                   {/* Member list with ordering */}
-                  <div className="space-y-1">
-                    <span className="text-xs text-muted-foreground uppercase tracking-wide">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-sm text-muted-foreground uppercase tracking-wide">
                       Members
                     </span>
                     {getMappingsInGroup(group.id)
@@ -363,9 +363,9 @@ export function MappingPanel() {
                       .map((m, idx, arr) => (
                         <div
                           key={m.id}
-                          className="flex items-center gap-1 text-xs"
+                          className="flex items-center gap-1 text-sm"
                         >
-                          <span className="text-amber-700 font-mono flex-1">
+                          <span className="text-source-text font-mono flex-1">
                             {localName(m.sourcePropUri)}
                           </span>
                           <div className="flex gap-0.5">
@@ -400,7 +400,7 @@ export function MappingPanel() {
                   <button
                     type="button"
                     onClick={() => handleSelectGroup(group.id)}
-                    className="text-xs text-muted-foreground hover:text-foreground"
+                    className="text-sm text-muted-foreground hover:text-foreground"
                   >
                     View SPARQL ›
                   </button>
@@ -430,15 +430,15 @@ export function MappingPanel() {
                   if (e.key === 'Enter' || e.key === ' ')
                     handleSelectMapping(mapping.id);
                 }}
-                className={`flex items-center justify-between px-3 py-2 cursor-pointer text-xs hover:bg-muted/50 transition-colors ${
+                className={`flex items-center justify-between px-3 py-2 cursor-pointer text-sm hover:bg-muted/50 transition-colors ${
                   isSelected ? 'bg-muted font-medium' : ''
                 }`}
               >
                 <span className="flex flex-col min-w-0 flex-1">
-                  <span className="truncate text-amber-700 font-mono">
+                  <span className="truncate text-source-text font-mono">
                     {localName(mapping.sourcePropUri)}
                   </span>
-                  <span className="text-muted-foreground text-xs">
+                  <span className="text-muted-foreground text-sm">
                     {sourceRange} → {localName(mapping.targetPropUri)}{' '}
                     {targetRange}
                   </span>
@@ -463,19 +463,19 @@ export function MappingPanel() {
           {/* Editor header */}
           <div className="shrink-0 flex items-center justify-between px-3 py-2 border-b border-border bg-muted/30">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <span className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
                 {isGroupSelected ? 'Group SPARQL' : 'SPARQL Construct'}
               </span>
               {isGroupSelected ? (
-                <span className="text-xs px-1.5 py-0.5 rounded font-medium bg-muted text-muted-foreground">
+                <span className="text-sm px-1.5 py-0.5 rounded font-medium bg-muted text-muted-foreground">
                   read-only
                 </span>
               ) : selectedMapping !== null ? (
                 <span
-                  className={`text-xs px-1.5 py-0.5 rounded font-medium ${
+                  className={`text-sm px-1.5 py-0.5 rounded font-medium ${
                     isValidConstruct(selectedMapping.sparqlConstruct)
-                      ? 'bg-green-100 text-green-700'
-                      : 'bg-amber-100 text-amber-700'
+                      ? 'bg-mapping/15 text-mapping-text'
+                      : 'bg-source/15 text-source-text'
                   }`}
                   title={
                     isValidConstruct(selectedMapping.sparqlConstruct)
@@ -499,7 +499,7 @@ export function MappingPanel() {
                 className="shrink-0 flex items-center gap-2 px-3 py-1.5 border-b border-border bg-muted/10"
               >
                 <label
-                  className="text-xs text-muted-foreground shrink-0"
+                  className="text-sm text-muted-foreground shrink-0"
                   htmlFor="kind-picker"
                 >
                   Kind
@@ -512,7 +512,7 @@ export function MappingPanel() {
                     const newKind = e.target.value as Mapping['kind'];
                     updateMapping(selectedMapping.id, { kind: newKind });
                   }}
-                  className="text-xs border border-border rounded px-1.5 py-0.5 bg-background"
+                  className="text-sm border border-border rounded px-1.5 py-0.5 bg-background"
                 >
                   <option value="direct">direct</option>
                   <option value="template">template</option>
@@ -535,7 +535,7 @@ export function MappingPanel() {
                 <div className="shrink-0 flex flex-col gap-1.5 px-3 py-2 border-b border-border bg-muted/5">
                   {selectedMapping.kind === 'template' && (
                     <div className="flex flex-col gap-1.5">
-                      <div className="flex gap-4 text-xs text-muted-foreground font-mono">
+                      <div className="flex gap-4 text-sm text-muted-foreground font-mono">
                         <span>
                           {'{'}prop1{'}'} ={' '}
                           {localName(selectedMapping.sourcePropUri)}
@@ -546,11 +546,11 @@ export function MappingPanel() {
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <label className="text-xs text-muted-foreground w-20 shrink-0">
+                        <label className="text-sm text-muted-foreground w-20 shrink-0">
                           Pattern
                         </label>
                         <input
-                          className="text-xs border border-border rounded px-1.5 py-0.5 bg-background flex-1 min-w-0"
+                          className="text-sm border border-border rounded px-1.5 py-0.5 bg-background flex-1 min-w-0"
                           value={selectedMapping.templatePattern ?? ''}
                           onChange={(e) =>
                             updateMapping(selectedMapping.id, {
@@ -565,11 +565,11 @@ export function MappingPanel() {
                   {selectedMapping.kind === 'constant' && (
                     <>
                       <div className="flex items-center gap-2">
-                        <label className="text-xs text-muted-foreground w-20 shrink-0">
+                        <label className="text-sm text-muted-foreground w-20 shrink-0">
                           Value
                         </label>
                         <input
-                          className="text-xs border border-border rounded px-1.5 py-0.5 bg-background flex-1 min-w-0"
+                          className="text-sm border border-border rounded px-1.5 py-0.5 bg-background flex-1 min-w-0"
                           value={selectedMapping.constantValue ?? ''}
                           onChange={(e) =>
                             updateMapping(selectedMapping.id, {
@@ -580,11 +580,11 @@ export function MappingPanel() {
                         />
                       </div>
                       <div className="flex items-center gap-2">
-                        <label className="text-xs text-muted-foreground w-20 shrink-0">
+                        <label className="text-sm text-muted-foreground w-20 shrink-0">
                           Datatype
                         </label>
                         <input
-                          className="text-xs border border-border rounded px-1.5 py-0.5 bg-background flex-1 min-w-0"
+                          className="text-sm border border-border rounded px-1.5 py-0.5 bg-background flex-1 min-w-0"
                           value={selectedMapping.constantType ?? ''}
                           onChange={(e) =>
                             updateMapping(selectedMapping.id, {
@@ -598,11 +598,11 @@ export function MappingPanel() {
                   )}
                   {selectedMapping.kind === 'typecast' && (
                     <div className="flex items-center gap-2">
-                      <label className="text-xs text-muted-foreground w-20 shrink-0">
+                      <label className="text-sm text-muted-foreground w-20 shrink-0">
                         Datatype
                       </label>
                       <input
-                        className="text-xs border border-border rounded px-1.5 py-0.5 bg-background flex-1 min-w-0"
+                        className="text-sm border border-border rounded px-1.5 py-0.5 bg-background flex-1 min-w-0"
                         value={selectedMapping.targetDatatype ?? ''}
                         onChange={(e) =>
                           updateMapping(selectedMapping.id, {
@@ -615,11 +615,11 @@ export function MappingPanel() {
                   )}
                   {selectedMapping.kind === 'language' && (
                     <div className="flex items-center gap-2">
-                      <label className="text-xs text-muted-foreground w-20 shrink-0">
+                      <label className="text-sm text-muted-foreground w-20 shrink-0">
                         Language Tag
                       </label>
                       <input
-                        className="text-xs border border-border rounded px-1.5 py-0.5 bg-background flex-1 min-w-0"
+                        className="text-sm border border-border rounded px-1.5 py-0.5 bg-background flex-1 min-w-0"
                         value={selectedMapping.languageTag ?? ''}
                         onChange={(e) =>
                           updateMapping(selectedMapping.id, {
@@ -633,11 +633,11 @@ export function MappingPanel() {
                   {selectedMapping.kind === 'join' && (
                     <>
                       <div className="flex items-center gap-2">
-                        <label className="text-xs text-muted-foreground w-20 shrink-0">
+                        <label className="text-sm text-muted-foreground w-20 shrink-0">
                           Parent Source
                         </label>
                         <input
-                          className="text-xs border border-border rounded px-1.5 py-0.5 bg-background flex-1 min-w-0"
+                          className="text-sm border border-border rounded px-1.5 py-0.5 bg-background flex-1 min-w-0"
                           value={selectedMapping.parentSourceId ?? ''}
                           onChange={(e) =>
                             updateMapping(selectedMapping.id, {
@@ -648,11 +648,11 @@ export function MappingPanel() {
                         />
                       </div>
                       <div className="flex items-center gap-2">
-                        <label className="text-xs text-muted-foreground w-20 shrink-0">
+                        <label className="text-sm text-muted-foreground w-20 shrink-0">
                           Parent Ref URI
                         </label>
                         <input
-                          className="text-xs border border-border rounded px-1.5 py-0.5 bg-background flex-1 min-w-0"
+                          className="text-sm border border-border rounded px-1.5 py-0.5 bg-background flex-1 min-w-0"
                           value={selectedMapping.parentRef ?? ''}
                           onChange={(e) =>
                             updateMapping(selectedMapping.id, {
@@ -663,11 +663,11 @@ export function MappingPanel() {
                         />
                       </div>
                       <div className="flex items-center gap-2">
-                        <label className="text-xs text-muted-foreground w-20 shrink-0">
+                        <label className="text-sm text-muted-foreground w-20 shrink-0">
                           Child Ref URI
                         </label>
                         <input
-                          className="text-xs border border-border rounded px-1.5 py-0.5 bg-background flex-1 min-w-0"
+                          className="text-sm border border-border rounded px-1.5 py-0.5 bg-background flex-1 min-w-0"
                           value={selectedMapping.childRef ?? ''}
                           onChange={(e) =>
                             updateMapping(selectedMapping.id, {

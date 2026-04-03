@@ -408,10 +408,10 @@ export function SourcePanel({
       <div className="flex items-center justify-center h-full p-6 text-center">
         <div className="flex flex-col gap-1.5">
           <p className="text-sm font-medium">Add a source</p>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Map fields to ontology
           </p>
-          <p className="text-xs text-muted-foreground">Validate with SHACL</p>
+          <p className="text-sm text-muted-foreground">Validate with SHACL</p>
         </div>
       </div>
     );
@@ -447,10 +447,10 @@ export function SourcePanel({
 
         <span
           className={
-            'inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium uppercase tracking-wide ' +
+            'inline-flex items-center rounded px-1.5 py-0.5 text-sm font-medium uppercase tracking-wide ' +
             (dataFormat === 'xml'
-              ? 'bg-blue-100 text-blue-700'
-              : 'bg-amber-100 text-amber-700')
+              ? 'bg-master/15 text-master'
+              : 'bg-source/15 text-source-text')
           }
           aria-label={`Format: ${dataFormat.toUpperCase()}`}
         >
@@ -479,7 +479,7 @@ export function SourcePanel({
       {banner === 'invalid-json' && (
         <Alert
           variant="destructive"
-          className="shrink-0 rounded-none border-x-0 text-xs"
+          className="shrink-0 rounded-none border-x-0 text-sm"
         >
           <AlertDescription>Invalid JSON — schema not updated</AlertDescription>
         </Alert>
@@ -487,13 +487,13 @@ export function SourcePanel({
       {banner === 'invalid-xml' && (
         <Alert
           variant="destructive"
-          className="shrink-0 rounded-none border-x-0 text-xs"
+          className="shrink-0 rounded-none border-x-0 text-sm"
         >
           <AlertDescription>Invalid XML — schema not updated</AlertDescription>
         </Alert>
       )}
       {banner === 'format-changed' && (
-        <Alert className="shrink-0 rounded-none border-x-0 text-xs bg-blue-50 border-blue-200 text-blue-800">
+        <Alert className="shrink-0 rounded-none border-x-0 text-sm bg-master/10 border-master/30 text-master">
           <AlertDescription>
             Format changed — mappings for this source were cleared
           </AlertDescription>
@@ -502,7 +502,7 @@ export function SourcePanel({
       {banner === 'file-too-large' && (
         <Alert
           variant="destructive"
-          className="shrink-0 rounded-none border-x-0 text-xs"
+          className="shrink-0 rounded-none border-x-0 text-sm"
         >
           <AlertDescription>
             File too large (max 1MB). Paste content manually for larger files
@@ -512,20 +512,20 @@ export function SourcePanel({
       {banner === 'file-read-error' && (
         <Alert
           variant="destructive"
-          className="shrink-0 rounded-none border-x-0 text-xs"
+          className="shrink-0 rounded-none border-x-0 text-sm"
         >
           <AlertDescription>Could not read file. Try again.</AlertDescription>
         </Alert>
       )}
       {hasPrefixCollision && (
-        <Alert className="shrink-0 rounded-none border-x-0 text-xs bg-yellow-50 border-yellow-200 text-yellow-800">
+        <Alert className="shrink-0 rounded-none border-x-0 text-sm bg-source/10 border-source/30 text-source-text">
           <AlertDescription>
             Prefix collision — rename this source to avoid RDF conflicts
           </AlertDescription>
         </Alert>
       )}
       {banner === 'warnings' && (
-        <Alert className="shrink-0 rounded-none border-x-0 text-xs bg-yellow-50 border-yellow-200 text-yellow-800">
+        <Alert className="shrink-0 rounded-none border-x-0 text-sm bg-source/10 border-source/30 text-source-text">
           <AlertDescription>
             Schema generated with warnings — check your data structure
           </AlertDescription>
@@ -556,7 +556,7 @@ export function SourcePanel({
       >
         {/* RDFS pane header */}
         <div className="shrink-0 flex items-center px-3 py-1.5 border-b border-border bg-muted/10">
-          <span className="text-xs font-medium text-muted-foreground">
+          <span className="text-sm font-medium text-muted-foreground">
             {'RDFS Schema'}
           </span>
           <div className="flex-1" />

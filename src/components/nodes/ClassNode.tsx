@@ -83,7 +83,7 @@ export function ClassNode({ id, data }: NodeProps<OntologyNode>) {
 
   return (
     <div
-      className="bg-white border-2 border-master rounded-md shadow-md min-w-[200px] text-sm font-sans overflow-visible"
+      className="bg-background border-2 border-master rounded-md shadow-md min-w-[200px] text-sm font-sans overflow-visible"
       onContextMenu={handleContextMenu}
     >
       <Handle
@@ -134,7 +134,7 @@ export function ClassNode({ id, data }: NodeProps<OntologyNode>) {
               placeholder="Label"
             />
             <input
-              className="text-white/80 bg-master/80 border border-white/40 rounded px-1 py-0.5 text-xs font-mono w-full"
+              className="text-white/80 bg-master/80 border border-white/40 rounded px-1 py-0.5 text-sm font-mono w-full"
               value={draftUri}
               onChange={(e) => setDraftUri(e.target.value)}
               onKeyDown={(e) => {
@@ -148,7 +148,7 @@ export function ClassNode({ id, data }: NodeProps<OntologyNode>) {
               placeholder="URI (e.g. ex:MyClass)"
             />
             {headerError && (
-              <span className="text-red-300 text-xs">{headerError}</span>
+              <span className="text-destructive/70 text-sm">{headerError}</span>
             )}
           </div>
         ) : (
@@ -156,7 +156,7 @@ export function ClassNode({ id, data }: NodeProps<OntologyNode>) {
             <span className="text-white font-medium text-sm leading-tight truncate">
               {data.label}
             </span>
-            <span className="text-white/70 text-xs leading-tight font-mono truncate">
+            <span className="text-white/70 text-sm leading-tight font-mono truncate">
               {shortUri}
             </span>
           </div>
@@ -169,7 +169,7 @@ export function ClassNode({ id, data }: NodeProps<OntologyNode>) {
           {data.properties.map((prop) => (
             <div
               key={prop.uri}
-              className="relative flex items-center justify-between px-3 pr-5 py-1.5 bg-white hover:bg-slate-50"
+              className="relative flex items-center justify-between px-3 pr-5 py-1.5 bg-background hover:bg-muted/50"
               onDoubleClick={() => {
                 setEditingPropUri(prop.uri);
                 setDraftPropLabel(prop.label ?? prop.uri);
@@ -181,7 +181,7 @@ export function ClassNode({ id, data }: NodeProps<OntologyNode>) {
                 id={`target_prop_${prop.label}`}
                 type="target"
                 position={Position.Left}
-                className="!w-2.5 !h-2.5 !bg-blue-500 !border-blue-700"
+                className="!w-2.5 !h-2.5 !bg-master !border-master"
                 isConnectable={true}
               />
               {editingPropUri === prop.uri ? (
@@ -191,7 +191,7 @@ export function ClassNode({ id, data }: NodeProps<OntologyNode>) {
                 >
                   <input
                     autoFocus
-                    className="flex-1 bg-white border border-master/40 rounded px-1 py-0.5 text-xs min-w-0"
+                    className="flex-1 bg-background border border-master/40 rounded px-1 py-0.5 text-sm min-w-0"
                     value={draftPropLabel}
                     onChange={(e) => setDraftPropLabel(e.target.value)}
                     onKeyDown={(e) => {
@@ -204,7 +204,7 @@ export function ClassNode({ id, data }: NodeProps<OntologyNode>) {
                     onBlur={() => commitProp()}
                   />
                   <select
-                    className="bg-white border border-master/40 rounded px-1 py-0.5 text-xs"
+                    className="bg-background border border-master/40 rounded px-1 py-0.5 text-sm"
                     value={draftPropType}
                     onChange={(e) => setDraftPropType(e.target.value)}
                     onBlur={() => commitProp()}
@@ -223,15 +223,17 @@ export function ClassNode({ id, data }: NodeProps<OntologyNode>) {
                     ))}
                   </select>
                   {propError && (
-                    <span className="text-red-500 text-xs">{propError}</span>
+                    <span className="text-destructive text-sm">
+                      {propError}
+                    </span>
                   )}
                 </div>
               ) : (
                 <>
-                  <span className="text-foreground text-xs font-medium truncate max-w-[55%]">
+                  <span className="text-foreground text-sm font-medium truncate max-w-[55%]">
                     {prop.label}
                   </span>
-                  <span className="text-muted-foreground text-xs font-mono truncate ml-2">
+                  <span className="text-muted-foreground text-sm font-mono truncate ml-2">
                     {shortenRange(prop.range)}
                   </span>
                 </>

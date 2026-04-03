@@ -15,7 +15,7 @@ export function EdgeLabel({ labelX, labelY, children }: EdgeLabelProps) {
           transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
           pointerEvents: 'none',
         }}
-        className="text-xs text-master bg-white/80 px-1 rounded border border-master/30"
+        className="text-sm text-master bg-background/80 px-1 rounded border border-master/30"
       >
         {children}
       </div>

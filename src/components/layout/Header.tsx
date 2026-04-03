@@ -265,8 +265,8 @@ export function Header() {
     >
       {/* Left: brand */}
       <div className="flex items-center gap-3">
-        <span className="font-mono font-semibold tracking-tight text-white text-sm select-none">
-          Rosetta
+        <span className="font-semibold text-white text-2xl select-none">
+          Rosetta Workbench
         </span>
       </div>
 
@@ -284,9 +284,9 @@ export function Header() {
               Project
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="text-xs">
+          <DropdownMenuContent align="end" className="text-sm">
             <DropdownMenuItem
-              className="text-xs gap-2 cursor-pointer"
+              className="text-sm gap-2 cursor-pointer"
               onSelect={() => {
                 void handleNewProject();
               }}
@@ -295,7 +295,7 @@ export function Header() {
               New Project
             </DropdownMenuItem>
             <DropdownMenuItem
-              className="text-xs gap-2 cursor-pointer"
+              className="text-sm gap-2 cursor-pointer"
               onSelect={() => {
                 void handleExampleProject();
               }}
@@ -305,14 +305,14 @@ export function Header() {
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              className="text-xs gap-2 cursor-pointer"
+              className="text-sm gap-2 cursor-pointer"
               onSelect={handleImportClick}
             >
               <UploadSimpleIcon size={14} />
               Import Project
             </DropdownMenuItem>
             <DropdownMenuItem
-              className="text-xs gap-2 cursor-pointer"
+              className="text-sm gap-2 cursor-pointer"
               onSelect={handleExportProject}
             >
               <DownloadSimpleIcon size={14} />
@@ -322,7 +322,7 @@ export function Header() {
         </DropdownMenu>
 
         {importError !== null && (
-          <p role="alert" className="text-xs text-destructive">
+          <p role="alert" className="text-sm text-destructive">
             {importError}
           </p>
         )}

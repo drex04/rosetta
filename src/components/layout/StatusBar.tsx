@@ -30,7 +30,7 @@ export function StatusBar({ saveStatus }: StatusBarProps) {
       <div className="flex items-center">
         {showSaving && (
           <span
-            className="flex items-center gap-1 text-xs text-foreground px-2 py-0.5 rounded-full bg-muted"
+            className="flex items-center gap-1 text-sm text-foreground px-2 py-0.5 rounded-full bg-muted"
             aria-live="polite"
           >
             <CircleNotchIcon size={16} className="animate-spin" />
@@ -39,16 +39,16 @@ export function StatusBar({ saveStatus }: StatusBarProps) {
         )}
         {saveStatus === 'saved' && (
           <span
-            className="flex items-center gap-1 text-xs text-foreground px-2 py-0.5 rounded-full bg-muted"
+            className="flex items-center gap-1 text-sm text-foreground px-2 py-0.5 rounded-full bg-muted"
             aria-live="polite"
           >
-            <CheckCircleIcon size={16} className="text-green-500" />
+            <CheckCircleIcon size={16} className="text-mapping" />
             Saved
           </span>
         )}
         {saveStatus === 'error' && (
           <span
-            className="flex items-center gap-1 text-xs text-amber-500 px-2 py-0.5 rounded-full bg-muted"
+            className="flex items-center gap-1 text-sm text-destructive px-2 py-0.5 rounded-full bg-muted"
             aria-live="polite"
           >
             <WarningIcon size={16} />

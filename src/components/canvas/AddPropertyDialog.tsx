@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Button } from '@/components/ui/button';
 import type { PropertyData } from '@/types/index';
 
 const XSD_DATATYPES = [
@@ -67,7 +68,7 @@ export function AddPropertyDialog({
         </h2>
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-muted-foreground">
+            <label className="text-sm font-medium text-muted-foreground">
               Property Name
             </label>
             <input
@@ -80,7 +81,7 @@ export function AddPropertyDialog({
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-muted-foreground">
+            <label className="text-sm font-medium text-muted-foreground">
               Property URI
             </label>
             <input
@@ -92,7 +93,7 @@ export function AddPropertyDialog({
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-muted-foreground">
+            <label className="text-sm font-medium text-muted-foreground">
               XSD Datatype
             </label>
             <select
@@ -108,20 +109,16 @@ export function AddPropertyDialog({
             </select>
           </div>
           <div className="flex justify-end gap-2 mt-1">
-            <button
-              type="button"
-              onClick={onClose}
-              className="h-8 px-3 rounded-md text-sm border border-border hover:bg-accent transition-colors"
-            >
+            <Button type="button" variant="outline" size="sm" onClick={onClose}>
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
+              size="sm"
               disabled={!name.trim() || !uri.trim()}
-              className="h-8 px-3 rounded-md text-sm bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Add
-            </button>
+            </Button>
           </div>
         </form>
       </div>

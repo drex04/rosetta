@@ -100,7 +100,7 @@ export function SourceNode({ id, data }: NodeProps<SourceNodeType>) {
           >
             <input
               autoFocus
-              className="text-white bg-amber-600/80 border border-white/40 rounded px-1 py-0.5 text-sm font-medium w-full"
+              className="text-white bg-source/80 border border-white/40 rounded px-1 py-0.5 text-sm font-medium w-full"
               value={draftLabel}
               onChange={(e) => setDraftLabel(e.target.value)}
               onKeyDown={(e) => {
@@ -114,7 +114,7 @@ export function SourceNode({ id, data }: NodeProps<SourceNodeType>) {
               placeholder="Label"
             />
             <input
-              className="text-white/80 bg-amber-600/80 border border-white/40 rounded px-1 py-0.5 text-xs font-mono w-full"
+              className="text-white/80 bg-source/80 border border-white/40 rounded px-1 py-0.5 text-sm font-mono w-full"
               value={draftUri}
               onChange={(e) => setDraftUri(e.target.value)}
               onKeyDown={(e) => {
@@ -128,7 +128,7 @@ export function SourceNode({ id, data }: NodeProps<SourceNodeType>) {
               placeholder="URI"
             />
             {headerError && (
-              <span className="text-red-300 text-xs">{headerError}</span>
+              <span className="text-destructive/70 text-sm">{headerError}</span>
             )}
           </div>
         ) : (
@@ -136,7 +136,7 @@ export function SourceNode({ id, data }: NodeProps<SourceNodeType>) {
             <span className="text-white font-medium text-sm leading-tight truncate">
               {data.label}
             </span>
-            <span className="text-white/70 text-xs leading-tight font-mono truncate">
+            <span className="text-white/70 text-sm leading-tight font-mono truncate">
               {shortUri}
             </span>
           </div>
@@ -148,12 +148,12 @@ export function SourceNode({ id, data }: NodeProps<SourceNodeType>) {
           {data.properties.map((prop) => (
             <div
               key={prop.uri}
-              className="relative flex items-center justify-between px-3 pr-5 py-1.5 bg-white hover:bg-amber-50"
+              className="relative flex items-center justify-between px-3 pr-5 py-1.5 bg-background hover:bg-source/10"
             >
-              <span className="text-foreground text-xs font-medium truncate max-w-[55%]">
+              <span className="text-foreground text-sm font-medium truncate max-w-[55%]">
                 {prop.label}
               </span>
-              <span className="text-muted-foreground text-xs font-mono truncate ml-2">
+              <span className="text-muted-foreground text-sm font-mono truncate ml-2">
                 {shortenRange(prop.range)}
               </span>
               <Handle
