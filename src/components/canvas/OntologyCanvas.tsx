@@ -1018,14 +1018,24 @@ function OntologyCanvasInner({
         <Controls aria-label="Canvas controls" />
         <Background />
         <Panel position="top-left" className="flex gap-1.5 p-1.5">
-          <Button size="sm" variant="outline" onClick={handleAddClass}>
-            + Ontology Class
-          </Button>
           {activeSourceId && (
-            <Button size="sm" variant="outline" onClick={handleAddSourceClass}>
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-2 border-source"
+              onClick={handleAddSourceClass}
+            >
               + Source Class
             </Button>
           )}
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-2 border-master"
+            onClick={handleAddClass}
+          >
+            + Ontology Class
+          </Button>
         </Panel>
       </ReactFlow>
 
