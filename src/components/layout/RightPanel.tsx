@@ -1,5 +1,5 @@
 import { useState, useEffect, type RefObject } from 'react';
-import { CaretLeftIcon, CaretRightIcon } from '@phosphor-icons/react';
+import { SidebarSimpleIcon } from '@phosphor-icons/react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useUiStore } from '@/store/uiStore';
 import { useOntologyStore } from '@/store/ontologyStore';
@@ -13,7 +13,6 @@ import type { SaveStatus } from '@/hooks/useAutoSave';
 
 interface RightPanelProps {
   onEditorChange: (value: string) => void;
-  onSourceEditorChange?: (turtle: string) => void;
   resetSourceSchema?: () => void;
   isCanvasSyncPending?: RefObject<boolean>;
   saveStatus: SaveStatus;
@@ -21,7 +20,6 @@ interface RightPanelProps {
 
 export function RightPanel({
   onEditorChange,
-  onSourceEditorChange,
   resetSourceSchema,
   isCanvasSyncPending,
   saveStatus,
@@ -84,7 +82,7 @@ export function RightPanel({
             className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
             aria-label="Expand panel"
           >
-            <CaretLeftIcon size={14} />
+            <SidebarSimpleIcon size={24} />
           </button>
           <span className="text-sm text-muted-foreground [writing-mode:vertical-rl] rotate-180 select-none mt-1">
             {activeRightTab}
@@ -110,6 +108,13 @@ export function RightPanel({
             className="flex flex-col h-full gap-0"
           >
             <div className="px-2 shrink-0 flex items-center gap-1">
+              <button
+                onClick={() => setCollapsed(true)}
+                className="ml-1 p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors shrink-0 self-center"
+                aria-label="Collapse panel"
+              >
+                <SidebarSimpleIcon size={24} />
+              </button>
               <TabsList variant="line" className="flex-1 gap-0">
                 <TabsTrigger
                   value="SOURCE"
@@ -147,20 +152,10 @@ export function RightPanel({
                   SHACL
                 </TabsTrigger>
               </TabsList>
-              <button
-                onClick={() => setCollapsed(true)}
-                className="ml-1 p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors shrink-0 self-center"
-                aria-label="Collapse panel"
-              >
-                <CaretRightIcon size={12} />
-              </button>
             </div>
             <div className="flex-1 overflow-hidden">
               <TabsContent value="SOURCE" className="h-full m-0">
-                <SourcePanel
-                  onSourceEditorChange={onSourceEditorChange}
-                  resetSourceSchema={resetSourceSchema}
-                />
+                <SourcePanel resetSourceSchema={resetSourceSchema} />
               </TabsContent>
               <TabsContent value="ONTOLOGY" className="h-full m-0">
                 <TurtleEditorPanel

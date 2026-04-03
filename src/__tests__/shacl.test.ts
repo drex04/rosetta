@@ -227,7 +227,6 @@ function makeSource(
     dataFormat: 'json',
     schemaNodes: [],
     schemaEdges: [],
-    turtleSource: '',
     parseError: null,
     ...overrides,
   };

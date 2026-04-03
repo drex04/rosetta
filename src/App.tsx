@@ -23,8 +23,7 @@ function App() {
     hasPendingEdits,
     isCanvasSyncPending,
   } = useOntologySync();
-  const { onSourceEditorChange, onSourceCanvasChange, resetSourceSchema } =
-    useSourceSync();
+  const { resetSourceSchema } = useSourceSync();
   const { saveStatus } = useAutoSave();
   const [pendingSync, setPendingSync] = useState<{
     nodes: OntologyNode[];
@@ -73,15 +72,11 @@ function App() {
         <div className="flex flex-1 overflow-hidden">
           <ErrorBoundary>
             <div className="flex-1 relative">
-              <OntologyCanvas
-                onCanvasChange={handleCanvasChange}
-                onSourceCanvasChange={onSourceCanvasChange}
-              />
+              <OntologyCanvas onCanvasChange={handleCanvasChange} />
             </div>
           </ErrorBoundary>
           <RightPanel
             onEditorChange={onEditorChange}
-            onSourceEditorChange={onSourceEditorChange}
             resetSourceSchema={resetSourceSchema}
             isCanvasSyncPending={isCanvasSyncPending}
             saveStatus={saveStatus}

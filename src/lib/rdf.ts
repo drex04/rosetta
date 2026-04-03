@@ -420,49 +420,6 @@ export async function canvasToTurtle(
   });
 }
 
-// ─── sourceCanvasToTurtle ─────────────────────────────────────────────────────
-//
-// Serializes source schema nodes/edges to Turtle using the source's own URI
-// prefix. Mirrors canvasToTurtle but accepts SourceNodeData[] and the source's
-// URI prefix string so the output uses the correct prefix declaration.
-// Returns valid Turtle (prefix-only) even when nodes is empty.
-
-export async function sourceCanvasToTurtle(
-  nodes: SourceNodeData[],
-  edges: OntologyEdge[],
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _uriPrefix?: string,
-): Promise<string> {
-  // Cast SourceNodeData[] to OntologyNode[] — same data shape, different type tag.
-  // canvasToTurtle only reads .data and .id, so this is safe.
-  return canvasToTurtle(nodes as unknown as OntologyNode[], edges).then(
-    (turtle) => {
-      // If uriPrefix was already detected by canvasToTurtle's getOrAssignPrefix,
-      // the output is correct. For the empty-nodes case, return a minimal prefix
-      // block so callers always get valid Turtle.
-      if (nodes.length === 0 && turtle.trim() === '') {
-        const prefixMap: Record<string, string> = {
-          rdf: 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
-          rdfs: 'http://www.w3.org/2000/01/rdf-schema#',
-          owl: 'http://www.w3.org/2002/07/owl#',
-          xsd: 'http://www.w3.org/2001/XMLSchema#',
-        };
-        return new Promise<string>((resolve, reject) => {
-          const writer = new N3.Writer({
-            format: 'Turtle',
-            prefixes: prefixMap,
-          });
-          writer.end((err, result) => {
-            if (err) reject(err);
-            else resolve(result);
-          });
-        });
-      }
-      return turtle;
-    },
-  );
-}
-
 // ─── convertToSourceNodes ─────────────────────────────────────────────────────
 //
 // Takes OntologyNode[] produced by parseTurtle (type='classNode') and converts

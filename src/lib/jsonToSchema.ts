@@ -9,14 +9,11 @@ import type {
 import { COLUMN_X_SOURCE, COLUMN_SPACING } from '@/lib/rdf';
 import { applyTreeLayout } from '@/lib/layout';
 import { toPascalCase, xsdRangeShort } from '@/lib/stringUtils';
-import { serializeToTurtle } from '@/lib/rdfSerialize';
-
 // ─── Public types ─────────────────────────────────────────────────────────────
 
 export interface SchemaResult {
   nodes: SourceNodeData[];
   edges: OntologyEdge[];
-  turtle: string;
   warnings: string[];
 }
 
@@ -200,7 +197,6 @@ export function jsonToSchema(json: string, sourceName: string): SchemaResult {
   const empty: SchemaResult = {
     nodes: [],
     edges: [],
-    turtle: '',
     warnings: [],
   };
 
@@ -337,19 +333,9 @@ export function jsonToSchema(json: string, sourceName: string): SchemaResult {
     position: treePositions.get(n.id) ?? n.position,
   }));
 
-  // Step 4: Serialize to Turtle
-  const turtle = serializeToTurtle(
-    ctx.nodes,
-    ctx.edges,
-    uriBase,
-    prefixAlias,
-    ctx.warnings,
-  );
-
   return {
     nodes: ctx.nodes,
     edges: ctx.edges,
-    turtle,
     warnings: ctx.warnings,
   };
 }

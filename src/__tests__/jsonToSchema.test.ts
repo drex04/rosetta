@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { jsonToSchema } from '@/lib/jsonToSchema';
 
 // ─── Primitive fields → DatatypeProperty ──────────────────────────────────────
@@ -176,7 +176,6 @@ describe('empty input handling', () => {
     const result = jsonToSchema('{}', 'TestSource');
     expect(result.nodes).toHaveLength(0);
     expect(result.edges).toHaveLength(0);
-    expect(result.turtle).toBe('');
     expect(result.warnings).toHaveLength(0);
   });
 
@@ -184,7 +183,6 @@ describe('empty input handling', () => {
     const result = jsonToSchema('[]', 'TestSource');
     expect(result.nodes).toHaveLength(0);
     expect(result.edges).toHaveLength(0);
-    expect(result.turtle).toBe('');
     expect(result.warnings).toHaveLength(0);
   });
 });
@@ -196,7 +194,6 @@ describe('unexpected root types', () => {
     const result = jsonToSchema('null', 'TestSource');
     expect(result.nodes).toHaveLength(0);
     expect(result.edges).toHaveLength(0);
-    expect(result.turtle).toBe('');
     expect(result.warnings).toContain('Unexpected root type');
   });
 
@@ -204,7 +201,6 @@ describe('unexpected root types', () => {
     const result = jsonToSchema('"hello"', 'TestSource');
     expect(result.nodes).toHaveLength(0);
     expect(result.edges).toHaveLength(0);
-    expect(result.turtle).toBe('');
     expect(result.warnings).toContain('Unexpected root type');
   });
 
@@ -235,14 +231,13 @@ describe('URI prefix sanitization', () => {
   it('sanitizes source name with special chars: Norway/Track#Alpha → src_norwaytrackalpha_', () => {
     const json = JSON.stringify({ items: [{ id: 'x' }] });
     const result = jsonToSchema(json, 'Norway/Track#Alpha');
-    // The turtle should contain the sanitized prefix (all lowercase)
-    expect(result.turtle).toContain('src_norwaytrackalpha_');
+    expect(result.nodes[0]?.data.uri).toContain('src_norwaytrackalpha_');
   });
 
   it('sanitizes spaces: Norwegian Radar → src_norwegianradar_', () => {
     const json = JSON.stringify({ items: [{ id: 'x' }] });
     const result = jsonToSchema(json, 'Norwegian Radar');
-    expect(result.turtle).toContain('src_norwegianradar_');
+    expect(result.nodes[0]?.data.uri).toContain('src_norwegianradar_');
   });
 });
 
@@ -277,43 +272,6 @@ describe('root object with array property', () => {
   });
 });
 
-// ─── N3.Writer failure ────────────────────────────────────────────────────────
-
-describe('N3.Writer failure handling', () => {
-  afterEach(() => {
-    vi.doUnmock('n3');
-    vi.resetModules();
-  });
-
-  it('returns turtle="" and warning when N3.Writer throws', async () => {
-    // Use vi.doMock (not hoisted) so it only affects this test
-    vi.doMock('n3', async () => {
-      const actual = await vi.importActual<typeof import('n3')>('n3');
-      return {
-        ...actual,
-        Writer: class {
-          addQuad() {
-            throw new Error('N3 writer error');
-          }
-          end() {
-            throw new Error('N3 writer error');
-          }
-        },
-      };
-    });
-
-    vi.resetModules();
-    const { jsonToSchema: jsonToSchemaFresh } =
-      await import('@/lib/jsonToSchema');
-    const result = jsonToSchemaFresh(
-      JSON.stringify({ items: [{ id: 'x' }] }),
-      'TestSource',
-    );
-    expect(result.turtle).toBe('');
-    expect(result.warnings).toContain('Failed to serialize schema to Turtle');
-  });
-});
-
 // ─── Norwegian sample JSON ────────────────────────────────────────────────────
 
 describe('Norwegian radar sample', () => {
@@ -342,7 +300,8 @@ describe('Norwegian radar sample', () => {
     expect((result.nodes[0]?.data as { label?: string })?.label).toBe(
       'RadarTracks',
     );
-    expect(result.turtle).toContain('RadarTracks');
-    expect(result.turtle).toContain('src_norwegianradar_');
+    expect((result.nodes[0]?.data as { label?: string })?.label).toBe(
+      'RadarTracks',
+    );
   });
 });

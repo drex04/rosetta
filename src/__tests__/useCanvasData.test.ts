@@ -59,7 +59,6 @@ describe('useCanvasData', () => {
       dataFormat: 'json' as const,
       schemaNodes: [sourceNode],
       schemaEdges: [sourceEdge],
-      turtleSource: '',
       parseError: null,
     };
     useSourcesStore.setState({ sources: [source], activeSourceId: 'src-1' });
@@ -109,7 +108,6 @@ describe('useCanvasData', () => {
       dataFormat: 'json' as const,
       schemaNodes: [sourceNode],
       schemaEdges: [],
-      turtleSource: '',
       parseError: null,
     };
     useSourcesStore.setState({ sources: [source], activeSourceId: 'src-1' });

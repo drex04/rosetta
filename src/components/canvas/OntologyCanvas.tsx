@@ -89,10 +89,6 @@ const edgeTypes = {
 
 interface OntologyCanvasProps {
   onCanvasChange?: (nodes: OntologyNode[], edges: OntologyEdge[]) => void;
-  onSourceCanvasChange?: (
-    nodes: SourceNodeData[],
-    edges: OntologyEdge[],
-  ) => void;
 }
 
 // Only these change types modify the RDF graph — position/select/dimensions do not
@@ -100,10 +96,7 @@ const STRUCTURAL_CHANGE_TYPES = new Set(['add', 'remove', 'reset']);
 
 // ─── Inner component (needs useReactFlow) ────────────────────────────────────
 
-function OntologyCanvasInner({
-  onCanvasChange,
-  onSourceCanvasChange,
-}: OntologyCanvasProps) {
+function OntologyCanvasInner({ onCanvasChange }: OntologyCanvasProps) {
   const { nodes, edges } = useCanvasData();
   const setNodes = useOntologyStore((s) => s.setNodes);
   const addNode = useOntologyStore((s) => s.addNode);
@@ -124,9 +117,7 @@ function OntologyCanvasInner({
   const canvasDebounceTimer = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
-  const sourceCanvasDebounceTimer = useRef<ReturnType<
-    typeof setTimeout
-  > | null>(null);
+
   const rfInstance = useRef<{
     fitView: (opts?: {
       padding?: number;
@@ -318,26 +309,9 @@ function OntologyCanvasInner({
           activeSource.schemaNodes,
         ) as SourceNodeData[];
         updateSource(activeSource.id, { schemaNodes: updatedSourceNodes });
-
-        const hasSourceStructural = sourceChanges.some((c) =>
-          STRUCTURAL_CHANGE_TYPES.has(c.type),
-        );
-        if (hasSourceStructural && onSourceCanvasChange !== undefined) {
-          if (sourceCanvasDebounceTimer.current !== null) {
-            clearTimeout(sourceCanvasDebounceTimer.current);
-          }
-          sourceCanvasDebounceTimer.current = setTimeout(() => {
-            const currentEdges =
-              useSourcesStore
-                .getState()
-                .sources.find((s) => s.id === activeSource.id)?.schemaEdges ??
-              [];
-            void onSourceCanvasChange(updatedSourceNodes, currentEdges);
-          }, 100);
-        }
       }
     },
-    [setNodes, updateSource, onCanvasChange, onSourceCanvasChange],
+    [setNodes, updateSource, onCanvasChange],
   );
 
   // ─── isValidConnection ────────────────────────────────────────────────────────
@@ -694,17 +668,8 @@ function OntologyCanvasInner({
       );
       if (!ownerSource) return;
       updateSchemaNode(ownerSource.id, nodeId, patch);
-      const updatedSource = useSourcesStore
-        .getState()
-        .sources.find((s) => s.id === ownerSource.id);
-      if (updatedSource && onSourceCanvasChange) {
-        onSourceCanvasChange(
-          updatedSource.schemaNodes,
-          updatedSource.schemaEdges ?? [],
-        );
-      }
     },
-    [updateSchemaNode, onSourceCanvasChange],
+    [updateSchemaNode],
   );
 
   // ─── Augment nodes with injected callbacks ────────────────────────────────────
@@ -862,15 +827,6 @@ function OntologyCanvasInner({
         updateSource(activeSourceId, {
           schemaEdges: [...(activeSrc.schemaEdges ?? []), newEdge],
         });
-        // Sync to source Turtle
-        const updatedSrc = useSourcesStore
-          .getState()
-          .sources.find((s) => s.id === activeSourceId);
-        if (updatedSrc)
-          onSourceCanvasChange?.(
-            updatedSrc.schemaNodes,
-            updatedSrc.schemaEdges ?? [],
-          );
       } else if (mode === 'edit' && edgeId) {
         // Find the edge — check ontology store first, then source stores
         const { edges: ontoEdges } = useOntologyStore.getState();
@@ -904,14 +860,6 @@ function OntologyCanvasInner({
                   newEdge,
                 ],
               });
-              const updatedSrc = useSourcesStore
-                .getState()
-                .sources.find((s) => s.id === src.id);
-              if (updatedSrc)
-                onSourceCanvasChange?.(
-                  updatedSrc.schemaNodes,
-                  updatedSrc.schemaEdges ?? [],
-                );
               break;
             }
           }
@@ -920,14 +868,7 @@ function OntologyCanvasInner({
 
       setEdgePicker(null);
     },
-    [
-      edgePicker,
-      addOntologyEdge,
-      replaceEdge,
-      updateSource,
-      onCanvasChange,
-      onSourceCanvasChange,
-    ],
+    [edgePicker, addOntologyEdge, replaceEdge, updateSource, onCanvasChange],
   );
 
   // ─── Edge double-click → open edge picker in edit mode ──────────────────────
@@ -1164,16 +1105,10 @@ function OntologyCanvasInner({
 
 // ─── Public wrapper (provides ReactFlow context) ──────────────────────────────
 
-export function OntologyCanvas({
-  onCanvasChange,
-  onSourceCanvasChange,
-}: OntologyCanvasProps) {
+export function OntologyCanvas({ onCanvasChange }: OntologyCanvasProps) {
   return (
     <ReactFlowProvider>
-      <OntologyCanvasInner
-        onCanvasChange={onCanvasChange}
-        onSourceCanvasChange={onSourceCanvasChange}
-      />
+      <OntologyCanvasInner onCanvasChange={onCanvasChange} />
     </ReactFlowProvider>
   );
 }
