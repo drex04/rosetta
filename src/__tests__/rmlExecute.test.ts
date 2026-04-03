@@ -86,6 +86,22 @@ describe('executeAllRml', () => {
     // Source with blank rawData is excluded from inputFiles and sourceSummaries
     expect(result.sources).toEqual([]);
   });
+
+  it('passes XML source content under .xml key for XPath-based execution', async () => {
+    const { parseTurtle } = await import('@comake/rmlmapper-js');
+    const source = makeSource({
+      name: 'Tracks',
+      dataFormat: 'xml',
+      rawData: '<root><item id="1"/></root>',
+    });
+    const mapping = makeMapping({ kind: 'direct' });
+    await executeAllRml([source], { s1: [mapping] });
+    const calls = (parseTurtle as ReturnType<typeof vi.fn>).mock.calls;
+    const callArgs = calls[calls.length - 1];
+    // inputFiles key must be the .xml-keyed filename (not .json)
+    expect(callArgs?.[1]).toHaveProperty('Tracks.xml');
+    expect(callArgs?.[1]['Tracks.xml']).toBe('<root><item id="1"/></root>');
+  });
 });
 
 describe('rmlSourceKey', () => {

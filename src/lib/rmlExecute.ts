@@ -44,6 +44,8 @@ export async function executeAllRml(
   }
 
   try {
+    // @comake/rmlmapper-js has no TypeScript declarations; the default output
+    // without toRDF:true is JSON-LD (object[]).
     const jsonLd = (await parseTurtle(rmlTurtle, inputFiles, {
       xpathLib: 'fontoxpath',
     })) as object[];
