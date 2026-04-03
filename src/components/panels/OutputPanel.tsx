@@ -33,9 +33,9 @@ function downloadBlob(content: string, filename: string, mime: string): void {
   URL.revokeObjectURL(url);
 }
 
-// ─── Fused JSON viewer ────────────────────────────────────────────────────────
+// ─── Fused JSON-LD viewer ─────────────────────────────────────────────────────
 
-function FusedJsonViewer({ content }: { content: string }) {
+function FusedJsonLdViewer({ content }: { content: string }) {
   return (
     <ScrollArea className="flex-1">
       <pre className="text-sm px-3 py-2 font-mono text-foreground whitespace-pre-wrap">
@@ -84,45 +84,29 @@ function FusedTab() {
           )}
           Transform &amp; Fuse
         </Button>
-        {stale && !loading && (
-          <span className="text-sm text-muted-foreground ml-auto">
-            Results may be stale
-          </span>
-        )}
-        {result && (
-          <div className="ml-auto flex gap-1">
+        <div className="ml-auto flex items-center gap-1">
+          {stale && !loading && (
+            <span className="text-sm text-muted-foreground">
+              Results may be stale
+            </span>
+          )}
+          {jsonLd && (
             <Button
               variant="ghost"
               size="icon"
-              title="Download JSON"
+              title="Download JSON-LD"
               onClick={() =>
                 downloadBlob(
-                  JSON.stringify(result.sources, null, 2),
-                  'fused.json',
-                  'application/json',
+                  JSON.stringify(jsonLd, null, 2),
+                  'fused.jsonld',
+                  'application/ld+json',
                 )
               }
             >
               <DownloadSimpleIcon size={14} />
             </Button>
-            {jsonLd && (
-              <Button
-                variant="ghost"
-                size="icon"
-                title="Download JSON-LD"
-                onClick={() =>
-                  downloadBlob(
-                    JSON.stringify(jsonLd, null, 2),
-                    'fused.jsonld',
-                    'application/ld+json',
-                  )
-                }
-              >
-                <DownloadSimpleIcon size={14} />
-              </Button>
-            )}
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Error */}
@@ -158,11 +142,9 @@ function FusedTab() {
         </div>
       )}
 
-      {/* Fused JSON output viewer */}
-      {result ? (
-        <FusedJsonViewer
-          content={JSON.stringify({ sources: result.sources }, null, 2)}
-        />
+      {/* Fused JSON-LD output viewer */}
+      {jsonLd ? (
+        <FusedJsonLdViewer content={JSON.stringify(jsonLd, null, 2)} />
       ) : !loading ? (
         <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground">
           Click Transform &amp; Fuse to run
