@@ -143,21 +143,6 @@ export function generateConstruct(
     ].join('\n');
   }
 
-  if (kind === 'join') {
-    return [
-      `# JOIN placeholder — parentSourceId: ${m.parentSourceId ?? '?'}  parentRef: ${m.parentRef ?? '?'}  childRef: ${m.childRef ?? '?'}`,
-      `PREFIX src: <${srcPrefix}>`,
-      `PREFIX tgt: <${tgtPrefix}>`,
-      ``,
-      `CONSTRUCT {`,
-      `  ?target tgt:${tgtProp} ?val .`,
-      `}`,
-      `WHERE {`,
-      `  FILTER(false) # Remove FILTER and implement join logic`,
-      `}`,
-    ].join('\n');
-  }
-
   // kind === 'sparql': user-managed, return empty string (sparqlConstruct is omitted from param)
   return '';
 }

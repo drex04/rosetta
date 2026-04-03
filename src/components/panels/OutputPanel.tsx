@@ -151,7 +151,8 @@ function FusedTab() {
       {/* Source summary */}
       {result && (
         <div className="shrink-0 px-3 py-2 border-b border-border text-sm text-muted-foreground">
-          {result.totalQuads} triples from {result.sources.length} source
+          {result.jsonLd.length} result{result.jsonLd.length !== 1 ? 's' : ''}{' '}
+          from {result.sources.length} source
           {result.sources.length !== 1 ? 's' : ''}
           {lastRun && ` · ${new Date(lastRun).toLocaleTimeString()}`}
         </div>
@@ -160,11 +161,7 @@ function FusedTab() {
       {/* Fused JSON output viewer */}
       {result ? (
         <FusedJsonViewer
-          content={JSON.stringify(
-            { totalQuads: result.totalQuads, sources: result.sources },
-            null,
-            2,
-          )}
+          content={JSON.stringify({ sources: result.sources }, null, 2)}
         />
       ) : !loading ? (
         <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground">
@@ -184,7 +181,7 @@ function ExportTab() {
   const hasMappings = Object.values(mappings).some((m) => m.length > 0);
   const hasSparqlOrJoin = Object.values(mappings)
     .flat()
-    .some((m) => m.kind === 'sparql' || m.kind === 'join');
+    .some((m) => m.kind === 'sparql');
 
   const rmlPreview = useMemo(
     () => generateRml(sources, mappings),

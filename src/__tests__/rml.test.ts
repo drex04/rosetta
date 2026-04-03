@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { inferIterator, generateRml } from '@/lib/rml';
+import { inferIterator, generateRml, rmlSourceKey } from '@/lib/rml';
 import type { Source } from '@/store/sourcesStore';
 import type { Mapping } from '@/types/index';
 
@@ -61,6 +61,35 @@ function makeMapping(
     ...overrides,
   };
 }
+
+// ─── rmlSourceKey tests ───────────────────────────────────────────────────────
+
+describe('rmlSourceKey', () => {
+  it('returns sanitized name + .json for json sources', () => {
+    expect(
+      rmlSourceKey({
+        name: 'NATO/Air Defense',
+        dataFormat: 'json',
+      } as Parameters<typeof rmlSourceKey>[0]),
+    ).toBe('NATO_Air_Defense.json');
+  });
+
+  it('returns sanitized name + .xml for xml sources', () => {
+    expect(
+      rmlSourceKey({ name: 'tracks', dataFormat: 'xml' } as Parameters<
+        typeof rmlSourceKey
+      >[0]),
+    ).toBe('tracks.xml');
+  });
+
+  it('defaults to .json when dataFormat is undefined', () => {
+    expect(
+      rmlSourceKey({ name: 'radar', dataFormat: undefined } as Parameters<
+        typeof rmlSourceKey
+      >[0]),
+    ).toBe('radar.json');
+  });
+});
 
 // ─── generateRml tests ────────────────────────────────────────────────────────
 
@@ -152,6 +181,36 @@ describe('generateRml', () => {
     const result = generateRml([source], { src1: [mapping] });
 
     expect(result).toContain('rr:datatype');
+  });
+
+  it('uses rmlSourceKey value as rml:source for json source', () => {
+    const source = makeSource({
+      id: 'src1',
+      name: 'NATO/Air Defense',
+      rawData: '{"tracks":[]}',
+      dataFormat: 'json',
+    });
+    const mapping = makeMapping({ kind: 'direct' });
+    const result = generateRml([source], { src1: [mapping] });
+
+    expect(result).toContain('rml:source "NATO_Air_Defense.json"');
+    expect(result).toContain('ql:JSONPath');
+  });
+
+  it('emits ql:XPath and rml:iterator "/*" for xml source', () => {
+    const source = makeSource({
+      id: 'src1',
+      name: 'tracks',
+      rawData: '<tracks><track><id>1</id></track></tracks>',
+      dataFormat: 'xml',
+    });
+    const mapping = makeMapping({ kind: 'direct' });
+    const result = generateRml([source], { src1: [mapping] });
+
+    expect(result).toContain('rml:source "tracks.xml"');
+    expect(result).toContain('ql:XPath');
+    expect(result).toContain('rml:iterator "/*"');
+    expect(result).not.toContain('ql:JSONPath');
   });
 
   it('skips source with empty JSON', () => {

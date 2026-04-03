@@ -1,9 +1,7 @@
 import { create } from 'zustand';
-import { executeAllConstructs, type FusionResult } from '../lib/fusion';
-import { compactToJsonLd } from '../lib/jsonldFramer';
+import { executeAllRml, type FusionResult } from '../lib/rmlExecute';
 import { useSourcesStore } from './sourcesStore';
 import { useMappingStore } from './mappingStore';
-import { useOntologyStore } from './ontologyStore';
 
 interface FusionState {
   result: FusionResult | null;
@@ -31,16 +29,10 @@ export const useFusionStore = create<FusionState>()((set, get) => ({
     try {
       const sources = useSourcesStore.getState().sources;
       const { mappings } = useMappingStore.getState();
-      const { nodes: ontologyNodes } = useOntologyStore.getState();
-      const fusionResult = await executeAllConstructs(
-        sources,
-        mappings,
-        ontologyNodes,
-      );
-      const jsonLd = await compactToJsonLd(fusionResult.store, ontologyNodes);
+      const fusionResult = await executeAllRml(sources, mappings);
       set({
         result: fusionResult,
-        jsonLd,
+        jsonLd: fusionResult.jsonLd,
         loading: false,
         stale: false,
         lastRun: Date.now(),
