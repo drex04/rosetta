@@ -157,7 +157,7 @@ export function SourcePanel({
   }
 
   // ── RDFS pane show/collapse state ─────────────────────────────────────────────
-  const [showRdfs, setShowRdfs] = useState(true);
+  const showRdfs = true;
 
   // ── Current dataFormat (tracked locally for editor remount key) ───────────────
   const [dataFormat, setDataFormat] = useState<'json' | 'xml'>(
