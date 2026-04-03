@@ -87,13 +87,6 @@ export function ClassNode({ id, data }: NodeProps<OntologyNode>) {
       onContextMenu={handleContextMenu}
     >
       <Handle
-        id="class-top"
-        type="source"
-        position={Position.Top}
-        className="!w-2.5 !h-2.5 !bg-master !border-master"
-        isConnectable={true}
-      />
-      <Handle
         id="class-left"
         type="target"
         position={Position.Left}
@@ -238,26 +231,11 @@ export function ClassNode({ id, data }: NodeProps<OntologyNode>) {
                   </span>
                 </>
               )}
-              <Handle
-                id={`prop_${prop.label}`}
-                type="source"
-                position={Position.Right}
-                className="!w-2.5 !h-2.5 !bg-master !border-master"
-                isConnectable={true}
-              />
             </div>
           ))}
         </div>
       )}
 
-      <Handle
-        id="class-right"
-        type="source"
-        position={Position.Right}
-        style={{ top: 26 }}
-        className="!w-2.5 !h-2.5 !bg-master !border-master"
-        isConnectable={true}
-      />
       <Handle
         id="class-bottom"
         type="source"
