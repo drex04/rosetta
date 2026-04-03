@@ -8,5 +8,5 @@ test('app renders', () => {
       <App />
     </ReactFlowProvider>,
   );
-  expect(screen.getByText('Rosetta')).toBeInTheDocument();
+  expect(screen.getByText('Rosetta Workbench')).toBeInTheDocument();
 });
