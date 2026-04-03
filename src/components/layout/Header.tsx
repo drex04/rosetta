@@ -276,7 +276,7 @@ export function Header() {
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              size="xs"
+              size="sm"
               className="text-slate-300 hover:text-white hover:bg-slate-700"
               aria-label="Project menu"
             >
@@ -340,24 +340,26 @@ export function Header() {
         <div className="flex items-center gap-1">
           <Button
             variant="ghost"
-            size="xs"
-            className="px-1.5 text-slate-400 hover:text-white hover:bg-slate-700"
+            size="sm"
+            className="text-slate-300 hover:text-white hover:bg-slate-700"
             aria-label="Open help"
           >
-            <QuestionIcon size={14} />
+            <QuestionIcon size={13} />
+            Help
           </Button>
           <Button
             variant="ghost"
-            size="xs"
-            className="px-1.5 text-slate-400 hover:text-white hover:bg-slate-700"
+            size="sm"
+            className="text-slate-300 hover:text-white hover:bg-slate-700"
             aria-label="About Rosetta"
           >
-            <InfoIcon size={14} />
+            <InfoIcon size={13} />
+            About
           </Button>
           <Button
             variant="ghost"
-            size="xs"
-            className="w-7 px-0 text-slate-400 hover:text-white hover:bg-slate-700"
+            size="sm"
+            className="text-slate-300 hover:text-white hover:bg-slate-700"
             aria-label="View source on GitHub"
             onClick={() =>
               window.open(
@@ -367,7 +369,8 @@ export function Header() {
               )
             }
           >
-            <GithubLogoIcon size={14} />
+            <GithubLogoIcon size={13} />
+            GitHub
           </Button>
         </div>
       </div>

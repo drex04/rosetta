@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { PlusIcon } from '@phosphor-icons/react';
+import { Button } from '@/components/ui/button';
 import { useSourcesStore, generateSourceId } from '@/store/sourcesStore';
 import { useMappingStore } from '@/store/mappingStore';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
@@ -133,52 +134,42 @@ export function SourceSelector() {
           const isEditing = editingId === source.id;
 
           return (
-            <div
-              key={source.id}
-              className={[
-                'flex items-center gap-1.5 h-6 pl-2.5 pr-1.5 rounded text-sm font-medium select-none shrink-0 transition-colors border',
-                isActive
-                  ? 'bg-source/10 text-source-text border-source/40 shadow-sm'
-                  : 'bg-background text-muted-foreground border-border hover:border-border hover:bg-muted/50',
-              ].join(' ')}
-            >
-              {isEditing ? (
-                <input
-                  ref={inputRef}
-                  className={[
-                    'bg-transparent outline-none border-none text-sm font-medium w-20 min-w-0',
-                    isActive
-                      ? 'text-source-text placeholder:text-source/50'
-                      : 'text-foreground',
-                  ].join(' ')}
-                  value={editValue}
-                  onChange={(e) => setEditValue(e.target.value)}
-                  onKeyDown={(e) => handleKeyDown(e, source.id, source.name)}
-                  onBlur={() => handleBlur(source.id)}
-                  aria-label={`Rename source ${source.name}`}
-                />
-              ) : (
-                <button
-                  className={[
-                    'bg-transparent border-none p-0 cursor-pointer text-sm font-medium',
-                    isActive ? 'text-source-text' : 'text-foreground',
-                  ].join(' ')}
-                  onClick={() => setActiveSourceId(source.id)}
-                  onDoubleClick={() => {
-                    setActiveSourceId(source.id);
-                    startEditing(source.id, source.name);
-                    requestAnimationFrame(() => {
-                      inputRef.current?.focus();
-                      inputRef.current?.select();
-                    });
-                  }}
-                  aria-label={`Select source ${source.name}`}
-                  aria-current={isActive ? 'true' : undefined}
-                >
-                  {source.name}
-                </button>
-              )}
-
+            <div key={source.id} className="flex items-center shrink-0 gap-0.5">
+              <Button
+                variant="secondary"
+                size="sm"
+                className={[
+                  'h-6 px-2.5 text-sm font-medium select-none transition-colors',
+                  isActive
+                    ? 'bg-source/10 text-source-text border border-source/40 hover:bg-source/15'
+                    : '',
+                ].join(' ')}
+                onClick={() => setActiveSourceId(source.id)}
+                onDoubleClick={() => {
+                  setActiveSourceId(source.id);
+                  startEditing(source.id, source.name);
+                  requestAnimationFrame(() => {
+                    inputRef.current?.focus();
+                    inputRef.current?.select();
+                  });
+                }}
+                aria-label={`Select source ${source.name}`}
+                aria-current={isActive ? 'true' : undefined}
+              >
+                {isEditing ? (
+                  <input
+                    ref={inputRef}
+                    className="bg-transparent outline-none border-none text-sm font-medium w-20 min-w-0"
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    onKeyDown={(e) => handleKeyDown(e, source.id, source.name)}
+                    onBlur={() => handleBlur(source.id)}
+                    aria-label={`Rename source ${source.name}`}
+                  />
+                ) : (
+                  source.name
+                )}
+              </Button>
               <button
                 className={[
                   'flex items-center justify-center size-4 rounded text-sm leading-none border-none p-0 cursor-pointer transition-colors',

@@ -106,7 +106,7 @@ export function TurtleEditorPanel({
         </span>
         <Button
           variant="outline"
-          size="xs"
+          size="sm"
           onClick={() =>
             downloadBlob(turtleSource, 'ontology.ttl', 'text/turtle')
           }

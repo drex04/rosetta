@@ -8,12 +8,15 @@ import { SourcePanel } from '@/components/panels/SourcePanel';
 import { MappingPanel } from '@/components/panels/MappingPanel';
 import { OutputPanel } from '@/components/panels/OutputPanel';
 import { ValidationPanel } from '@/components/panels/ValidationPanel';
+import { StatusBar } from '@/components/layout/StatusBar';
+import type { SaveStatus } from '@/hooks/useAutoSave';
 
 interface RightPanelProps {
   onEditorChange: (value: string) => void;
   onSourceEditorChange?: (turtle: string) => void;
   resetSourceSchema?: () => void;
   isCanvasSyncPending?: RefObject<boolean>;
+  saveStatus: SaveStatus;
 }
 
 export function RightPanel({
@@ -21,6 +24,7 @@ export function RightPanel({
   onSourceEditorChange,
   resetSourceSchema,
   isCanvasSyncPending,
+  saveStatus,
 }: RightPanelProps) {
   const { activeRightTab, setActiveRightTab } = useUiStore();
   const turtleSource = useOntologyStore((s) => s.turtleSource);
@@ -105,39 +109,39 @@ export function RightPanel({
             }
             className="flex flex-col h-full gap-0"
           >
-            <div className="border-b border-border px-2 py-1.5 shrink-0 flex items-center gap-1">
-              <TabsList className="h-7 w-full bg-transparent p-0 gap-0.5">
+            <div className="px-2 shrink-0 flex items-center gap-1">
+              <TabsList variant="line" className="flex-1 gap-0">
                 <TabsTrigger
                   value="SOURCE"
-                  className="flex-1 text-sm h-6 rounded data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted"
+                  className="flex-1 tracking-wide text-xs"
                   aria-label="Source tab"
                 >
-                  Source
+                  SOURCE
                 </TabsTrigger>
                 <TabsTrigger
                   value="ONTOLOGY"
-                  className="flex-1 text-sm h-6 rounded data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted"
+                  className="flex-1 tracking-wide text-xs"
                   aria-label="Ontology tab"
                 >
-                  Ontology
+                  ONTOLOGY
                 </TabsTrigger>
                 <TabsTrigger
                   value="MAP"
-                  className="flex-1 text-sm h-6 rounded data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted"
+                  className="flex-1 tracking-wide text-xs"
                   aria-label="Mapping tab"
                 >
-                  Map
+                  MAP
                 </TabsTrigger>
                 <TabsTrigger
                   value="OUTPUT"
-                  className="flex-1 text-sm h-6 rounded data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted"
+                  className="flex-1 tracking-wide text-xs"
                   aria-label="Output tab"
                 >
-                  Output
+                  OUTPUT
                 </TabsTrigger>
                 <TabsTrigger
                   value="VALIDATE"
-                  className="flex-1 text-sm h-6 rounded data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted"
+                  className="flex-1 tracking-wide text-xs"
                   aria-label="SHACL validation tab"
                 >
                   SHACL
@@ -145,7 +149,7 @@ export function RightPanel({
               </TabsList>
               <button
                 onClick={() => setCollapsed(true)}
-                className="ml-auto p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                className="ml-1 p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors shrink-0 self-center"
                 aria-label="Collapse panel"
               >
                 <CaretRightIcon size={12} />
@@ -179,6 +183,7 @@ export function RightPanel({
           </Tabs>
         </>
       )}
+      <StatusBar saveStatus={saveStatus} />
     </aside>
   );
 }

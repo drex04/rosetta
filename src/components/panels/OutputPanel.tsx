@@ -1,6 +1,14 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   DownloadSimpleIcon,
   CircleNotchIcon,
@@ -29,9 +37,11 @@ function downloadBlob(content: string, filename: string, mime: string): void {
 
 function FusedJsonViewer({ content }: { content: string }) {
   return (
-    <pre className="flex-1 overflow-auto text-sm px-3 py-2 font-mono text-foreground whitespace-pre-wrap">
-      {content}
-    </pre>
+    <ScrollArea className="flex-1">
+      <pre className="text-sm px-3 py-2 font-mono text-foreground whitespace-pre-wrap">
+        {content}
+      </pre>
+    </ScrollArea>
   );
 }
 
@@ -61,7 +71,12 @@ function FusedTab() {
     <div className="flex flex-col flex-1 overflow-hidden">
       {/* Header row */}
       <div className="shrink-0 flex items-center gap-2 px-3 py-2 border-b border-border">
-        <Button size="sm" onClick={() => runFusion()} disabled={loading}>
+        <Button
+          variant="default"
+          size="sm"
+          onClick={() => runFusion()}
+          disabled={loading}
+        >
           {loading ? (
             <CircleNotchIcon size={12} className="animate-spin" />
           ) : (
@@ -73,6 +88,40 @@ function FusedTab() {
           <span className="text-sm text-muted-foreground ml-auto">
             Results may be stale
           </span>
+        )}
+        {result && (
+          <div className="ml-auto flex gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              title="Download JSON"
+              onClick={() =>
+                downloadBlob(
+                  JSON.stringify(result.sources, null, 2),
+                  'fused.json',
+                  'application/json',
+                )
+              }
+            >
+              <DownloadSimpleIcon size={14} />
+            </Button>
+            {jsonLd && (
+              <Button
+                variant="ghost"
+                size="icon"
+                title="Download JSON-LD"
+                onClick={() =>
+                  downloadBlob(
+                    JSON.stringify(jsonLd, null, 2),
+                    'fused.jsonld',
+                    'application/ld+json',
+                  )
+                }
+              >
+                <DownloadSimpleIcon size={14} />
+              </Button>
+            )}
+          </div>
         )}
       </div>
 
@@ -105,42 +154,6 @@ function FusedTab() {
           {result.totalQuads} triples from {result.sources.length} source
           {result.sources.length !== 1 ? 's' : ''}
           {lastRun && ` · ${new Date(lastRun).toLocaleTimeString()}`}
-        </div>
-      )}
-
-      {/* Download buttons */}
-      {result && (
-        <div className="shrink-0 flex gap-2 px-3 py-2 border-b border-border">
-          <Button
-            variant="outline"
-            size="xs"
-            onClick={() =>
-              downloadBlob(
-                JSON.stringify(result.sources, null, 2),
-                'fused.json',
-                'application/json',
-              )
-            }
-          >
-            <DownloadSimpleIcon size={12} />
-            JSON
-          </Button>
-          {jsonLd && (
-            <Button
-              variant="outline"
-              size="xs"
-              onClick={() =>
-                downloadBlob(
-                  JSON.stringify(jsonLd, null, 2),
-                  'fused.jsonld',
-                  'application/ld+json',
-                )
-              }
-            >
-              <DownloadSimpleIcon size={12} />
-              JSON-LD
-            </Button>
-          )}
         </div>
       )}
 
@@ -200,87 +213,110 @@ function ExportTab() {
   }
 
   return (
-    <div className="flex flex-col gap-3 p-3">
-      {hasSparqlOrJoin && (
-        <Alert className="border-source/40 text-source-text bg-source/5">
-          <WarningIcon size={14} className="shrink-0" />
-          <AlertDescription>
-            Some mappings use <strong>SPARQL</strong> or <strong>join</strong>{' '}
-            kinds and are annotated as <em>requires manual conversion</em> in
-            the exported files.
-          </AlertDescription>
-        </Alert>
-      )}
-      <div className="flex flex-col gap-2">
+    <ScrollArea className="flex-1">
+      <div className="flex flex-col gap-3 p-3">
+        {hasSparqlOrJoin && (
+          <Alert className="border-source/40 text-source-text bg-source/5">
+            <WarningIcon size={14} className="shrink-0" />
+            <AlertDescription>
+              Some mappings use <strong>SPARQL</strong> or <strong>join</strong>{' '}
+              kinds and are annotated as <em>requires manual conversion</em> in
+              the exported files.
+            </AlertDescription>
+          </Alert>
+        )}
         <p className="text-sm text-muted-foreground">
           Download production ETL mapping files for use with RML processors
           (RMLMapper, Morph-KGC, etc.).
         </p>
-        <details className="border border-border rounded text-sm">
-          <summary className="px-2 py-1.5 cursor-pointer hover:bg-muted font-medium text-muted-foreground select-none">
-            RML Preview
-          </summary>
-          <pre className="overflow-auto max-h-48 px-3 py-2 font-mono text-sm text-foreground bg-muted/30 border-t border-border whitespace-pre-wrap">
-            {rmlPreview}
-          </pre>
-        </details>
-        <Button
-          variant="outline"
-          size="xs"
-          className="justify-start"
-          onClick={handleDownloadRml}
-        >
-          <DownloadSimpleIcon size={12} />
-          Download RML (.rml.ttl)
-        </Button>
-        <details className="border border-border rounded text-sm">
-          <summary className="px-2 py-1.5 cursor-pointer hover:bg-muted font-medium text-muted-foreground select-none">
-            YARRRML Preview
-          </summary>
-          <pre className="overflow-auto max-h-48 px-3 py-2 font-mono text-sm text-foreground bg-muted/30 border-t border-border whitespace-pre-wrap">
-            {yarrrmlPreview}
-          </pre>
-        </details>
-        <Button
-          variant="outline"
-          size="xs"
-          className="justify-start"
-          onClick={handleDownloadYarrrml}
-        >
-          <DownloadSimpleIcon size={12} />
-          Download YARRRML (.yarrrml.yml)
-        </Button>
+        <Accordion type="multiple" defaultValue={['rml']} className="w-full">
+          <AccordionItem
+            value="rml"
+            className="border border-border rounded-md mb-2"
+          >
+            <AccordionTrigger className="px-3 py-2 text-sm font-medium hover:no-underline [&>svg]:ml-auto">
+              <span className="flex-1 text-left">RML Preview</span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 shrink-0 mr-1"
+                title="Download RML"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDownloadRml();
+                }}
+              >
+                <DownloadSimpleIcon size={14} />
+              </Button>
+            </AccordionTrigger>
+            <AccordionContent className="p-0">
+              <ScrollArea className="h-[280px]">
+                <pre className="px-3 py-2 font-mono text-sm text-foreground bg-muted/30 border-t border-border whitespace-pre-wrap">
+                  {rmlPreview}
+                </pre>
+              </ScrollArea>
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem
+            value="yarrrml"
+            className="border border-border rounded-md"
+          >
+            <AccordionTrigger className="px-3 py-2 text-sm font-medium hover:no-underline [&>svg]:ml-auto">
+              <span className="flex-1 text-left">YARRRML Preview</span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 shrink-0 mr-1"
+                title="Download YARRRML"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDownloadYarrrml();
+                }}
+              >
+                <DownloadSimpleIcon size={14} />
+              </Button>
+            </AccordionTrigger>
+            <AccordionContent className="p-0">
+              <ScrollArea className="h-[280px]">
+                <pre className="px-3 py-2 font-mono text-sm text-foreground bg-muted/30 border-t border-border whitespace-pre-wrap">
+                  {yarrrmlPreview}
+                </pre>
+              </ScrollArea>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </div>
-    </div>
+    </ScrollArea>
   );
 }
 
 // ─── OutputPanel ─────────────────────────────────────────────────────────────
 
 export function OutputPanel() {
-  const [outTab, setOutTab] = useState<'fused' | 'export'>('fused');
-
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      {/* Sub-tab nav */}
-      <div className="shrink-0 flex gap-1 px-3 py-2 border-b border-border">
-        {(['fused', 'export'] as const).map((t) => (
-          <Button
-            key={t}
-            size="xs"
-            variant={outTab === t ? 'default' : 'ghost'}
-            onClick={() => setOutTab(t)}
-          >
-            {t === 'fused' ? 'Fused' : t.charAt(0).toUpperCase() + t.slice(1)}
-          </Button>
-        ))}
+    <Tabs defaultValue="fused" className="flex flex-col h-full gap-0">
+      <div className="shrink-0 px-3 py-2 border-b border-border">
+        <TabsList className="w-full">
+          <TabsTrigger value="fused" className="flex-1">
+            Fused
+          </TabsTrigger>
+          <TabsTrigger value="export" className="flex-1">
+            Export
+          </TabsTrigger>
+        </TabsList>
       </div>
-
-      {/* Tab content */}
-      <div className="flex-1 overflow-hidden flex flex-col">
-        {outTab === 'fused' && <FusedTab />}
-        {outTab === 'export' && <ExportTab />}
-      </div>
-    </div>
+      <TabsContent
+        value="fused"
+        className="flex-1 overflow-hidden m-0 flex flex-col"
+      >
+        <FusedTab />
+      </TabsContent>
+      <TabsContent
+        value="export"
+        className="flex-1 overflow-hidden m-0 flex flex-col"
+      >
+        <ExportTab />
+      </TabsContent>
+    </Tabs>
   );
 }

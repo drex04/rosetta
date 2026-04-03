@@ -9,6 +9,13 @@ import { localName } from '@/lib/rdf';
 import { getPropRange } from '@/lib/mappingHelpers';
 import { generateConstruct } from '@/lib/sparql';
 import { lightTheme } from '@/lib/codemirror-theme';
+import * as AccordionPrimitive from '@radix-ui/react-accordion';
+import { CaretDownIcon } from '@phosphor-icons/react';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+} from '@/components/ui/accordion';
 import type { Mapping, MappingGroup } from '@/types/index';
 
 // ─── Lint badge helper (RD-05) ────────────────────────────────────────────────
@@ -239,177 +246,192 @@ export function MappingPanel() {
     <div className="flex flex-col h-full overflow-hidden">
       {/* ── Mapping list ── */}
       <div className="shrink-0 overflow-y-auto border-b border-border max-h-[40%]">
-        <ul className="divide-y divide-border">
-          {/* ── Group rows ── */}
-          {groups.map((group) => (
-            <li key={group.id} className="border-b border-border">
-              {/* Group header */}
-              <div
-                role="button"
-                tabIndex={0}
-                onClick={() =>
-                  setExpandedGroupId(
-                    expandedGroupId === group.id ? null : group.id,
-                  )
-                }
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ')
-                    setExpandedGroupId(
-                      expandedGroupId === group.id ? null : group.id,
-                    );
-                }}
-                className="flex items-center justify-between px-3 py-2 cursor-pointer text-sm hover:bg-muted/50 bg-muted/20"
+        {/* ── Group rows ── */}
+        {groups.length > 0 && (
+          <Accordion
+            type="single"
+            collapsible
+            value={expandedGroupId ?? ''}
+            onValueChange={(v) => setExpandedGroupId(v || null)}
+          >
+            {groups.map((group) => (
+              <AccordionItem
+                key={group.id}
+                value={group.id}
+                className="border-b border-border border-x-0 first:border-t-0"
               >
-                <span className="flex items-center gap-1.5">
-                  <span className="text-muted-foreground">
-                    {expandedGroupId === group.id ? '▾' : '▸'}
-                  </span>
-                  <span className="text-master font-mono">
-                    {localName(group.targetPropUri)}
-                  </span>
-                  <span className="text-sm bg-mapping/15 text-mapping px-1.5 py-0.5 rounded font-medium uppercase">
-                    {group.strategy}({getMappingsInGroup(group.id).length})
-                  </span>
-                </span>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    ungroupMappings(group.id);
-                    if (selectedGroupId === group.id) setSelectedGroupId(null);
-                    if (expandedGroupId === group.id) setExpandedGroupId(null);
-                  }}
-                  className="text-muted-foreground hover:text-destructive text-sm"
-                  aria-label="Ungroup"
-                >
-                  ungroup
-                </button>
-              </div>
-
-              {/* Expanded group details */}
-              {expandedGroupId === group.id && (
-                <div className="px-3 py-2 bg-muted/10 border-t border-border flex flex-col gap-2">
-                  {/* Strategy picker */}
-                  <div className="flex items-center gap-2">
-                    <label className="text-sm text-muted-foreground">
-                      Strategy
-                    </label>
-                    <select
-                      value={group.strategy}
-                      onChange={(e) =>
-                        updateGroup(group.id, {
-                          strategy: e.target.value as MappingGroup['strategy'],
-                        })
-                      }
-                      className="text-sm border border-border rounded px-1.5 py-0.5 bg-background"
-                    >
-                      <option value="concat">concat</option>
-                      <option value="coalesce">coalesce</option>
-                      <option value="template">template</option>
-                    </select>
-                  </div>
-
-                  {/* Separator input (concat) */}
-                  {group.strategy === 'concat' && (
-                    <div className="flex items-center gap-2">
-                      <label className="text-sm text-muted-foreground">
-                        Separator
-                      </label>
-                      <input
-                        type="text"
-                        value={group.separator}
-                        onChange={(e) =>
-                          updateGroup(group.id, { separator: e.target.value })
-                        }
-                        className="text-sm border border-border rounded px-1.5 py-0.5 bg-background w-16 font-mono"
-                      />
-                    </div>
-                  )}
-
-                  {/* Template input (template strategy) */}
-                  {group.strategy === 'template' && (
-                    <div className="flex items-center gap-2">
-                      <label className="text-sm text-muted-foreground">
-                        Template
-                      </label>
-                      <input
-                        type="text"
-                        value={
-                          (
-                            group as Extract<
-                              MappingGroup,
-                              { strategy: 'template' }
-                            >
-                          ).templatePattern
-                        }
-                        onChange={(e) =>
-                          updateGroup(group.id, {
-                            templatePattern: e.target.value,
-                          } as Parameters<typeof updateGroup>[1])
-                        }
-                        className="text-sm border border-border rounded px-1.5 py-0.5 bg-background flex-1 font-mono"
-                        placeholder="{0}, {1}"
-                      />
-                    </div>
-                  )}
-
-                  {/* Member list with ordering */}
-                  <div className="flex flex-col gap-1">
-                    <span className="text-sm text-muted-foreground uppercase tracking-wide">
-                      Members
+                <AccordionPrimitive.Header className="flex items-center">
+                  <AccordionPrimitive.Trigger className="flex flex-1 items-center justify-between px-3 py-2 text-sm bg-muted/20 hover:bg-muted/50 [&[data-state=open]>svg]:rotate-180">
+                    <span className="flex items-center gap-1.5 flex-1 min-w-0">
+                      <span className="text-master font-mono truncate">
+                        {localName(group.targetPropUri)}
+                      </span>
+                      <span className="text-sm bg-mapping/15 text-mapping px-1.5 py-0.5 rounded font-medium uppercase shrink-0">
+                        {group.strategy}({getMappingsInGroup(group.id).length})
+                      </span>
                     </span>
-                    {getMappingsInGroup(group.id)
-                      .sort((a, b) => (a.groupOrder ?? 0) - (b.groupOrder ?? 0))
-                      .map((m, idx, arr) => (
-                        <div
-                          key={m.id}
-                          className="flex items-center gap-1 text-sm"
-                        >
-                          <span className="text-source-text font-mono flex-1">
-                            {localName(m.sourcePropUri)}
-                          </span>
-                          <div className="flex gap-0.5">
-                            <button
-                              type="button"
-                              disabled={idx === 0}
-                              onClick={() =>
-                                reorderGroupMember(group.id, m.id, arr, idx, -1)
-                              }
-                              className="text-muted-foreground hover:text-foreground disabled:opacity-30 px-0.5"
-                              aria-label="Move up"
-                            >
-                              ↑
-                            </button>
-                            <button
-                              type="button"
-                              disabled={idx === arr.length - 1}
-                              onClick={() =>
-                                reorderGroupMember(group.id, m.id, arr, idx, 1)
-                              }
-                              className="text-muted-foreground hover:text-foreground disabled:opacity-30 px-0.5"
-                              aria-label="Move down"
-                            >
-                              ↓
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-
-                  {/* View SPARQL button */}
+                    <CaretDownIcon
+                      size={16}
+                      className="shrink-0 transition-transform duration-200"
+                    />
+                  </AccordionPrimitive.Trigger>
                   <button
                     type="button"
-                    onClick={() => handleSelectGroup(group.id)}
-                    className="text-sm text-muted-foreground hover:text-foreground"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      ungroupMappings(group.id);
+                      if (selectedGroupId === group.id)
+                        setSelectedGroupId(null);
+                      if (expandedGroupId === group.id)
+                        setExpandedGroupId(null);
+                    }}
+                    className="text-muted-foreground hover:text-destructive text-sm px-2 mr-1 shrink-0"
+                    aria-label="Ungroup"
                   >
-                    View SPARQL ›
+                    ungroup
                   </button>
-                </div>
-              )}
-            </li>
-          ))}
+                </AccordionPrimitive.Header>
+                <AccordionContent className="px-3 bg-muted/10 border-t border-border pb-0">
+                  <div className="flex flex-col gap-2 py-2">
+                    {/* Strategy picker */}
+                    <div className="flex items-center gap-2">
+                      <label className="text-sm text-muted-foreground">
+                        Strategy
+                      </label>
+                      <select
+                        value={group.strategy}
+                        onChange={(e) =>
+                          updateGroup(group.id, {
+                            strategy: e.target
+                              .value as MappingGroup['strategy'],
+                          })
+                        }
+                        className="text-sm border border-border rounded px-1.5 py-0.5 bg-background"
+                      >
+                        <option value="concat">concat</option>
+                        <option value="coalesce">coalesce</option>
+                        <option value="template">template</option>
+                      </select>
+                    </div>
 
-          {/* ── Ungrouped mapping rows ── */}
+                    {/* Separator input (concat) */}
+                    {group.strategy === 'concat' && (
+                      <div className="flex items-center gap-2">
+                        <label className="text-sm text-muted-foreground">
+                          Separator
+                        </label>
+                        <input
+                          type="text"
+                          value={group.separator}
+                          onChange={(e) =>
+                            updateGroup(group.id, { separator: e.target.value })
+                          }
+                          className="text-sm border border-border rounded px-1.5 py-0.5 bg-background w-16 font-mono"
+                        />
+                      </div>
+                    )}
+
+                    {/* Template input (template strategy) */}
+                    {group.strategy === 'template' && (
+                      <div className="flex items-center gap-2">
+                        <label className="text-sm text-muted-foreground">
+                          Template
+                        </label>
+                        <input
+                          type="text"
+                          value={
+                            (
+                              group as Extract<
+                                MappingGroup,
+                                { strategy: 'template' }
+                              >
+                            ).templatePattern
+                          }
+                          onChange={(e) =>
+                            updateGroup(group.id, {
+                              templatePattern: e.target.value,
+                            } as Parameters<typeof updateGroup>[1])
+                          }
+                          className="text-sm border border-border rounded px-1.5 py-0.5 bg-background flex-1 font-mono"
+                          placeholder="{0}, {1}"
+                        />
+                      </div>
+                    )}
+
+                    {/* Member list with ordering */}
+                    <div className="flex flex-col gap-1">
+                      <span className="text-sm text-muted-foreground uppercase tracking-wide">
+                        Members
+                      </span>
+                      {getMappingsInGroup(group.id)
+                        .sort(
+                          (a, b) => (a.groupOrder ?? 0) - (b.groupOrder ?? 0),
+                        )
+                        .map((m, idx, arr) => (
+                          <div
+                            key={m.id}
+                            className="flex items-center gap-1 text-sm"
+                          >
+                            <span className="text-source-text font-mono flex-1">
+                              {localName(m.sourcePropUri)}
+                            </span>
+                            <div className="flex gap-0.5">
+                              <button
+                                type="button"
+                                disabled={idx === 0}
+                                onClick={() =>
+                                  reorderGroupMember(
+                                    group.id,
+                                    m.id,
+                                    arr,
+                                    idx,
+                                    -1,
+                                  )
+                                }
+                                className="text-muted-foreground hover:text-foreground disabled:opacity-30 px-0.5"
+                                aria-label="Move up"
+                              >
+                                ↑
+                              </button>
+                              <button
+                                type="button"
+                                disabled={idx === arr.length - 1}
+                                onClick={() =>
+                                  reorderGroupMember(
+                                    group.id,
+                                    m.id,
+                                    arr,
+                                    idx,
+                                    1,
+                                  )
+                                }
+                                className="text-muted-foreground hover:text-foreground disabled:opacity-30 px-0.5"
+                                aria-label="Move down"
+                              >
+                                ↓
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+
+                    {/* View SPARQL button */}
+                    <button
+                      type="button"
+                      onClick={() => handleSelectGroup(group.id)}
+                      className="text-sm text-muted-foreground hover:text-foreground"
+                    >
+                      View SPARQL ›
+                    </button>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        )}
+
+        {/* ── Ungrouped mapping rows ── */}
+        <ul className="divide-y divide-border">
           {ungroupedMappings.map((mapping) => {
             const isSelected = mapping.id === selectedMappingId;
             const sourceRange = getPropRange(
@@ -434,14 +456,24 @@ export function MappingPanel() {
                   isSelected ? 'bg-muted font-medium' : ''
                 }`}
               >
-                <span className="flex flex-col min-w-0 flex-1">
-                  <span className="truncate text-source-text font-mono">
+                <span className="flex items-baseline gap-1 min-w-0 flex-1 truncate">
+                  <span className="text-foreground">
                     {localName(mapping.sourcePropUri)}
                   </span>
-                  <span className="text-muted-foreground text-sm">
-                    {sourceRange} → {localName(mapping.targetPropUri)}{' '}
-                    {targetRange}
+                  {sourceRange ? (
+                    <span className="font-mono text-muted-foreground text-sm shrink-0">
+                      {sourceRange}
+                    </span>
+                  ) : null}
+                  <span className="text-muted-foreground shrink-0">→</span>
+                  <span className="text-foreground">
+                    {localName(mapping.targetPropUri)}
                   </span>
+                  {targetRange ? (
+                    <span className="font-mono text-muted-foreground text-sm shrink-0">
+                      {targetRange}
+                    </span>
+                  ) : null}
                 </span>
                 <button
                   type="button"

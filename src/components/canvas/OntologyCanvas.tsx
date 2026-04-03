@@ -142,6 +142,23 @@ function OntologyCanvasInner({
 
   // Offset ref to stagger rapidly-added nodes
   const addNodeOffset = useRef(0);
+  const [showMiniMap, setShowMiniMap] = useState(false);
+  const minimapHideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const revealMiniMap = useCallback(() => {
+    if (minimapHideTimer.current) clearTimeout(minimapHideTimer.current);
+    setShowMiniMap(true);
+  }, []);
+
+  const scheduleMiniMapHide = useCallback(() => {
+    minimapHideTimer.current = setTimeout(() => setShowMiniMap(false), 800);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (minimapHideTimer.current) clearTimeout(minimapHideTimer.current);
+    };
+  }, []);
 
   // ─── UI state ───────────────────────────────────────────────────────────────
   const [canvasMenu, setCanvasMenu] = useState<ContextMenuState | null>(null);
@@ -983,19 +1000,29 @@ function OntologyCanvasInner({
           rfInstance.current = instance;
         }}
         onPaneContextMenu={onPaneContextMenu}
+        onMoveStart={revealMiniMap}
+        onMoveEnd={scheduleMiniMapHide}
+        onNodeDragStart={revealMiniMap}
+        onNodeDragStop={scheduleMiniMapHide}
         aria-label="Ontology mapping canvas"
       >
-        <div className="hidden sm:block">
+        <div
+          className="hidden sm:block transition-opacity duration-300"
+          style={{
+            opacity: showMiniMap ? 1 : 0,
+            pointerEvents: showMiniMap ? 'auto' : 'none',
+          }}
+        >
           <MiniMap />
         </div>
         <Controls aria-label="Canvas controls" />
         <Background />
         <Panel position="top-left" className="flex gap-1.5 p-1.5">
-          <Button size="xs" variant="outline" onClick={handleAddClass}>
+          <Button size="sm" variant="outline" onClick={handleAddClass}>
             + Ontology Class
           </Button>
           {activeSourceId && (
-            <Button size="xs" variant="outline" onClick={handleAddSourceClass}>
+            <Button size="sm" variant="outline" onClick={handleAddSourceClass}>
               + Source Class
             </Button>
           )}
