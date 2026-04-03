@@ -101,7 +101,7 @@ export function TurtleEditorPanel({
   return (
     <div className="flex flex-col h-full">
       <div className="shrink-0 flex items-center justify-between px-3 py-1.5 border-b border-border bg-muted/20">
-        <span className="text-xs text-muted-foreground font-mono">
+        <span className="text-sm text-muted-foreground font-mono">
           ontology.ttl
         </span>
         <Button
@@ -123,7 +123,7 @@ export function TurtleEditorPanel({
       {parseError && (
         <Alert
           variant="destructive"
-          className="shrink-0 rounded-none border-x-0 border-b-0 text-xs"
+          className="shrink-0 rounded-none border-x-0 border-b-0 text-sm"
         >
           <AlertDescription>{parseError}</AlertDescription>
         </Alert>

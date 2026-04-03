@@ -118,12 +118,12 @@ export function SourceSelector() {
   return (
     <>
       <div
-        className="h-8 flex items-center px-3 gap-1.5 border-b border-border bg-slate-50 shrink-0 overflow-x-auto"
+        className="h-8 flex items-center px-3 gap-1.5 border-b border-border bg-background shrink-0 overflow-x-auto"
         role="navigation"
         aria-label="Source selector"
       >
         {sources.length === 0 && (
-          <span className="text-xs text-muted-foreground select-none mr-1">
+          <span className="text-sm text-muted-foreground select-none mr-1">
             No sources yet
           </span>
         )}
@@ -136,19 +136,19 @@ export function SourceSelector() {
             <div
               key={source.id}
               className={[
-                'flex items-center gap-1.5 h-6 pl-2.5 pr-1.5 rounded text-xs font-medium select-none shrink-0 transition-colors border',
+                'flex items-center gap-1.5 h-6 pl-2.5 pr-1.5 rounded text-sm font-medium select-none shrink-0 transition-colors border',
                 isActive
-                  ? 'bg-amber-50 text-amber-800 border-amber-300 shadow-sm'
-                  : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50',
+                  ? 'bg-source/10 text-source-text border-source/40 shadow-sm'
+                  : 'bg-background text-muted-foreground border-border hover:border-border hover:bg-muted/50',
               ].join(' ')}
             >
               {isEditing ? (
                 <input
                   ref={inputRef}
                   className={[
-                    'bg-transparent outline-none border-none text-xs font-medium w-20 min-w-0',
+                    'bg-transparent outline-none border-none text-sm font-medium w-20 min-w-0',
                     isActive
-                      ? 'text-amber-800 placeholder:text-amber-400'
+                      ? 'text-source-text placeholder:text-source/50'
                       : 'text-foreground',
                   ].join(' ')}
                   value={editValue}
@@ -160,8 +160,8 @@ export function SourceSelector() {
               ) : (
                 <button
                   className={[
-                    'bg-transparent border-none p-0 cursor-pointer text-xs font-medium',
-                    isActive ? 'text-amber-800' : 'text-slate-600',
+                    'bg-transparent border-none p-0 cursor-pointer text-sm font-medium',
+                    isActive ? 'text-source-text' : 'text-foreground',
                   ].join(' ')}
                   onClick={() => setActiveSourceId(source.id)}
                   onDoubleClick={() => {
@@ -181,10 +181,10 @@ export function SourceSelector() {
 
               <button
                 className={[
-                  'flex items-center justify-center w-4 h-4 rounded text-xs leading-none border-none p-0 cursor-pointer transition-colors',
+                  'flex items-center justify-center size-4 rounded text-sm leading-none border-none p-0 cursor-pointer transition-colors',
                   isActive
-                    ? 'text-amber-400 hover:text-amber-700 hover:bg-amber-100'
-                    : 'text-slate-300 hover:text-slate-600 hover:bg-slate-100',
+                    ? 'text-source/60 hover:text-source-text hover:bg-source/20'
+                    : 'text-muted-foreground/50 hover:text-muted-foreground hover:bg-muted',
                 ].join(' ')}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -201,7 +201,7 @@ export function SourceSelector() {
 
         <button
           onClick={handleAddSource}
-          className="flex items-center gap-1 shrink-0 text-xs px-2 py-0.5 rounded border border-dashed border-slate-300 text-slate-400 hover:border-amber-400 hover:text-amber-600 transition-colors"
+          className="flex items-center gap-1 shrink-0 text-sm px-2 py-0.5 rounded border border-dashed border-border text-muted-foreground hover:border-source hover:text-source transition-colors"
           aria-label="Add source"
         >
           <PlusIcon size={12} />

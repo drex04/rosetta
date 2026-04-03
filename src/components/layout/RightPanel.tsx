@@ -82,7 +82,7 @@ export function RightPanel({
           >
             <CaretLeftIcon size={14} />
           </button>
-          <span className="text-xs text-muted-foreground [writing-mode:vertical-rl] rotate-180 select-none mt-1">
+          <span className="text-sm text-muted-foreground [writing-mode:vertical-rl] rotate-180 select-none mt-1">
             {activeRightTab}
           </span>
         </div>
@@ -109,35 +109,35 @@ export function RightPanel({
               <TabsList className="h-7 w-full bg-transparent p-0 gap-0.5">
                 <TabsTrigger
                   value="SOURCE"
-                  className="flex-1 text-xs h-6 rounded data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted"
+                  className="flex-1 text-sm h-6 rounded data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted"
                   aria-label="Source tab"
                 >
                   Source
                 </TabsTrigger>
                 <TabsTrigger
                   value="ONTOLOGY"
-                  className="flex-1 text-xs h-6 rounded data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted"
+                  className="flex-1 text-sm h-6 rounded data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted"
                   aria-label="Ontology tab"
                 >
                   Ontology
                 </TabsTrigger>
                 <TabsTrigger
                   value="MAP"
-                  className="flex-1 text-xs h-6 rounded data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted"
+                  className="flex-1 text-sm h-6 rounded data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted"
                   aria-label="Mapping tab"
                 >
                   Map
                 </TabsTrigger>
                 <TabsTrigger
                   value="OUTPUT"
-                  className="flex-1 text-xs h-6 rounded data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted"
+                  className="flex-1 text-sm h-6 rounded data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted"
                   aria-label="Output tab"
                 >
                   Output
                 </TabsTrigger>
                 <TabsTrigger
                   value="VALIDATE"
-                  className="flex-1 text-xs h-6 rounded data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted"
+                  className="flex-1 text-sm h-6 rounded data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted"
                   aria-label="SHACL validation tab"
                 >
                   SHACL

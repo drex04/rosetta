@@ -128,7 +128,11 @@ function OntologyCanvasInner({
     typeof setTimeout
   > | null>(null);
   const rfInstance = useRef<{
-    fitView: (opts?: { padding?: number; duration?: number }) => void;
+    fitView: (opts?: {
+      padding?: number;
+      duration?: number;
+      maxZoom?: number;
+    }) => void;
   } | null>(null);
   const prevHadNodes = useRef(false);
   const highlightedCanvasNodeId = useValidationStore(
@@ -154,14 +158,14 @@ function OntologyCanvasInner({
   useEffect(() => {
     const hasNodes = nodes.length > 0;
     if (hasNodes && !prevHadNodes.current && rfInstance.current) {
-      rfInstance.current.fitView({ padding: 0.15, duration: 400 });
+      rfInstance.current.fitView({ padding: 0.15, duration: 400, maxZoom: 1 });
     }
     prevHadNodes.current = hasNodes;
   }, [nodes.length]);
 
   useEffect(() => {
     if (!highlightedCanvasNodeId || !rfInstance.current) return;
-    rfInstance.current.fitView({ padding: 0.4, duration: 400 });
+    rfInstance.current.fitView({ padding: 0.4, duration: 400, maxZoom: 1 });
   }, [highlightedCanvasNodeId]);
 
   // ─── Inject onContextMenu into node data ─────────────────────────────────────
@@ -1058,7 +1062,7 @@ function OntologyCanvasInner({
             transform: 'translate(-50%, -50%)',
           }}
         >
-          <p className="text-xs font-medium text-muted-foreground mb-1 px-1">
+          <p className="text-sm font-medium text-muted-foreground mb-1 px-1">
             Group these mappings?
           </p>
           {(['concat', 'coalesce', 'template'] as const).map((strategy) => (
@@ -1080,7 +1084,7 @@ function OntologyCanvasInner({
             </button>
           ))}
           <button
-            className="text-xs text-muted-foreground text-left px-2 py-1 rounded hover:bg-accent transition-colors mt-1"
+            className="text-sm text-muted-foreground text-left px-2 py-1 rounded hover:bg-accent transition-colors mt-1"
             onClick={() => setGroupPrompt(null)}
           >
             Keep separate
@@ -1094,7 +1098,7 @@ function OntologyCanvasInner({
           className="fixed z-50 bg-popover border border-border rounded-lg shadow-xl p-3 flex flex-col gap-1 min-w-[160px]"
           style={{ left: edgePicker.x, top: edgePicker.y }}
         >
-          <p className="text-xs font-medium text-muted-foreground mb-1 px-1">
+          <p className="text-sm font-medium text-muted-foreground mb-1 px-1">
             {edgePicker.mode === 'edit' ? 'Change edge type' : 'Edge type'}
           </p>
           <button
@@ -1110,7 +1114,7 @@ function OntologyCanvasInner({
             Object Property
           </button>
           <button
-            className="text-xs text-muted-foreground text-left px-2 py-1 rounded hover:bg-accent transition-colors mt-1"
+            className="text-sm text-muted-foreground text-left px-2 py-1 rounded hover:bg-accent transition-colors mt-1"
             onClick={() => setEdgePicker(null)}
           >
             Cancel
