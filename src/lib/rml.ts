@@ -2,6 +2,17 @@ import { localName } from '@/lib/rdf';
 import type { Source } from '@/store/sourcesStore';
 import type { Mapping } from '@/types/index';
 
+// ─── rmlSourceKey ─────────────────────────────────────────────────────────────
+
+/**
+ * Derive the logical source filename key for a given source.
+ * XML sources get a .xml extension; all others get .json.
+ */
+export function rmlSourceKey(source: Source): string {
+  const ext = source.dataFormat === 'xml' ? '.xml' : '.json';
+  return source.name.replace(/[^a-zA-Z0-9._-]/g, '_') + ext;
+}
+
 // ─── inferIterator ────────────────────────────────────────────────────────────
 
 /**
@@ -95,7 +106,7 @@ export function generateRml(
   for (const source of sources) {
     if (source.rawData.trim() === '') continue;
 
-    const iterator = inferIterator(source.rawData);
+    const isXml = source.dataFormat === 'xml';
     const mlist = mappingsBySource[source.id] ?? [];
 
     // Group mappings by sourceClassUri
@@ -120,9 +131,15 @@ export function generateRml(
 
       lines.push(`${mapName} a rr:TriplesMap ;`);
       lines.push(`  rml:logicalSource [`);
-      lines.push(`    rml:source "${source.name}.json" ;`);
-      lines.push(`    rml:referenceFormulation ql:JSONPath ;`);
-      lines.push(`    rml:iterator "${iterator}" ;`);
+      lines.push(`    rml:source "${rmlSourceKey(source)}" ;`);
+      if (isXml) {
+        lines.push(`    rml:referenceFormulation ql:XPath ;`);
+        lines.push(`    rml:iterator "/*" ;`);
+      } else {
+        const iterator = inferIterator(source.rawData);
+        lines.push(`    rml:referenceFormulation ql:JSONPath ;`);
+        lines.push(`    rml:iterator "${iterator}" ;`);
+      }
       lines.push(`  ] ;`);
       lines.push(`  rr:subjectMap [`);
       lines.push(`    rr:template "${subjectTemplate}" ;`);
@@ -130,7 +147,7 @@ export function generateRml(
       lines.push(`  ] ;`);
 
       for (const mapping of mappings) {
-        if (mapping.kind === 'sparql' || mapping.kind === 'join') {
+        if (mapping.kind === 'sparql') {
           lines.push(
             `  # rr:predicateObjectMap [ # requires manual conversion`,
           );

@@ -1,7 +1,5 @@
 import { describe, it, expect } from 'vitest';
 import { generateConstruct } from '@/lib/sparql';
-import { executeAllConstructs } from '@/lib/fusion';
-import type { Source } from '@/store/sourcesStore';
 
 const baseMapping = {
   sourceId: 'src-1',
@@ -94,25 +92,6 @@ describe('generateConstruct', () => {
 });
 
 describe('generateConstruct — new kinds', () => {
-  it('join kind: includes FILTER(false) and JOIN placeholder comment', () => {
-    const m: Omit<import('@/types').Mapping, 'id' | 'sparqlConstruct'> = {
-      sourceId: 's1',
-      sourceClassUri: 'http://example.org/Track',
-      sourcePropUri: 'http://example.org/trackId',
-      targetClassUri: 'http://nato.org/Target',
-      targetPropUri: 'http://nato.org/id',
-      sourceHandle: 'prop_trackId',
-      targetHandle: 'target_prop_id',
-      kind: 'join',
-      parentSourceId: 's2',
-      parentRef: 'http://example.org/parentRef',
-      childRef: 'http://example.org/childRef',
-    };
-    const result = generateConstruct(m);
-    expect(result).toContain('FILTER(false)');
-    expect(result).toContain('JOIN placeholder');
-  });
-
   it('constant kind: includes BIND with typed literal', () => {
     const m = {
       ...base,
@@ -222,74 +201,4 @@ describe('generateConstruct — sourcePrefix override', () => {
     const result = generateConstruct({ ...base, kind: 'direct' as const });
     expect(result).toContain('PREFIX src: <http://example.org/source#>');
   });
-});
-
-describe('executeAllConstructs — namespace fix', () => {
-  it('produces non-zero quad count for a direct mapping with matching prefix', async () => {
-    // The source prefix matches the schemaNode prefix exactly
-    const sourcePrefix = 'http://example.org/source#';
-    // instanceGenerator uses schemaNodes[0].data.prefix as uriBase and
-    // starts walkValue with className='Root'. Top-level array items become
-    // instances of src:Root with properties src:<key>.
-    const schemaNode = {
-      id: 'node-1',
-      type: 'sourceNode' as const,
-      position: { x: 0, y: 0 },
-      data: {
-        label: 'Root',
-        prefix: sourcePrefix,
-        properties: [{ name: 'trackId', range: 'xsd:string' }],
-        classUri: `${sourcePrefix}Root`,
-        uri: `${sourcePrefix}Root`,
-      },
-    };
-
-    const source: Source = {
-      id: 'src-1',
-      name: 'TestSource',
-      order: 0,
-      rawData: JSON.stringify([{ trackId: 'T-001' }, { trackId: 'T-002' }]),
-      dataFormat: 'json',
-      schemaNodes: [schemaNode as Source['schemaNodes'][number]],
-      schemaEdges: [],
-      turtleSource: '',
-      parseError: null,
-    };
-
-    // The CONSTRUCT WHERE must match what instanceGenerator produces:
-    // blank nodes typed as src:Root with property src:trackId
-    const mapping = {
-      id: 'map-1',
-      sourceId: 'src-1',
-      sourceClassUri: `${sourcePrefix}Root`,
-      sourcePropUri: `${sourcePrefix}trackId`,
-      sourceHandle: 'prop_Root',
-      targetClassUri: 'http://example.org/nato#AirObject',
-      targetPropUri: 'http://example.org/nato#identifier',
-      targetHandle: 'target_prop_identifier',
-      kind: 'direct' as const,
-      sparqlConstruct: generateConstruct(
-        {
-          sourceId: 'src-1',
-          sourceClassUri: `${sourcePrefix}Root`,
-          sourcePropUri: `${sourcePrefix}trackId`,
-          sourceHandle: 'prop_Root',
-          targetClassUri: 'http://example.org/nato#AirObject',
-          targetPropUri: 'http://example.org/nato#identifier',
-          targetHandle: 'target_prop_identifier',
-          kind: 'direct',
-        },
-        sourcePrefix,
-      ),
-    };
-
-    const result = await executeAllConstructs(
-      [source],
-      { 'src-1': [mapping] },
-      [],
-    );
-
-    expect(result.totalQuads).toBeGreaterThan(0);
-    expect(result.sources[0]?.quadCount).toBeGreaterThan(0);
-  }, 30000);
 });

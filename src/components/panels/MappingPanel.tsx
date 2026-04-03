@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { EditorView, lineNumbers, highlightActiveLine } from '@codemirror/view';
 import { EditorState } from '@codemirror/state';
 import { basicSetup } from 'codemirror';
@@ -7,7 +7,7 @@ import { useSourcesStore } from '@/store/sourcesStore';
 import { useOntologyStore } from '@/store/ontologyStore';
 import { localName } from '@/lib/rdf';
 import { getPropRange } from '@/lib/mappingHelpers';
-import { generateConstruct } from '@/lib/sparql';
+import { generateRml } from '@/lib/rml';
 import { lightTheme } from '@/lib/codemirror-theme';
 import * as AccordionPrimitive from '@radix-ui/react-accordion';
 import { CaretDownIcon } from '@phosphor-icons/react';
@@ -144,6 +144,18 @@ export function MappingPanel() {
     selectedGroup?.sparqlConstruct ?? selectedMapping?.sparqlConstruct ?? '';
   const isGroupSelected = selectedGroup !== null;
 
+  const rmlSnippet = useMemo(() => {
+    if (
+      !selectedMapping ||
+      selectedMapping.kind === 'sparql' ||
+      isGroupSelected
+    )
+      return '';
+    const source = sources.find((s) => s.id === selectedMapping.sourceId);
+    if (!source) return '';
+    return generateRml([source], { [source.id]: [selectedMapping] });
+  }, [selectedMapping, isGroupSelected, sources]);
+
   function handleSelectMapping(id: string) {
     setSelectedMappingId(selectedMappingId === id ? null : id);
     setSelectedGroupId(null);
@@ -163,36 +175,6 @@ export function MappingPanel() {
     if (selectedMappingId === null) return;
     updateMapping(selectedMappingId, { sparqlConstruct: newValue });
   }
-
-  // Auto-regenerate SPARQL when kind-specific fields change (non-sparql kinds only)
-  // Intentional: selectedMapping is omitted as a whole — it is a derived .find() value that
-  // gets a new reference on every render. Listing only the specific fields that drive SPARQL
-  // generation prevents spurious re-runs while still catching every meaningful change.
-  // updateMapping is a stable Zustand action and is safe to include.
-  useEffect(() => {
-    if (!selectedMapping || selectedMapping.kind === 'sparql') return;
-    const timer = setTimeout(() => {
-      const newSparql = generateConstruct(selectedMapping);
-      if (newSparql !== selectedMapping.sparqlConstruct) {
-        updateMapping(selectedMapping.id, { sparqlConstruct: newSparql });
-      }
-    }, 300);
-    return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    updateMapping,
-    selectedMapping?.kind,
-    selectedMapping?.templatePattern,
-    selectedMapping?.constantValue,
-    selectedMapping?.constantType,
-    selectedMapping?.targetDatatype,
-    selectedMapping?.languageTag,
-    selectedMapping?.parentSourceId,
-    selectedMapping?.parentRef,
-    selectedMapping?.childRef,
-    selectedMapping?.sourcePropUri,
-    selectedMapping?.targetPropUri,
-  ]);
 
   function reorderGroupMember(
     groupId: string,
@@ -496,13 +478,18 @@ export function MappingPanel() {
           <div className="shrink-0 flex items-center justify-between px-3 py-2 border-b border-border bg-muted/30">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-                {isGroupSelected ? 'Group SPARQL' : 'SPARQL Construct'}
+                {isGroupSelected
+                  ? 'Group SPARQL'
+                  : selectedMapping?.kind === 'sparql'
+                    ? 'SPARQL Construct'
+                    : 'RML'}
               </span>
               {isGroupSelected ? (
                 <span className="text-sm px-1.5 py-0.5 rounded font-medium bg-muted text-muted-foreground">
                   read-only
                 </span>
-              ) : selectedMapping !== null ? (
+              ) : selectedMapping !== null &&
+                selectedMapping.kind === 'sparql' ? (
                 <span
                   className={`text-sm px-1.5 py-0.5 rounded font-medium ${
                     isValidConstruct(selectedMapping.sparqlConstruct)
@@ -551,19 +538,14 @@ export function MappingPanel() {
                   <option value="constant">constant</option>
                   <option value="typecast">typecast</option>
                   <option value="language">language</option>
-                  <option value="join">join</option>
                   <option value="sparql">sparql (custom)</option>
                 </select>
               </div>
 
               {/* Kind-specific inline fields */}
-              {[
-                'template',
-                'constant',
-                'typecast',
-                'language',
-                'join',
-              ].includes(selectedMapping.kind) && (
+              {['template', 'constant', 'typecast', 'language'].includes(
+                selectedMapping.kind,
+              ) && (
                 <div className="shrink-0 flex flex-col gap-1.5 px-3 py-2 border-b border-border bg-muted/5">
                   {selectedMapping.kind === 'template' && (
                     <div className="flex flex-col gap-1.5">
@@ -662,66 +644,23 @@ export function MappingPanel() {
                       />
                     </div>
                   )}
-                  {selectedMapping.kind === 'join' && (
-                    <>
-                      <div className="flex items-center gap-2">
-                        <label className="text-sm text-muted-foreground w-20 shrink-0">
-                          Parent Source
-                        </label>
-                        <input
-                          className="text-sm border border-border rounded px-1.5 py-0.5 bg-background flex-1 min-w-0"
-                          value={selectedMapping.parentSourceId ?? ''}
-                          onChange={(e) =>
-                            updateMapping(selectedMapping.id, {
-                              parentSourceId: e.target.value,
-                            })
-                          }
-                          placeholder="source id"
-                        />
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <label className="text-sm text-muted-foreground w-20 shrink-0">
-                          Parent Ref URI
-                        </label>
-                        <input
-                          className="text-sm border border-border rounded px-1.5 py-0.5 bg-background flex-1 min-w-0"
-                          value={selectedMapping.parentRef ?? ''}
-                          onChange={(e) =>
-                            updateMapping(selectedMapping.id, {
-                              parentRef: e.target.value,
-                            })
-                          }
-                          placeholder="property URI"
-                        />
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <label className="text-sm text-muted-foreground w-20 shrink-0">
-                          Child Ref URI
-                        </label>
-                        <input
-                          className="text-sm border border-border rounded px-1.5 py-0.5 bg-background flex-1 min-w-0"
-                          value={selectedMapping.childRef ?? ''}
-                          onChange={(e) =>
-                            updateMapping(selectedMapping.id, {
-                              childRef: e.target.value,
-                            })
-                          }
-                          placeholder="property URI"
-                        />
-                      </div>
-                    </>
-                  )}
                 </div>
               )}
             </>
           )}
 
-          {/* CodeMirror editor */}
-          <SparqlEditor
-            value={sparqlToShow}
-            onChange={handleEditorChange}
-            readOnly={isGroupSelected}
-          />
+          {/* CodeMirror editor or RML snippet */}
+          {isGroupSelected || selectedMapping?.kind === 'sparql' ? (
+            <SparqlEditor
+              value={sparqlToShow}
+              onChange={handleEditorChange}
+              readOnly={isGroupSelected}
+            />
+          ) : (
+            <div className="flex-1 overflow-auto p-3 font-mono text-xs bg-muted/10 whitespace-pre text-muted-foreground">
+              {rmlSnippet || '# No RML generated — add mappings first'}
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -93,7 +93,7 @@ export function generateYarrrml(
       block.push(`      - [a, "<${sourceClassUri}>"]`);
 
       for (const m of classMappings) {
-        if (m.kind === 'sparql' || m.kind === 'join') {
+        if (m.kind === 'sparql') {
           block.push(
             `      # - ["<${m.targetPropUri}>", "?"] # requires manual conversion`,
           );

@@ -94,14 +94,7 @@ export interface Mapping {
   targetPropUri: string;
   sourceHandle: string; // e.g. 'prop_trackId' — stored directly from connection (RD-02)
   targetHandle: string; // e.g. 'target_prop_identifier' — stored directly from connection (RD-02)
-  kind:
-    | 'direct'
-    | 'template'
-    | 'constant'
-    | 'typecast'
-    | 'language'
-    | 'join'
-    | 'sparql';
+  kind: 'direct' | 'template' | 'constant' | 'typecast' | 'language' | 'sparql';
   sparqlConstruct: string;
   // kind-specific optional fields
   templatePattern?: string; // template: e.g. "{first} {last}"
@@ -109,9 +102,6 @@ export interface Mapping {
   constantType?: string; // constant: XSD datatype URI, default xsd:string
   targetDatatype?: string; // typecast: XSD datatype URI
   languageTag?: string; // language: e.g. "en"
-  parentSourceId?: string; // join: the other source id
-  parentRef?: string; // join: property URI in parent source
-  childRef?: string; // join: property URI in this source
   groupId?: string; // group membership
   groupOrder?: number; // position within group
 }
