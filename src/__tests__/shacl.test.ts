@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import * as N3 from 'n3';
-import { generateShapes } from '../lib/shacl/shapesGenerator';
+import {
+  generateShapes,
+  generateShapesTurtle,
+} from '../lib/shacl/shapesGenerator';
 import {
   jsonToInstances,
   xmlToInstances,
@@ -381,5 +384,147 @@ describe('validateSource', () => {
     // No mapping passed
     const violations = await validateSource(source, [ontNode], []);
     expect(violations).toEqual([]);
+  });
+});
+
+describe('validateSource with userShapesTurtle', () => {
+  it('valid user shapes → violations from user shapes', async () => {
+    const URI_BASE = 'http://src_ust_#';
+    const TGT = 'http://tgt_ust_#';
+    const source = makeSource({
+      rawData: '{"items":[{"val":"not-a-float"}]}',
+      schemaNodes: [makeSourceNodeData(URI_BASE)],
+    });
+    const ontNode = makeOntologyNode(TGT + 'Item', [
+      { uri: TGT + 'val', label: 'val', range: 'xsd:string', kind: 'datatype' },
+    ]);
+    const mapping = makeMapping({
+      sourceClassUri: URI_BASE + 'Items',
+      sourcePropUri: URI_BASE + 'val',
+      targetClassUri: TGT + 'Item',
+      targetPropUri: TGT + 'val',
+    });
+
+    // User shapes demand xsd:float for val — this WILL trigger violations
+    const userShapes = `
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+<${TGT}ItemShape> a sh:NodeShape ;
+  sh:targetClass <${TGT}Item> ;
+  sh:property [
+    sh:path <${TGT}val> ;
+    sh:datatype xsd:float
+  ] .
+`;
+    const violations = await validateSource(
+      source,
+      [ontNode],
+      [mapping],
+      userShapes,
+    );
+    expect(violations.length).toBeGreaterThan(0);
+  });
+
+  it('invalid Turtle → no throw, falls back to auto-generated', async () => {
+    const URI_BASE = 'http://src_ust2_#';
+    const TGT = 'http://tgt_ust2_#';
+    const source = makeSource({
+      rawData: '{"items":[{"val":1.0}]}',
+      schemaNodes: [makeSourceNodeData(URI_BASE)],
+    });
+    const ontNode = makeOntologyNode(TGT + 'Item', [
+      { uri: TGT + 'val', label: 'val', range: 'xsd:float', kind: 'datatype' },
+    ]);
+    const mapping = makeMapping({
+      sourceClassUri: URI_BASE + 'Items',
+      sourcePropUri: URI_BASE + 'val',
+      targetClassUri: TGT + 'Item',
+      targetPropUri: TGT + 'val',
+    });
+    // Should not throw — fallback to auto-generated shapes
+    await expect(
+      validateSource(source, [ontNode], [mapping], 'THIS IS NOT TURTLE'),
+    ).resolves.toBeDefined();
+  });
+
+  it('empty string → falls back to auto-generated', async () => {
+    const URI_BASE = 'http://src_ust3_#';
+    const TGT = 'http://tgt_ust3_#';
+    const source = makeSource({
+      rawData: '{"items":[{"val":1.0}]}',
+      schemaNodes: [makeSourceNodeData(URI_BASE)],
+    });
+    const ontNode = makeOntologyNode(TGT + 'Item', [
+      { uri: TGT + 'val', label: 'val', range: 'xsd:float', kind: 'datatype' },
+    ]);
+    const mapping = makeMapping({
+      sourceClassUri: URI_BASE + 'Items',
+      sourcePropUri: URI_BASE + 'val',
+      targetClassUri: TGT + 'Item',
+      targetPropUri: TGT + 'val',
+    });
+    const withEmpty = await validateSource(source, [ontNode], [mapping], '');
+    const withoutParam = await validateSource(source, [ontNode], [mapping]);
+    // Both should produce the same violations structurally; random `id` excluded
+    const strip = (vs: ViolationRecord[]) =>
+      vs.map(({ id: _id, ...rest }) => rest);
+    expect(strip(withEmpty)).toEqual(strip(withoutParam));
+  });
+
+  it('whitespace-only string → falls back to auto-generated (trim check)', async () => {
+    const URI_BASE = 'http://src_ust4_#';
+    const TGT = 'http://tgt_ust4_#';
+    const source = makeSource({
+      rawData: '{"items":[{"val":1.0}]}',
+      schemaNodes: [makeSourceNodeData(URI_BASE)],
+    });
+    const ontNode = makeOntologyNode(TGT + 'Item', [
+      { uri: TGT + 'val', label: 'val', range: 'xsd:float', kind: 'datatype' },
+    ]);
+    const mapping = makeMapping({
+      sourceClassUri: URI_BASE + 'Items',
+      sourcePropUri: URI_BASE + 'val',
+      targetClassUri: TGT + 'Item',
+      targetPropUri: TGT + 'val',
+    });
+    const withWhitespace = await validateSource(
+      source,
+      [ontNode],
+      [mapping],
+      '   ',
+    );
+    const withoutParam = await validateSource(source, [ontNode], [mapping]);
+    // Both should produce the same violations (same count and same structural shape);
+    // random `id` fields are excluded from comparison
+    const strip = (vs: ViolationRecord[]) =>
+      vs.map(({ id: _id, ...rest }) => rest);
+    expect(strip(withWhitespace)).toEqual(strip(withoutParam));
+  });
+});
+
+describe('generateShapesTurtle', () => {
+  it('empty nodes → returns empty string', async () => {
+    expect(await generateShapesTurtle([])).toBe('');
+  });
+
+  it('single node with float property → includes comment, NodeShape, targetClass, datatype', async () => {
+    const node = makeOntologyNode('http://ex.org/Track', [
+      {
+        uri: 'http://ex.org/speed',
+        label: 'speed',
+        range: 'xsd:float',
+        kind: 'datatype',
+      },
+    ]);
+    const result = await generateShapesTurtle([node]);
+    expect(result).toContain('# Auto-generated');
+    expect(result).toContain('sh:NodeShape');
+    expect(result).toContain('sh:targetClass');
+    expect(result).toContain('sh:datatype');
+  });
+
+  it('node with no URI → skipped, returns empty string', async () => {
+    const node = makeOntologyNode('', []);
+    expect(await generateShapesTurtle([node])).toBe('');
   });
 });

@@ -21,6 +21,8 @@ import { del } from 'idb-keyval';
 import { useOntologyStore, SEED_TURTLE } from '@/store/ontologyStore';
 import { useSourcesStore, generateSourceId } from '@/store/sourcesStore';
 import { useMappingStore } from '@/store/mappingStore';
+import { useValidationStore } from '@/store/validationStore';
+import sampleShapesTtl from '@/data/sample-shapes.ttl?raw';
 import { parseTurtle } from '@/lib/rdf';
 import { jsonToSchema } from '@/lib/jsonToSchema';
 import { generateConstruct } from '@/lib/sparql';
@@ -121,6 +123,7 @@ export function Header() {
       },
     ];
     useSourcesStore.setState({ sources, activeSourceId: idA });
+    useValidationStore.getState().setUserShapesTurtle(sampleShapesTtl);
 
     // Add a seed mapping: Norway spd_kts → AirTrack speed
     const radarTracksNode = resultA.nodes.find(

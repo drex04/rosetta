@@ -3,6 +3,7 @@ import { get, set } from 'idb-keyval';
 import { useOntologyStore, SEED_TURTLE } from '@/store/ontologyStore';
 import { useSourcesStore, migrateSource } from '@/store/sourcesStore';
 import { useMappingStore } from '@/store/mappingStore';
+import { useValidationStore } from '@/store/validationStore';
 import { parseTurtle } from '@/lib/rdf';
 import type { Mapping, MappingGroup, ProjectFile } from '@/types/index';
 
@@ -124,6 +125,11 @@ export function useAutoSave() {
         console.warn('[useAutoSave] Skipping malformed mappings from IDB');
       }
 
+      // Restore validation shapes ──────────────────────────────────────────────
+      useValidationStore
+        .getState()
+        .hydrate({ userShapesTurtle: saved.userShapesTurtle });
+
       hydratedRef.current = true;
     });
   }, []);
@@ -160,6 +166,8 @@ export function useAutoSave() {
             activeSourceId: sourcesState.activeSourceId,
             mappings,
             groups,
+            userShapesTurtle: useValidationStore.getState().snapshot()
+              .userShapesTurtle,
             timestamp: new Date().toISOString(),
           };
           await set(IDB_KEY, snapshot);
@@ -186,11 +194,16 @@ export function useAutoSave() {
       scheduleSave();
     });
 
+    const unsubValidation = useValidationStore.subscribe(() => {
+      scheduleSave();
+    });
+
     // Cleanup on unmount (R-02)
     return () => {
       unsubOntology();
       unsubSources();
       unsubMapping();
+      unsubValidation();
       if (debounceTimer.current !== null) {
         clearTimeout(debounceTimer.current);
         debounceTimer.current = null;

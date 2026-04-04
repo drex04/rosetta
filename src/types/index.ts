@@ -118,5 +118,6 @@ export interface ProjectFile {
   activeSourceId?: string | null;
   mappings: Record<string, Mapping[]>;
   groups?: Record<string, MappingGroup[]>;
+  userShapesTurtle?: string;
   timestamp: string;
 }
