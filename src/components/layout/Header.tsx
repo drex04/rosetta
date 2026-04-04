@@ -68,7 +68,11 @@ function resetAllStores(): void {
 
 // ─── Header ───────────────────────────────────────────────────────────────────
 
-export function Header() {
+interface HeaderProps {
+  onAboutClick: () => void;
+}
+
+export function Header({ onAboutClick }: HeaderProps) {
   const turtleSource = useOntologyStore((s) => s.turtleSource);
   const nodes = useOntologyStore((s) => s.nodes);
   const setTurtleSource = useOntologyStore((s) => s.setTurtleSource);
@@ -360,6 +364,7 @@ export function Header() {
             size="sm"
             className="text-slate-300 hover:text-white hover:bg-slate-700"
             aria-label="About Rosetta"
+            onClick={onAboutClick}
           >
             <InfoIcon size={13} />
             About
