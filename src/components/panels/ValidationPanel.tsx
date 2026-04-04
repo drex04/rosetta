@@ -146,7 +146,7 @@ export function ValidationPanel() {
               Validate
             </Button>
           </div>
-          <AccordionContent className="flex flex-col flex-1 min-h-0 pb-0 data-[state=open]:flex-1">
+          <AccordionContent className="flex flex-col flex-1 min-h-0 pb-0 data-[state=open]:flex data-[state=open]:flex-col data-[state=open]:flex-1">
             <div className="flex flex-col flex-1 overflow-y-auto px-3 pb-3 gap-2">
               {/* Error state */}
               {error && (

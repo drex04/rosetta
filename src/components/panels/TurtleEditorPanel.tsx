@@ -1,7 +1,8 @@
-import { useEffect, useRef, type RefObject } from 'react';
+import { useEffect, useRef, useState, type RefObject } from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { DownloadSimpleIcon } from '@phosphor-icons/react';
+import { DownloadSimpleIcon, UploadSimpleIcon } from '@phosphor-icons/react';
+import { parseOntologyFile } from '@/lib/parseOntologyFile';
 import { EditorView } from '@codemirror/view';
 import { EditorState } from '@codemirror/state';
 import { lineNumbers, highlightActiveLine } from '@codemirror/view';
@@ -32,6 +33,8 @@ interface TurtleEditorPanelProps {
   filename?: string;
   /** Label for the download button. Defaults to 'Download .ttl'. */
   downloadLabel?: string;
+  /** Called with parsed Turtle when user uploads a file. If provided, Upload button is shown. */
+  onUpload?: (turtle: string) => void;
 }
 
 export function TurtleEditorPanel({
@@ -41,9 +44,12 @@ export function TurtleEditorPanel({
   isCanvasSyncPending,
   filename,
   downloadLabel,
+  onUpload,
 }: TurtleEditorPanelProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
+  const uploadInputRef = useRef<HTMLInputElement>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   // Track whether a programmatic update is in flight so we don't echo it back
   const isExternalUpdate = useRef(false);
 
@@ -104,27 +110,73 @@ export function TurtleEditorPanel({
     isExternalUpdate.current = false;
   }, [turtleSource]);
 
+  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    // Reset input so same file can be re-uploaded
+    e.target.value = '';
+    try {
+      const turtle = await parseOntologyFile(file);
+      onUpload!(turtle);
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : String(err));
+    }
+  }
+
   return (
     <div className="flex flex-col h-full">
       <div className="shrink-0 flex items-center justify-between px-3 py-1.5 border-b border-border bg-muted/20">
         <span className="text-sm text-muted-foreground font-mono">
           {filename ?? 'ontology.ttl'}
         </span>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() =>
-            downloadBlob(
-              turtleSource,
-              filename ?? 'ontology.ttl',
-              'text/turtle',
-            )
-          }
-        >
-          <DownloadSimpleIcon size={12} />
-          {downloadLabel ?? 'Download .ttl'}
-        </Button>
+        <div className="flex items-center gap-1">
+          {onUpload && (
+            <>
+              <input
+                ref={uploadInputRef}
+                type="file"
+                accept=".ttl,.rdf,.jsonld"
+                className="hidden"
+                onChange={handleUpload}
+              />
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 px-2 text-xs"
+                onClick={() => {
+                  setUploadError(null);
+                  uploadInputRef.current?.click();
+                }}
+              >
+                <UploadSimpleIcon size={12} className="mr-1" />
+                Upload
+              </Button>
+            </>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              downloadBlob(
+                turtleSource,
+                filename ?? 'ontology.ttl',
+                'text/turtle',
+              )
+            }
+          >
+            <DownloadSimpleIcon size={12} />
+            {downloadLabel ?? 'Download .ttl'}
+          </Button>
+        </div>
       </div>
+      {uploadError && (
+        <Alert
+          variant="destructive"
+          className="shrink-0 rounded-none border-x-0 text-sm"
+        >
+          <AlertDescription>{uploadError}</AlertDescription>
+        </Alert>
+      )}
       <div
         ref={containerRef}
         className="flex-1 overflow-hidden"

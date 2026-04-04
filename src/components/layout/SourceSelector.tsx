@@ -1,6 +1,5 @@
 import { useRef, useState } from 'react';
 import { PlusIcon } from '@phosphor-icons/react';
-import { Button } from '@/components/ui/button';
 import { useSourcesStore, generateSourceId } from '@/store/sourcesStore';
 import { useMappingStore } from '@/store/mappingStore';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
@@ -134,28 +133,28 @@ export function SourceSelector() {
           const isEditing = editingId === source.id;
 
           return (
-            <div key={source.id} className="flex items-center shrink-0 gap-0.5">
-              <Button
-                variant="secondary"
-                size="sm"
-                className={[
-                  'h-6 px-2.5 text-sm font-medium select-none transition-colors',
-                  isActive
-                    ? 'bg-source/10 text-source-text border border-source/40 hover:bg-source/15'
-                    : '',
-                ].join(' ')}
-                onClick={() => setActiveSourceId(source.id)}
-                onDoubleClick={() => {
-                  setActiveSourceId(source.id);
-                  startEditing(source.id, source.name);
-                  requestAnimationFrame(() => {
-                    inputRef.current?.focus();
-                    inputRef.current?.select();
-                  });
-                }}
-                aria-label={`Select source ${source.name}`}
-                aria-current={isActive ? 'true' : undefined}
-              >
+            <div
+              key={source.id}
+              className={[
+                'group flex items-center shrink-0 h-6 rounded border transition-colors cursor-pointer select-none',
+                isActive
+                  ? 'bg-source/10 border-source/40 text-source-text hover:bg-source/15'
+                  : 'bg-muted/50 border-border text-foreground hover:bg-muted',
+              ].join(' ')}
+              onClick={() => setActiveSourceId(source.id)}
+              onDoubleClick={() => {
+                setActiveSourceId(source.id);
+                startEditing(source.id, source.name);
+                requestAnimationFrame(() => {
+                  inputRef.current?.focus();
+                  inputRef.current?.select();
+                });
+              }}
+              aria-label={`Select source ${source.name}`}
+              aria-current={isActive ? 'true' : undefined}
+            >
+              {/* Name area */}
+              <span className="px-2.5 text-sm font-medium">
                 {isEditing ? (
                   <input
                     ref={inputRef}
@@ -169,14 +168,10 @@ export function SourceSelector() {
                 ) : (
                   source.name
                 )}
-              </Button>
+              </span>
+              {/* Delete button — integrated in chip */}
               <button
-                className={[
-                  'flex items-center justify-center size-4 rounded text-sm leading-none border-none p-0 cursor-pointer transition-colors',
-                  isActive
-                    ? 'text-source/60 hover:text-source-text hover:bg-source/20'
-                    : 'text-muted-foreground/50 hover:text-muted-foreground hover:bg-muted',
-                ].join(' ')}
+                className="pr-1.5 pl-0.5 text-sm opacity-40 hover:opacity-100 transition-opacity"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleDeleteClick(source.id, source.name, source.rawData);
