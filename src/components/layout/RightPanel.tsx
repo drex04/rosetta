@@ -121,14 +121,14 @@ export function RightPanel({
                   className="flex-1 tracking-wide text-xs"
                   aria-label="Source tab"
                 >
-                  SOURCE
+                  LOAD
                 </TabsTrigger>
                 <TabsTrigger
                   value="ONTOLOGY"
                   className="flex-1 tracking-wide text-xs"
                   aria-label="Ontology tab"
                 >
-                  ONTOLOGY
+                  BUILD
                 </TabsTrigger>
                 <TabsTrigger
                   value="MAP"
@@ -142,14 +142,14 @@ export function RightPanel({
                   className="flex-1 tracking-wide text-xs"
                   aria-label="Output tab"
                 >
-                  OUTPUT
+                  FUSE
                 </TabsTrigger>
                 <TabsTrigger
                   value="VALIDATE"
                   className="flex-1 tracking-wide text-xs"
                   aria-label="SHACL validation tab"
                 >
-                  SHACL
+                  CHECK
                 </TabsTrigger>
               </TabsList>
             </div>
