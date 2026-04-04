@@ -194,8 +194,12 @@ export function useAutoSave() {
       scheduleSave();
     });
 
-    const unsubValidation = useValidationStore.subscribe(() => {
-      scheduleSave();
+    let prevShapesTurtle = useValidationStore.getState().userShapesTurtle;
+    const unsubValidation = useValidationStore.subscribe((s) => {
+      if (s.userShapesTurtle !== prevShapesTurtle) {
+        prevShapesTurtle = s.userShapesTurtle;
+        scheduleSave();
+      }
     });
 
     // Cleanup on unmount (R-02)

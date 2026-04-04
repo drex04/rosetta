@@ -178,6 +178,8 @@ export function Header() {
       sources: sourcesState.sources,
       activeSourceId: sourcesState.activeSourceId,
       mappings,
+      userShapesTurtle: useValidationStore.getState().snapshot()
+        .userShapesTurtle,
       timestamp: new Date().toISOString(),
     };
     downloadBlob(
@@ -243,6 +245,11 @@ export function Header() {
                     >)
                   : undefined;
               useMappingStore.getState().hydrate(parsed.mappings, groups);
+            }
+            if (typeof parsed.userShapesTurtle === 'string') {
+              useValidationStore
+                .getState()
+                .hydrate({ userShapesTurtle: parsed.userShapesTurtle });
             }
             setImportError(null);
           })
