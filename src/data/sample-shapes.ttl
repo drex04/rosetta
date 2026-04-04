@@ -1,0 +1,66 @@
+# Example NATO air defense SHACL shapes
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix nato: <http://nato.int/onto#> .
+
+nato:AirTrackShape a sh:NodeShape ;
+  sh:targetClass nato:AirTrack ;
+
+  # Track number — required identifier
+  sh:property [
+    sh:path nato:trackNumber ;
+    sh:minCount 1 ;
+    sh:datatype xsd:string ;
+    sh:name "Track Number" ;
+  ] ;
+
+  # Timestamp — required on every track report
+  sh:property [
+    sh:path nato:timestamp ;
+    sh:minCount 1 ;
+    sh:datatype xsd:string ;
+    sh:name "Timestamp" ;
+  ] ;
+
+  # Speed — numeric, knots
+  sh:property [
+    sh:path nato:speed ;
+    sh:datatype xsd:float ;
+    sh:name "Speed" ;
+  ] ;
+
+  # Latitude — numeric, degrees
+  sh:property [
+    sh:path nato:latitude ;
+    sh:datatype xsd:float ;
+    sh:name "Latitude" ;
+  ] ;
+
+  # Longitude — numeric, degrees
+  sh:property [
+    sh:path nato:longitude ;
+    sh:datatype xsd:float ;
+    sh:name "Longitude" ;
+  ] ;
+
+  # Altitude — numeric, feet
+  sh:property [
+    sh:path nato:altitude ;
+    sh:datatype xsd:float ;
+    sh:name "Altitude" ;
+  ] ;
+
+  # IFF code — constrained to valid NATO IFF designators
+  sh:property [
+    sh:path nato:iffCode ;
+    sh:datatype xsd:string ;
+    sh:pattern "^(FRI|HOS|UNK|SUS)$" ;
+    sh:name "IFF Code" ;
+  ] ;
+
+  # Sensor name — free string
+  sh:property [
+    sh:path nato:sensorName ;
+    sh:datatype xsd:string ;
+    sh:name "Sensor Name" ;
+  ] .

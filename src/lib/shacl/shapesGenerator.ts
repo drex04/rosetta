@@ -1,5 +1,6 @@
 import * as N3 from 'n3';
 import type { OntologyNode } from '../../types';
+import { localName } from '../rdf';
 
 const SH = 'http://www.w3.org/ns/shacl#';
 const RDF_TYPE = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type';
@@ -73,4 +74,29 @@ export function generateShapes(ontologyNodes: OntologyNode[]): N3.Store {
   }
 
   return store;
+}
+
+export async function generateShapesTurtle(
+  nodes: OntologyNode[],
+): Promise<string> {
+  const blocks: string[] = [];
+
+  for (const node of nodes) {
+    const classUri = node.data.uri;
+    if (!classUri) continue;
+
+    const store = generateShapes([node]);
+
+    const writer = new N3.Writer({ prefixes: { sh: SH, xsd: XSD } });
+    store.forEach((q) => writer.addQuad(q));
+    const turtleStr = await new Promise<string>((res, rej) =>
+      writer.end((err, result) => (err ? rej(err) : res(result))),
+    );
+
+    blocks.push(
+      `# Auto-generated — derived from ${localName(classUri)}\n${turtleStr}`,
+    );
+  }
+
+  return blocks.join('\n\n');
 }

@@ -28,6 +28,10 @@ interface TurtleEditorPanelProps {
   /** Ref set to true during the 100ms canvas→editor debounce window. When true,
    *  user keystrokes are suppressed to prevent overwrite races. */
   isCanvasSyncPending?: RefObject<boolean>;
+  /** Filename shown in the header and used for downloads. Defaults to 'ontology.ttl'. */
+  filename?: string;
+  /** Label for the download button. Defaults to 'Download .ttl'. */
+  downloadLabel?: string;
 }
 
 export function TurtleEditorPanel({
@@ -35,6 +39,8 @@ export function TurtleEditorPanel({
   onEditorChange,
   parseError,
   isCanvasSyncPending,
+  filename,
+  downloadLabel,
 }: TurtleEditorPanelProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
@@ -102,17 +108,21 @@ export function TurtleEditorPanel({
     <div className="flex flex-col h-full">
       <div className="shrink-0 flex items-center justify-between px-3 py-1.5 border-b border-border bg-muted/20">
         <span className="text-sm text-muted-foreground font-mono">
-          ontology.ttl
+          {filename ?? 'ontology.ttl'}
         </span>
         <Button
           variant="outline"
           size="sm"
           onClick={() =>
-            downloadBlob(turtleSource, 'ontology.ttl', 'text/turtle')
+            downloadBlob(
+              turtleSource,
+              filename ?? 'ontology.ttl',
+              'text/turtle',
+            )
           }
         >
           <DownloadSimpleIcon size={12} />
-          Download .ttl
+          {downloadLabel ?? 'Download .ttl'}
         </Button>
       </div>
       <div

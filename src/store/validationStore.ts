@@ -1,8 +1,10 @@
 import { create } from 'zustand';
 import { validateSource, type ViolationRecord } from '../lib/shacl/index';
+import { generateShapesTurtle } from '../lib/shacl/shapesGenerator';
 import { useSourcesStore } from './sourcesStore';
 import { useOntologyStore } from './ontologyStore';
 import { useMappingStore } from './mappingStore';
+import type { OntologyNode } from '../types';
 
 interface ValidationState {
   results: Record<string, ViolationRecord[]>;
@@ -11,11 +13,16 @@ interface ValidationState {
   error: string | null;
   lastRun: number | null;
   highlightedCanvasNodeId: string | null;
+  userShapesTurtle: string;
 
   runValidation: () => Promise<void>;
   setStale: (stale: boolean) => void;
   reset: () => void;
   setHighlightedCanvasNodeId: (id: string | null) => void;
+  setUserShapesTurtle: (turtle: string) => void;
+  resetShapesToAuto: (ontologyNodes: OntologyNode[]) => Promise<void>;
+  snapshot: () => { userShapesTurtle: string };
+  hydrate: (s: { userShapesTurtle?: unknown }) => void;
 }
 
 export const useValidationStore = create<ValidationState>()((set, get) => ({
@@ -25,6 +32,7 @@ export const useValidationStore = create<ValidationState>()((set, get) => ({
   error: null,
   lastRun: null,
   highlightedCanvasNodeId: null,
+  userShapesTurtle: '',
 
   runValidation: async () => {
     if (get().loading) return;
@@ -44,6 +52,7 @@ export const useValidationStore = create<ValidationState>()((set, get) => ({
           source,
           ontologyNodes,
           getMappingsForSource(source.id),
+          get().userShapesTurtle,
         );
         results[source.id] = violations as ViolationRecord[];
       } catch (e: unknown) {
@@ -75,6 +84,24 @@ export const useValidationStore = create<ValidationState>()((set, get) => ({
     }),
 
   setHighlightedCanvasNodeId: (id) => set({ highlightedCanvasNodeId: id }),
+
+  setUserShapesTurtle: (turtle) => set({ userShapesTurtle: turtle }),
+
+  resetShapesToAuto: async (ontologyNodes) => {
+    try {
+      const t = await generateShapesTurtle(ontologyNodes);
+      set({ userShapesTurtle: t });
+    } catch {
+      // leave unchanged on error
+    }
+  },
+
+  snapshot: () => ({ userShapesTurtle: get().userShapesTurtle }),
+
+  hydrate: (s) => {
+    if (typeof s.userShapesTurtle === 'string')
+      set({ userShapesTurtle: s.userShapesTurtle });
+  },
 }));
 
 export function subscribeValidationToMappings(): () => void {
