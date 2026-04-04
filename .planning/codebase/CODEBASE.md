@@ -1,156 +1,141 @@
 # Codebase Reference
 
-**Mapped:** 2026-03-31
+**Mapped:** 2026-04-04
 
 ## Structure — Where to Put New Code
 
 ### Directory Layout
 ```
-src/
-├── components/       # React components (canvas, nodes, edges, panels, layout, ui)
-├── store/            # Zustand stores (ontology, sources, mappings, validation, ui)
-├── lib/              # RDF processing, SPARQL, SHACL, JSON→RDF utilities
-├── hooks/            # Custom React hooks (useAutoSave, useOntologySync, useCanvasData)
-├── types/            # TypeScript interfaces (index.ts is the single source of truth)
-├── data/             # Sample project bundles (NATO air defense scenario)
-├── assets/           # Static assets (icons, images)
-└── __tests__/        # Vitest unit tests
+rosetta/
+├── src/
+│   ├── App.tsx                  # Root component; wires hooks + layout
+│   ├── main.tsx                 # Vite entry point
+│   ├── components/
+│   │   ├── canvas/              # React Flow canvas + context menus
+│   │   ├── edges/               # Custom edge types (subclass, object property, mapping)
+│   │   ├── layout/              # Shell chrome: Header, RightPanel, SourceSelector, StatusBar
+│   │   ├── nodes/               # Custom node types (ClassNode, SourceNode)
+│   │   ├── panels/              # Tab panel content (Mapping, Output, Source, Turtle, Validation)
+│   │   └── ui/                  # shadcn/ui primitives + local overrides
+│   ├── store/                   # Zustand stores (one file per domain)
+│   ├── lib/                     # Pure RDF/SPARQL/SHACL utilities + format converters
+│   │   └── shacl/               # SHACL sub-utilities (validator, shapes, instances, CONSTRUCT)
+│   ├── hooks/                   # Custom React hooks (sync, persistence, invalidation)
+│   ├── types/                   # Shared TypeScript interfaces and type aliases
+│   ├── data/                    # Static seed data (NATO air defense scenario bundle)
+│   └── __tests__/               # Vitest unit tests
+├── e2e/                         # Playwright end-to-end tests
+└── public/                      # Static assets
 ```
 
 ### Placement Rules
-- **New canvas-related component:** `src/components/canvas/{FeatureName}.tsx`
-- **New node type:** `src/components/nodes/{NodeType}.tsx` + register in `nodeTypes` object in `OntologyCanvas.tsx`
-- **New edge type:** `src/components/edges/{EdgeType}.tsx` + register in `edgeTypes` object in `OntologyCanvas.tsx`
-- **New panel/editor:** `src/components/panels/{PanelName}.tsx` + wire into `RightPanel.tsx` tabs
-- **New Zustand store:** `src/store/{featureName}Store.ts` following the `create<StoreState>((set, get) => ({...}))` pattern
-- **New RDF/SPARQL utility:** `src/lib/{feature}.ts` — use N3.js for parsing/writing, Comunica for SPARQL queries
-- **New hook:** `src/hooks/use{HookName}.ts` — follow the pattern of `useAutoSave`, `useOntologySync`
-- **New UI component:** `src/components/ui/{component-name}.tsx` — shadcn/ui preset is `bcivVKZU`, icons are Phosphor
-- **Tests:** `src/__tests__/{moduleUnderTest}.test.ts{x}` — Vitest; E2E tests in `e2e/` with Playwright
+- **New feature UI component:** `src/components/panels/` (tab panel) or `src/components/canvas/` (canvas overlay)
+- **New reusable primitive:** `src/components/ui/` (shadcn pattern — functional, no business logic)
+- **New canvas node type:** `src/components/nodes/`
+- **New canvas edge type:** `src/components/edges/`
+- **New Zustand store:** `src/store/{domain}Store.ts`
+- **New RDF/SPARQL/SHACL utility:** `src/lib/{utilityName}.ts`
+- **New React hook:** `src/hooks/use{HookName}.ts`
+- **New shared type:** `src/types/index.ts` (single barrel file)
+- **New unit test:** `src/__tests__/{subject}.test.ts`
+- **New E2E test:** `e2e/{subject}.spec.ts`
 
 ### Key Entry Points
-- `src/App.tsx`: Main app component, orchestrates Header, SourceSelector, OntologyCanvas, RightPanel
-- `src/components/canvas/OntologyCanvas.tsx`: React Flow canvas, node/edge types, sync hooks
-- `src/store/ontologyStore.ts`: Master ontology state (nodes, edges, Turtle source, parse errors)
-- `src/store/mappingStore.ts`: Mappings indexed by sourceId; handles idempotent add (RD-04)
-- `src/lib/rdf.ts`: RDF utilities — `localName()`, `prefixFromUri()`, `shortenUri()` — **never re-implement**
-- `src/hooks/useAutoSave.ts`: IDB persistence pattern with type guards; restores on mount
-- `src/hooks/useOntologySync.ts`: Bidirectional editor↔canvas sync with `isUpdatingFrom*` flags
+- `src/main.tsx`: Vite mount point
+- `src/App.tsx`: Root layout, hook wiring, canvas↔editor sync coordination
+- `src/hooks/useAutoSave.ts`: IDB persistence — hydrates all stores on mount, debounced save on any store change
+- `src/store/ontologyStore.ts`: Master ontology state (nodes, edges, turtleSource)
 
 ## Conventions — Which Patterns to Follow
 
 ### Naming
-- **Files:** `kebab-case.ts` for utilities, `PascalCase.tsx` for React components
-- **Functions:** `camelCase`; event handlers prefix with `handle` (e.g., `handleCanvasChange`)
-- **React hooks:** `use{FeatureName}` (e.g., `useAutoSave`, `useOntologySync`)
-- **Zustand stores:** `use{Feature}Store` (e.g., `useOntologyStore`, `useMappingStore`)
-- **Store getters:** `(s) => s.propertyName` — use selector shorthand
-- **Zustand actions:** verb phrase (e.g., `addMapping`, `removeMapping`, `setSelectedMappingId`, `hydrate`)
+- **Files:** `camelCase.ts` / `PascalCase.tsx` for components
+- **Components:** `PascalCase` named exports (no default exports from components)
+- **Hooks:** `use` prefix, `camelCase` — e.g. `useAutoSave`, `useOntologySync`
+- **Stores:** `use{Domain}Store` — e.g. `useOntologyStore`, `useMappingStore`
+- **Event handlers (props):** `on` prefix — e.g. `onCanvasChange`, `onEditorChange`
+- **Internal handlers:** `handle` prefix — e.g. `handleCanvasChange`
+- **Types/Interfaces:** `PascalCase`, interfaces preferred over `type` for object shapes
+- **Constants:** `SCREAMING_SNAKE_CASE` — e.g. `SEED_TURTLE`, `IDB_KEY`, `COLUMN_X_MASTER`
 
 ### Code Style
-- **Formatting:** ESLint + React hooks + TypeScript strict rules (no config for prettier)
-- **Imports:** Path aliases via `@/*` (tsconfig baseUrl); group by: external, internal, types. Never re-implement `localName` — always import from `src/lib/rdf.ts` (RD-01)
-- **Error handling:**
-  - RDF parsing: try/catch → `setParseError()` → preserve raw Turtle in state
-  - IDB restore: type guards validate element shape (e.g., `typeof m.id === 'string'`), not just `Array.isArray()`
-  - Failed restores: `setSaveStatus('error')`, log to console, don't crash
-- **Exports:** Named exports for utilities, default export for React components
-- **Zustand state updates:** Immutable — spread objects (`...s`), filter/map arrays, never mutate
-- **Circular sync prevention:** Use `isUpdatingFrom*` ref flags (e.g., `hasPendingEdits.current`)
+- **Formatting:** Prettier (enforced via lint); no trailing commas in function params
+- **Imports:** Path alias `@/` maps to `src/`; type imports use `import type {}`; React hooks first, then stores, then lib, then types
+- **Section dividers:** `// ─── Section Name ───...` comments to separate logical blocks within a file
+- **Error handling:** `try/catch` with `console.warn` for recoverable IDB/parse failures; `setSaveStatus('error')` on persistence failure; `(e as Error)?.message` pattern for unknown errors
+- **Async:** `void` prefix on floating promises; `async/await` inside `useEffect` via IIFE `void (async () => { ... })()`
+- **Exports:** Named exports throughout; `export default` only in `App.tsx` and route-level files
+- **Text size:** Default `text-sm`; shadcn Button default `size="sm"`
 
-### Example Pattern
+### Example Pattern — Zustand store
 ```typescript
-// src/lib/example.ts
-import { localName, prefixFromUri } from './rdf'
-
-export function derivePrefix(uri: string): string {
-  return prefixFromUri(uri)
-}
-
 // src/store/exampleStore.ts
-import { create } from 'zustand'
+import { create } from 'zustand';
+import type { SomeType } from '@/types/index';
+
+// ─── Store interface ──────────────────────────────────────────────────────────
 
 interface ExampleState {
-  items: Record<string, Item[]>
-  selectedId: string | null
-  addItem: (item: Omit<Item, 'id'>) => string
-  setSelectedId: (id: string | null) => void
-  hydrate: (items: Record<string, Item[]>) => void
+  items: SomeType[];
+  setItems: (items: SomeType[]) => void;
+  hydrate: (items: SomeType[]) => void;  // resets selection state too
+  reset: () => void;
 }
 
-export const useExampleStore = create<ExampleState>((set, get) => ({
-  items: {},
-  selectedId: null,
-  addItem: (item) => {
-    const id = crypto.randomUUID()
-    set((s) => ({
-      items: { ...s.items, key: [...(s.items.key ?? []), { ...item, id }] }
-    }))
-    return id
-  },
-  setSelectedId: (id) => set({ selectedId: id }),
-  hydrate: (items) => set({ items }),
-}))
+export const useExampleStore = create<ExampleState>((set) => ({
+  items: [],
+  setItems: (items) => set({ items }),
+  hydrate: (items) => set({ items, selectedId: null }),
+  reset: () => set({ items: [] }),
+}));
 ```
+
+### Canvas Color Semantics (never break)
+- **Amber nodes:** source data nodes
+- **Blue nodes:** master ontology nodes
+- **Dashed green edges:** mapping edges
 
 ## Architecture — How Layers Connect
 
 ### Pattern Overview
-**Modular canvas + polyglot RDF processing.**
-
-React Flow manages node/edge placement; Zustand stores own all state; RDF lib handles N3.js/Comunica/SHACL independently; IDB persists via `useAutoSave`; sync hooks prevent circular updates.
+**Client-only layered architecture** — no backend. All RDF processing in-browser via N3.js, SPARQL via Comunica against N3.Store, SHACL via rdf-validate-shacl.
 
 ### Layer Dependencies
 ```
-UI Components (React Flow, shadcn/ui)
-  ↓
-Zustand Stores (ontology, sources, mappings, validation, ui)
-  ↓
-RDF Lib (N3.js, Comunica, SHACL)
-  ↓
-Data Serialization (Turtle, JSON→RDF)
+components/ → store/ → lib/ → (N3, Comunica, rdf-validate-shacl)
+hooks/      → store/ + lib/
+components/ → hooks/
+App.tsx     → components/ + hooks/ + store/
+types/      ← imported by all layers (no outbound deps)
 ```
-
-- **React components** depend on: Zustand stores, custom hooks, lib utilities
-- React components **NEVER** import from other components (except ui/ subcomponents)
-- **Zustand stores** depend on: lib utilities, other stores (validation subscribes to mappings)
-- Stores **NEVER** import React
-- **lib/** is pure TypeScript — no React, no Zustand state (takes data as args)
+- `lib/` is pure — no store imports, no React
+- `store/` imports from `lib/` only (never from `components/` or `hooks/`)
+- `components/` reads store via hooks; writes via store actions
+- `hooks/` may import multiple stores and lib utilities
 
 ### Data Flow
 
-**Ontology Loading:**
-1. User loads Turtle file → `OntologyCanvas` → `useOntologyStore.loadTurtle()`
-2. `loadTurtle()` calls `parseTurtle()` (lib) → N3.js parses → extract classes/properties → update nodes/edges
+**Canvas ↔ Turtle Editor sync:**
+1. User edits Turtle → `useOntologySync.onEditorChange` → `parseTurtle` (lib) → `ontologyStore.setNodes/setEdges`
+2. User drags canvas → `OntologyCanvas.onCanvasChange` → `App.handleCanvasChange` → `useOntologySync.onCanvasChange` → serialize to Turtle → `ontologyStore.setTurtleSource`
+3. Circular update prevention: `isUpdatingFromEditor` / `isUpdatingFromCanvas` ref flags in `useOntologySync`
 
-**Mapping Creation:**
-1. User connects canvas handles → `OntologyCanvas.onConnect()` → `addMapping()`
-2. `addMapping()` checks idempotence (RD-04) → store mutation → validation triggered
-3. Validation store auto-subscribes to mappings changes → reruns SHACL validation
+**Persistence (IDB):**
+1. Mount: `useAutoSave` reads `rosetta-project` key from IndexedDB → validates with type guards → hydrates all stores
+2. Change: any store subscription fires → debounced 500ms → snapshot all stores → `idb-keyval.set`
 
-**Persistence:**
-1. `useAutoSave` subscribes to all stores on mount
-2. On change, debounce 500ms → snapshot to IDB as `ProjectFile` (ontology + sources + mappings)
-3. On reload, restore from IDB → parse Turtle → restore node positions → hydrate stores
-
-**Bidirectional Sync (Editor ↔ Canvas):**
-1. Editor change → `onEditorChange()` → `isUpdatingFromEditor.current = true` → `loadTurtle()` → parse
-2. Canvas change → `onCanvasChange()` → if `hasPendingEdits.current`, queue update, else sync to Turtle source
-3. Flags prevent infinite loops during paint
+**Mapping pipeline:**
+1. Source schema parsed by `jsonToSchema` / `xmlToSchema` → `sourcesStore`
+2. User draws mapping edge → `mappingStore` records `{sourceFieldUri, targetPropUri}`
+3. `rml.ts` / `rmlExecute.ts` generate RML + execute transform → `fusionStore` holds output RDF
 
 ### State Management
-
-- **Ontology:** `src/store/ontologyStore.ts` — Turtle source, nodes, edges, parse error
-- **Sources:** `src/store/sourcesStore.ts` — RDF source files, URI prefixes
-- **Mappings:** `src/store/mappingStore.ts` — transformations (direct, template, constant, typecast, language, join, SPARQL), indexed by sourceId
-- **Validation:** `src/store/validationStore.ts` — SHACL validation reports, auto-triggered on mapping changes
-- **UI:** `src/store/uiStore.ts` — active tabs, right panel collapsed state, highlighted canvas nodes
-- **Persistence:** IDB key `rosetta-project` stores serialized `ProjectFile`
+- One Zustand store per domain: `ontologyStore`, `sourcesStore`, `mappingStore`, `validationStore`, `fusionStore`, `uiStore`
+- Stores are subscribed to externally by `useAutoSave`; cross-store coordination in `App.tsx` or dedicated hooks
+- `hydrate` actions always reset related selection state to prevent stale pointers after IDB restore
 
 ### Key Abstractions
-
-- **ClassData** at `src/types/index.ts`: Core domain model — label, URI, prefix, properties (PropertyData[])
-- **Mapping** at `src/types/index.ts`: Transformation rule — source+target class/prop, kind (direct/template/constant/typecast/language/join/sparql), kind-specific fields
-- **Node handle IDs:** Canvas handle IDs encode property info (e.g., `prop_trackId`, `target_prop_identifier`). **Always store handles directly from connection event** (RD-02). Use `localName()` to extract property labels for display.
-- **Canvas color semantics (never change):** Amber = source nodes, Blue = master ontology, dashed green = mapping edges
-- **RDF constants:** All URIs use full namespace (http://...) in N3 Store; shortening (`owl:Class`) is display-only
+- `localName(uri)` at `src/lib/rdf.ts`: extracts local name from any URI — always import this, never reimplement
+- `parseTurtle(text)` at `src/lib/rdf.ts`: parses Turtle → `{ nodes, edges }` for the canvas
+- `ProjectFile` at `src/types/index.ts`: the IDB snapshot shape (version, ontology, sources, mappings, groups)
+- `useAutoSave` at `src/hooks/useAutoSave.ts`: single hook owns all IDB read/write; mount in `App.tsx` only
