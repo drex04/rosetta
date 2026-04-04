@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Tabs } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
   Accordion,
   AccordionContent,
@@ -93,7 +93,8 @@ function FusedTab() {
           {jsonLd && (
             <Button
               variant="ghost"
-              size="icon"
+              size="sm"
+              className="h-6 px-2 text-xs"
               title="Download JSON-LD"
               onClick={() =>
                 downloadBlob(
@@ -103,7 +104,8 @@ function FusedTab() {
                 )
               }
             >
-              <DownloadSimpleIcon size={14} />
+              <DownloadSimpleIcon size={12} className="mr-1" />
+              Download JSON-LD
             </Button>
           )}
         </div>
@@ -217,15 +219,16 @@ function ExportTab() {
               <span className="flex-1 text-left">RML</span>
               <Button
                 variant="ghost"
-                size="icon"
-                className="h-6 w-6 shrink-0 mr-1"
+                size="sm"
+                className="h-6 px-2 text-xs shrink-0 mr-1"
                 title="Download RML"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleDownloadRml();
                 }}
               >
-                <DownloadSimpleIcon size={14} />
+                <DownloadSimpleIcon size={12} className="mr-1" />
+                Download RML
               </Button>
             </AccordionTrigger>
             <AccordionContent className="p-0">
@@ -244,15 +247,16 @@ function ExportTab() {
               <span className="flex-1 text-left">YARRRML</span>
               <Button
                 variant="ghost"
-                size="icon"
-                className="h-6 w-6 shrink-0 mr-1"
+                size="sm"
+                className="h-6 px-2 text-xs shrink-0 mr-1"
                 title="Download YARRRML"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleDownloadYarrrml();
                 }}
               >
-                <DownloadSimpleIcon size={14} />
+                <DownloadSimpleIcon size={12} className="mr-1" />
+                Download YARRRML
               </Button>
             </AccordionTrigger>
             <AccordionContent className="p-0">
@@ -273,11 +277,23 @@ function ExportTab() {
 
 export function OutputPanel() {
   return (
-    <Tabs className="flex flex-col h-full gap-0">
-      <div className="shrink-0 px-3 py-2 border-b border-border">
-        <ExportTab />
-        <FusedTab />
+    <Tabs defaultValue="fuse" className="flex flex-col h-full gap-0">
+      <div className="shrink-0 px-3 py-1.5 border-b border-border">
+        <TabsList variant="line" className="w-full gap-0">
+          <TabsTrigger value="fuse" className="flex-1 tracking-wide text-xs">
+            Fuse
+          </TabsTrigger>
+          <TabsTrigger value="export" className="flex-1 tracking-wide text-xs">
+            Export
+          </TabsTrigger>
+        </TabsList>
       </div>
+      <TabsContent value="fuse" className="flex-1 min-h-0 m-0">
+        <FusedTab />
+      </TabsContent>
+      <TabsContent value="export" className="flex-1 min-h-0 m-0">
+        <ExportTab />
+      </TabsContent>
     </Tabs>
   );
 }

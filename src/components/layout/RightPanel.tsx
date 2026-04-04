@@ -26,6 +26,7 @@ export function RightPanel({
 }: RightPanelProps) {
   const { activeRightTab, setActiveRightTab } = useUiStore();
   const turtleSource = useOntologyStore((s) => s.turtleSource);
+  const setTurtleSource = useOntologyStore((s) => s.setTurtleSource);
   const parseError = useOntologyStore((s) => s.parseError);
   const [collapsed, setCollapsed] = useState(false);
   const [width, setWidth] = useState(() => Math.round(window.innerWidth * 0.3));
@@ -105,7 +106,7 @@ export function RightPanel({
                 v as 'SOURCE' | 'ONTOLOGY' | 'MAP' | 'OUTPUT' | 'VALIDATE',
               )
             }
-            className="flex flex-col h-full gap-0"
+            className="flex flex-col flex-1 min-h-0 gap-0"
           >
             <div className="px-2 shrink-0 flex items-center gap-1">
               <button
@@ -163,6 +164,10 @@ export function RightPanel({
                   onEditorChange={onEditorChange}
                   parseError={parseError}
                   isCanvasSyncPending={isCanvasSyncPending}
+                  onUpload={(turtle) => {
+                    setTurtleSource(turtle);
+                    onEditorChange(turtle);
+                  }}
                 />
               </TabsContent>
               <TabsContent value="MAP" className="h-full m-0">

@@ -11,13 +11,6 @@ import {
 } from '@phosphor-icons/react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { useSourcesStore } from '@/store/sourcesStore';
 import { useMappingStore } from '@/store/mappingStore';
 import { jsonToSchema } from '@/lib/jsonToSchema';
@@ -319,7 +312,7 @@ export function SourcePanel({ resetSourceSchema }: SourcePanelProps) {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      {/* Toolbar: Source name + format badge */}
+      {/* Toolbar: Source name + format badge + upload/reset */}
       <div className="shrink-0 flex items-center gap-2 px-3 py-1.5 border-b border-border bg-muted/10">
         {/* Source name (inline editable) */}
         <input
@@ -355,6 +348,30 @@ export function SourcePanel({ resetSourceSchema }: SourcePanelProps) {
         >
           {dataFormat.toUpperCase()}
         </span>
+        <div className="ml-auto flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 px-2 text-xs"
+            onClick={() => fileInputRef.current?.click()}
+            title="Upload file"
+          >
+            <UploadSimpleIcon size={12} className="mr-1" />
+            Upload
+          </Button>
+          {resetSourceSchema !== undefined && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 px-2 text-xs"
+              onClick={resetSourceSchema}
+              title="Reset schema from source data"
+            >
+              <ArrowCounterClockwiseIcon size={12} className="mr-1" />
+              Reset
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Hidden file input */}
@@ -423,60 +440,13 @@ export function SourcePanel({ resetSourceSchema }: SourcePanelProps) {
         </Alert>
       )}
 
-      {/* Accordion sections */}
-      <ScrollArea className="flex-1">
-        <div className="flex flex-col gap-3 p-3">
-          <Accordion
-            type="multiple"
-            defaultValue={['source']}
-            className="w-full"
-          >
-            <AccordionItem
-              value="source"
-              className="border border-border rounded-md mb-2"
-            >
-              <AccordionTrigger className="px-3 py-2 text-sm font-medium hover:no-underline [&>svg]:ml-auto">
-                <span className="flex-1 text-left">Source Data</span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 shrink-0 mr-1"
-                  title="Upload File"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    fileInputRef.current?.click();
-                  }}
-                >
-                  <UploadSimpleIcon size={14} />
-                </Button>
-                {resetSourceSchema !== undefined && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 shrink-0 mr-1"
-                    title="Reset schema from source data"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      resetSourceSchema();
-                    }}
-                  >
-                    <ArrowCounterClockwiseIcon size={14} />
-                  </Button>
-                )}
-              </AccordionTrigger>
-              <AccordionContent className="p-0">
-                {/* key remounts CodeMirror with correct language when format changes */}
-                <div
-                  key={dataFormat}
-                  ref={dataContainerRef}
-                  className="h-64 border-t border-border overflow-hidden"
-                  aria-label={`${dataFormat.toUpperCase()} source editor`}
-                />
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-        </div>
-      </ScrollArea>
+      {/* CodeMirror editor — takes remaining height */}
+      <div
+        key={dataFormat}
+        ref={dataContainerRef}
+        className="flex-1 min-h-0 overflow-hidden"
+        aria-label={`${dataFormat.toUpperCase()} source editor`}
+      />
     </div>
   );
 }
