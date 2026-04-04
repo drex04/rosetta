@@ -98,10 +98,8 @@ function firstLiteral(
   predicate: string,
   nn: (uri: string) => N3.Term,
 ): string | undefined {
-  const q = store
-    .match(subject, nn(predicate), null, null)
-    [Symbol.iterator]()
-    .next().value;
+  const matches = store.match(subject, nn(predicate), null, null);
+  const q = matches[Symbol.iterator]().next().value;
   return q?.object.termType === 'Literal' ? q.object.value : undefined;
 }
 
@@ -111,10 +109,8 @@ function firstNamedNode(
   predicate: string,
   nn: (uri: string) => N3.Term,
 ): string | undefined {
-  const q = store
-    .match(subject, nn(predicate), null, null)
-    [Symbol.iterator]()
-    .next().value;
+  const matches = store.match(subject, nn(predicate), null, null);
+  const q = matches[Symbol.iterator]().next().value;
   return q?.object.termType === 'NamedNode' ? q.object.value : undefined;
 }
 

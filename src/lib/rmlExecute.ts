@@ -3,7 +3,7 @@ import type { Source } from '../store/sourcesStore';
 import type { Mapping } from '../types/index';
 import { generateRml, rmlSourceKey } from './rml';
 
-export interface FusionSourceResult {
+interface FusionSourceResult {
   sourceId: string;
   sourceName: string;
   error?: string;
