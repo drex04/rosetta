@@ -50,12 +50,17 @@
 **Requirements:** REQ-96 through REQ-107
 **Exit criteria:** Double-click any node/edge/property to inline-edit; drawing same-type edges creates schema relationships; mapping edges show type labels; clicking canvas elements auto-navigates to relevant panel tab; selecting MAP tab mapping highlights canvas edge.
 
-## Phase 11: SHACL Authoring
+## Phase 11: RML-Native Transform
+**Goal:** Replace the Comunica/SPARQL-CONSTRUCT execution path with RMLmapper-js, which runs generated RML directly against raw JSON/XML source data. Remove the `join` mapping kind. Replace the SPARQL snippet display in the MAP panel with an RML snippet for all non-custom-sparql mapping kinds.
+**Requirements:** REQ-111 through REQ-115
+**Exit criteria:** Transform & Fuse runs via RMLmapper-js; `join` kind removed from UI and types; MAP panel shows RML snippet for direct/template/constant/typecast/language kinds; `sparql` kind still shows a SPARQL CodeMirror editor; XML sources use `ql:XPath`; `fusion.ts` deleted; `@comake/rmlmapper-js` installed.
+
+## Phase 12: SHACL Authoring
 **Goal:** User-authored SHACL shapes with a Turtle editor, example shapes for sample data, and validation against custom shapes.
 **Requirements:** REQ-108 through REQ-110
 **Exit criteria:** SHACL tab has a Turtle editor for shape definitions; example shapes load with sample project; validation runs against user-defined shapes and surfaces results.
 
-## Phase 12: Onboarding & Demo
+## Phase 13: Onboarding & Demo
 **Goal:** Demo-ready product — sample project, guided tour, contextual education, empty states.
 **Requirements:** REQ-68 through REQ-78
 **Exit criteria:** First-time user gets interactive tour; sample NATO project loads with both sources pre-configured; all panels have empty states; About dialog explains the technology.

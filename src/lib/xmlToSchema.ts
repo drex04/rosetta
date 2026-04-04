@@ -9,8 +9,6 @@ import { COLUMN_X_SOURCE, COLUMN_SPACING } from '@/lib/rdf';
 import { applyTreeLayout } from '@/lib/layout';
 import type { SchemaResult } from '@/lib/jsonToSchema';
 
-export type { SchemaResult };
-
 const MAX_DEPTH = 10;
 
 // ─── URI helpers ──────────────────────────────────────────────────────────────
