@@ -277,7 +277,7 @@ export function Header({ onAboutClick }: HeaderProps) {
     >
       {/* Left: brand */}
       <div className="flex items-center gap-3">
-        <span className="font-semibold text-white text-2xl select-none">
+        <span className="font-semibold text-slate-50 text-2xl select-none">
           Rosetta Workbench
         </span>
       </div>
