@@ -265,7 +265,7 @@ function OntologyVisual() {
         textAnchor="middle"
         style={{ fill: '#94a3b8', fontSize: 9 }}
       >
-        EngageZone
+        C2 Node
       </text>
     </svg>
   );
@@ -588,7 +588,7 @@ const SLIDES = [
   {
     tag: 'THE TECHNOLOGY',
     title: 'Built on Proven, Open Standards',
-    body: 'RDF stores data as simple triples (Subject → Predicate → Object). OWL defines the ontology rules. SPARQL lets you query across everything. These are W3C standards — vendor-neutral, widely adopted in defence and intelligence, and future-proof.',
+    body: 'RDF stores data as simple triples (Subject → Predicate → Object). OWL and SHACL define the ontology rules. SPARQL lets you query across everything. These are W3C standards — vendor-neutral, widely adopted in defence and intelligence, and future-proof.',
     visual: StandardsVisual,
     accent: 'blue',
   },
@@ -672,13 +672,13 @@ export function AboutDialog({ open, onClose }: AboutDialogProps) {
                     <Dialog.Title className="text-2xl font-bold text-slate-50 mb-3 leading-tight">
                       {slide.title}
                     </Dialog.Title>
-                    <p className="text-sm text-slate-400 leading-relaxed">
+                    <p className="text-sm text-slate-300 leading-relaxed">
                       {slide.body}
                     </p>
                   </div>
 
                   {/* Visual */}
-                  <div className="w-52 h-40 shrink-0 rounded-lg bg-slate-800 border border-slate-700/50 p-2 flex items-center justify-center">
+                  <div className="w-78 h-60 shrink-0 rounded-lg bg-slate-800 border border-slate-700/50 p-2 flex items-center justify-center">
                     <Visual />
                   </div>
                 </div>

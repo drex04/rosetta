@@ -60,6 +60,11 @@
 **Requirements:** REQ-108 through REQ-110
 **Exit criteria:** SHACL tab has a Turtle editor for shape definitions; example shapes load with sample project; validation runs against user-defined shapes and surfaces results.
 
+## Phase 14: UI Polish III
+**Goal:** Mobile status bar fix, scroll containers for violations and fused JSON-LD, unified source chip hover, flattened Source Data pane, multi-format ontology upload on BUILD tab, and labeled download buttons.
+**Requirements:** (housekeeping — no new REQ IDs)
+**Exit criteria:** StatusBar visible on mobile; violations and fused JSON-LD scroll; source chips have unified hover; LOAD tab Source Data is flat; BUILD tab accepts .ttl/.rdf/.jsonld uploads; FUSE/EXPORT download buttons have text labels.
+
 ## Phase 13: Onboarding & Demo
 **Goal:** Demo-ready product — sample project, guided tour, contextual education, empty states.
 **Requirements:** REQ-68 through REQ-78
