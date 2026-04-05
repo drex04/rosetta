@@ -67,7 +67,7 @@ function App() {
   return (
     <ErrorBoundary>
       <AppLayout>
-        <div className="flex flex-col h-dvh overflow-hidden">
+        <div className="flex flex-col flex-1 min-h-0">
           <SourceSelector />
           <div className="flex flex-1 overflow-hidden">
             <ErrorBoundary>

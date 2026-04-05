@@ -352,22 +352,22 @@ export function SourcePanel({ resetSourceSchema }: SourcePanelProps) {
           <Button
             variant="ghost"
             size="sm"
-            className="h-6 px-2 text-xs"
+            className="h-6 px-2 text-sm"
             onClick={() => fileInputRef.current?.click()}
-            title="Upload file"
+            title="Import file"
           >
-            <UploadSimpleIcon size={12} className="mr-1" />
-            Upload
+            <UploadSimpleIcon size={14} className="mr-1" />
+            Import
           </Button>
           {resetSourceSchema !== undefined && (
             <Button
               variant="ghost"
               size="sm"
-              className="h-6 px-2 text-xs"
+              className="h-6 px-2 text-sm"
               onClick={resetSourceSchema}
               title="Reset schema from source data"
             >
-              <ArrowCounterClockwiseIcon size={12} className="mr-1" />
+              <ArrowCounterClockwiseIcon size={14} className="mr-1" />
               Reset
             </Button>
           )}

@@ -15,6 +15,7 @@ import { localName } from '@/lib/rdf';
 import {
   ArrowCounterClockwiseIcon,
   CircleNotchIcon,
+  DownloadSimpleIcon,
   PlayIcon,
   UploadSimpleIcon,
 } from '@phosphor-icons/react';
@@ -89,21 +90,41 @@ export function ValidationPanel() {
               <Button
                 size="sm"
                 variant="ghost"
-                className="h-6 px-2 text-xs"
+                className="h-6 px-2 text-sm"
                 onClick={() => importInputRef.current?.click()}
                 title="Import shapes from .ttl file"
               >
-                <UploadSimpleIcon size={12} className="mr-1" />
+                <UploadSimpleIcon size={14} className="mr-1" />
                 Import
               </Button>
               <Button
                 size="sm"
                 variant="ghost"
-                className="h-6 px-2 text-xs"
+                className="h-6 px-2 text-sm"
+                onClick={() => {
+                  const blob = new Blob([userShapesTurtle], {
+                    type: 'text/turtle',
+                  });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = 'shapes.ttl';
+                  a.click();
+                  URL.revokeObjectURL(url);
+                }}
+                title="Download shapes.ttl"
+              >
+                <DownloadSimpleIcon size={14} className="mr-1" />
+                Download
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-6 px-2 text-sm"
                 onClick={() => void resetShapesToAuto(ontologyNodes)}
                 title="Reset shapes to auto-generated"
               >
-                <ArrowCounterClockwiseIcon size={12} className="mr-1" />
+                <ArrowCounterClockwiseIcon size={14} className="mr-1" />
                 Reset
               </Button>
             </div>
@@ -114,7 +135,8 @@ export function ValidationPanel() {
                 turtleSource={userShapesTurtle}
                 onEditorChange={setUserShapesTurtle}
                 filename="shapes.ttl"
-                downloadLabel="Download shapes.ttl"
+                hideDownload
+                hideHeader
               />
             </div>
           </AccordionContent>

@@ -33,7 +33,11 @@ interface TurtleEditorPanelProps {
   filename?: string;
   /** Label for the download button. Defaults to 'Download .ttl'. */
   downloadLabel?: string;
-  /** Called with parsed Turtle when user uploads a file. If provided, Upload button is shown. */
+  /** If true, hides the download button. */
+  hideDownload?: boolean;
+  /** If true, hides the entire filename/button header bar. */
+  hideHeader?: boolean;
+  /** Called with parsed Turtle when user uploads a file. If provided, Import button is shown. */
   onUpload?: (turtle: string) => void;
 }
 
@@ -44,6 +48,8 @@ export function TurtleEditorPanel({
   isCanvasSyncPending,
   filename,
   downloadLabel,
+  hideDownload,
+  hideHeader,
   onUpload,
 }: TurtleEditorPanelProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -125,50 +131,55 @@ export function TurtleEditorPanel({
 
   return (
     <div className="flex flex-col h-full">
-      <div className="shrink-0 flex items-center justify-between px-3 py-1.5 border-b border-border bg-muted/20">
-        <span className="text-sm text-muted-foreground font-mono">
-          {filename ?? 'ontology.ttl'}
-        </span>
-        <div className="flex items-center gap-1">
-          {onUpload && (
-            <>
-              <input
-                ref={uploadInputRef}
-                type="file"
-                accept=".ttl,.rdf,.jsonld"
-                className="hidden"
-                onChange={handleUpload}
-              />
+      {!hideHeader && (
+        <div className="shrink-0 flex items-center justify-between px-3 py-1.5 border-b border-border bg-muted/20">
+          <span className="text-sm text-muted-foreground font-mono">
+            {filename ?? 'ontology.ttl'}
+          </span>
+          <div className="flex items-center gap-1">
+            {onUpload && (
+              <>
+                <input
+                  ref={uploadInputRef}
+                  type="file"
+                  accept=".ttl,.rdf,.jsonld"
+                  className="hidden"
+                  onChange={handleUpload}
+                />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 px-2 text-sm"
+                  onClick={() => {
+                    setUploadError(null);
+                    uploadInputRef.current?.click();
+                  }}
+                >
+                  <UploadSimpleIcon size={14} className="mr-1" />
+                  Import
+                </Button>
+              </>
+            )}
+            {!hideDownload && (
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-6 px-2 text-xs"
-                onClick={() => {
-                  setUploadError(null);
-                  uploadInputRef.current?.click();
-                }}
+                className="h-6 px-2 text-sm"
+                onClick={() =>
+                  downloadBlob(
+                    turtleSource,
+                    filename ?? 'ontology.ttl',
+                    'text/turtle',
+                  )
+                }
               >
-                <UploadSimpleIcon size={12} className="mr-1" />
-                Upload
+                <DownloadSimpleIcon size={14} className="mr-1" />
+                {downloadLabel ?? 'Download'}
               </Button>
-            </>
-          )}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() =>
-              downloadBlob(
-                turtleSource,
-                filename ?? 'ontology.ttl',
-                'text/turtle',
-              )
-            }
-          >
-            <DownloadSimpleIcon size={12} />
-            {downloadLabel ?? 'Download .ttl'}
-          </Button>
+            )}
+          </div>
         </div>
-      </div>
+      )}
       {uploadError && (
         <Alert
           variant="destructive"
