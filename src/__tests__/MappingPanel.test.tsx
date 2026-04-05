@@ -214,7 +214,8 @@ describe('MappingPanel — formula kind', () => {
 
   it('8. Tier resets to Form when a different mapping is selected', async () => {
     // Set up two mappings
-    const id1 = setupStore({ kind: 'formula' });
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const _id1 = setupStore({ kind: 'formula' });
     const id2 = useMappingStore.getState().addMapping(
       makeMapping({
         kind: 'formula',

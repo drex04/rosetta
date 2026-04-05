@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { Header } from './Header';
 import { AboutDialog } from '@/components/ui/about-dialog';
 
@@ -7,13 +7,9 @@ interface AppLayoutProps {
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
-  const [aboutOpen, setAboutOpen] = useState(false);
-
-  useEffect(() => {
-    if (!localStorage.getItem('rosetta-onboarding-v1')) {
-      setAboutOpen(true);
-    }
-  }, []);
+  const [aboutOpen, setAboutOpen] = useState(
+    () => !localStorage.getItem('rosetta-onboarding-v1'),
+  );
 
   const handleAboutClose = useCallback(() => {
     localStorage.setItem('rosetta-onboarding-v1', 'seen');
@@ -21,10 +17,10 @@ export function AppLayout({ children }: AppLayoutProps) {
   }, []);
 
   return (
-    <>
+    <div className="flex flex-col h-dvh overflow-hidden">
       <Header onAboutClick={() => setAboutOpen(true)} />
       {children}
       <AboutDialog open={aboutOpen} onClose={handleAboutClose} />
-    </>
+    </div>
   );
 }

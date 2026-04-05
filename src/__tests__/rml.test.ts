@@ -288,7 +288,8 @@ describe('generateRml', () => {
   });
 
   it('formula kind with literal containing double-quote emits properly escaped Turtle', () => {
-    const source = makeSource({
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const _source = makeSource({
       id: 'src1',
       name: 'radar',
       rawData: '{"tracks":[]}',

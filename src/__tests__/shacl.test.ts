@@ -466,6 +466,7 @@ describe('validateSource with userShapesTurtle', () => {
     const withoutParam = await validateSource(source, [ontNode], [mapping]);
     // Both should produce the same violations structurally; random `id` excluded
     const strip = (vs: ViolationRecord[]) =>
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       vs.map(({ id: _id, ...rest }) => rest);
     expect(strip(withEmpty)).toEqual(strip(withoutParam));
   });
@@ -496,6 +497,7 @@ describe('validateSource with userShapesTurtle', () => {
     // Both should produce the same violations (same count and same structural shape);
     // random `id` fields are excluded from comparison
     const strip = (vs: ViolationRecord[]) =>
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       vs.map(({ id: _id, ...rest }) => rest);
     expect(strip(withWhitespace)).toEqual(strip(withoutParam));
   });
