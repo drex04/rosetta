@@ -212,9 +212,11 @@ export const useMappingStore = create<MappingStateInternal>((set, get) => ({
     for (const [sourceId, list] of Object.entries(groups ?? {})) {
       migratedGroups[sourceId] = list.map((g) => {
         if ('sparqlConstruct' in g) {
-          const { sparqlConstruct: _, ...rest } = g as typeof g & {
-            sparqlConstruct: string;
-          };
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { sparqlConstruct: _sparqlConstruct, ...rest } =
+            g as typeof g & {
+              sparqlConstruct: string;
+            };
           return { ...rest, formulaExpression: rest.formulaExpression ?? '' };
         }
         return g;

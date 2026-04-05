@@ -289,11 +289,13 @@ export function MappingPanel() {
 
   const isGroupSelected = selectedGroup !== null;
 
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const rmlSnippet = useMemo(() => {
     if (!selectedMapping || isGroupSelected) return '';
     const source = sources.find((s) => s.id === selectedMapping.sourceId);
     if (!source) return '';
     return generateRml([source], { [source.id]: [selectedMapping] });
+    // eslint-disable-next-line react-hooks/preserve-manual-memoization
   }, [selectedMapping, isGroupSelected, sources]);
 
   function handleSelectMapping(id: string) {

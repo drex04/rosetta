@@ -25,6 +25,7 @@ export async function validateWithShacl(
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const validator = new SHACLValidator(shapesStore as any, {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       factory: ShaclFactory as any,
     });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

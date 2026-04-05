@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useLayoutEffect } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { Button } from '@/components/ui/button';
 
@@ -265,7 +265,7 @@ function OntologyVisual() {
         textAnchor="middle"
         style={{ fill: '#94a3b8', fontSize: 9 }}
       >
-        C2 Node
+        C2
       </text>
     </svg>
   );
@@ -614,8 +614,9 @@ export function AboutDialog({ open, onClose }: AboutDialogProps) {
   const [slideIndex, setSlideIndex] = useState(0);
   const [animState, setAnimState] = useState<'enter' | 'exit'>('enter');
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSlideIndex(0);
       setAnimState('enter');
     }
