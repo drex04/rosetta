@@ -911,6 +911,7 @@ function OntologyCanvasInner({ onCanvasChange }: OntologyCanvasProps) {
   return (
     <>
       <ReactFlow
+        minZoom={0.05}
         nodes={augmentedNodes}
         edges={edges}
         nodeTypes={nodeTypes}

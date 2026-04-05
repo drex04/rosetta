@@ -158,7 +158,7 @@ export function ClassNode({ id, data }: NodeProps<OntologyNode>) {
 
       {/* ── Properties ── */}
       {data.properties.length > 0 && (
-        <div className="divide-y divide-border">
+        <div className="divide-y divide-border max-h-48 overflow-y-auto nodrag">
           {data.properties.map((prop) => (
             <div
               key={prop.uri}
