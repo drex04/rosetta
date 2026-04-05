@@ -1,14 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { EditorView, lineNumbers, highlightActiveLine } from '@codemirror/view';
-import { EditorState } from '@codemirror/state';
-import { basicSetup } from 'codemirror';
+import { useMemo, useState } from 'react';
 import { useMappingStore } from '@/store/mappingStore';
 import { useSourcesStore } from '@/store/sourcesStore';
 import { useOntologyStore } from '@/store/ontologyStore';
 import { localName } from '@/lib/rdf';
 import { getPropRange } from '@/lib/mappingHelpers';
 import { generateRml } from '@/lib/rml';
-import { lightTheme } from '@/lib/codemirror-theme';
 import * as AccordionPrimitive from '@radix-ui/react-accordion';
 import { CaretDownIcon } from '@phosphor-icons/react';
 import {
@@ -17,95 +13,6 @@ import {
   AccordionItem,
 } from '@/components/ui/accordion';
 import type { Mapping, MappingGroup } from '@/types/index';
-
-// ─── Lint badge helper (RD-05) ────────────────────────────────────────────────
-
-function isValidConstruct(query: string): boolean {
-  const lower = query.toLowerCase();
-  return lower.includes('construct') && lower.includes('where');
-}
-
-// ─── SPARQL editor sub-component ──────────────────────────────────────────────
-
-interface SparqlEditorProps {
-  value: string;
-  onChange: (value: string) => void;
-  readOnly?: boolean;
-}
-
-function SparqlEditor({
-  value,
-  onChange,
-  readOnly = false,
-}: SparqlEditorProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const viewRef = useRef<EditorView | null>(null);
-  const isExternalUpdate = useRef(false);
-
-  useEffect(() => {
-    if (containerRef.current === null) return;
-
-    const updateListener = EditorView.updateListener.of((update) => {
-      if (!update.docChanged) return;
-      if (isExternalUpdate.current) return;
-      onChange(update.state.doc.toString());
-    });
-
-    const extensions = [
-      basicSetup,
-      lineNumbers(),
-      highlightActiveLine(),
-      lightTheme,
-      updateListener,
-    ];
-
-    if (readOnly) {
-      extensions.push(EditorState.readOnly.of(true));
-    }
-
-    const state = EditorState.create({
-      doc: value,
-      extensions,
-    });
-
-    const view = new EditorView({ state, parent: containerRef.current });
-    viewRef.current = view;
-
-    return () => {
-      view.destroy();
-      viewRef.current = null;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [readOnly]); // Re-mount when readOnly changes
-
-  // Sync external value changes to editor (when not focused)
-  useEffect(() => {
-    const view = viewRef.current;
-    if (view === null) return;
-
-    const currentDoc = view.state.doc.toString();
-    if (currentDoc === value) return;
-    if (view.hasFocus) return;
-
-    isExternalUpdate.current = true;
-    view.dispatch({
-      changes: {
-        from: 0,
-        to: view.state.doc.length,
-        insert: value,
-      },
-    });
-    isExternalUpdate.current = false;
-  }, [value]);
-
-  return (
-    <div
-      ref={containerRef}
-      className="flex-1 overflow-hidden"
-      aria-label="SPARQL CONSTRUCT editor"
-    />
-  );
-}
 
 // ─── MappingPanel ─────────────────────────────────────────────────────────────
 
@@ -140,17 +47,11 @@ export function MappingPanel() {
     mappings.find((m) => m.id === selectedMappingId) ?? null;
   const selectedGroup = groups.find((g) => g.id === selectedGroupId) ?? null;
 
-  const sparqlToShow =
-    selectedGroup?.sparqlConstruct ?? selectedMapping?.sparqlConstruct ?? '';
+  const sparqlToShow = selectedGroup?.formulaExpression ?? '';
   const isGroupSelected = selectedGroup !== null;
 
   const rmlSnippet = useMemo(() => {
-    if (
-      !selectedMapping ||
-      selectedMapping.kind === 'sparql' ||
-      isGroupSelected
-    )
-      return '';
+    if (!selectedMapping || isGroupSelected) return '';
     const source = sources.find((s) => s.id === selectedMapping.sourceId);
     if (!source) return '';
     return generateRml([source], { [source.id]: [selectedMapping] });
@@ -169,11 +70,6 @@ export function MappingPanel() {
   function handleDeleteMapping(e: React.MouseEvent, id: string) {
     e.stopPropagation();
     removeMapping(id);
-  }
-
-  function handleEditorChange(newValue: string) {
-    if (selectedMappingId === null) return;
-    updateMapping(selectedMappingId, { sparqlConstruct: newValue });
   }
 
   function reorderGroupMember(
@@ -478,33 +374,11 @@ export function MappingPanel() {
           <div className="shrink-0 flex items-center justify-between px-3 py-2 border-b border-border bg-muted/30">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-                {isGroupSelected
-                  ? 'Group SPARQL'
-                  : selectedMapping?.kind === 'sparql'
-                    ? 'SPARQL Construct'
-                    : 'RML'}
+                {isGroupSelected ? 'Group SPARQL' : 'RML'}
               </span>
               {isGroupSelected ? (
                 <span className="text-sm px-1.5 py-0.5 rounded font-medium bg-muted text-muted-foreground">
                   read-only
-                </span>
-              ) : selectedMapping !== null &&
-                selectedMapping.kind === 'sparql' ? (
-                <span
-                  className={`text-sm px-1.5 py-0.5 rounded font-medium ${
-                    isValidConstruct(selectedMapping.sparqlConstruct)
-                      ? 'bg-mapping/15 text-mapping-text'
-                      : 'bg-source/15 text-source-text'
-                  }`}
-                  title={
-                    isValidConstruct(selectedMapping.sparqlConstruct)
-                      ? 'Valid: CONSTRUCT and WHERE present'
-                      : 'Missing CONSTRUCT or WHERE keyword'
-                  }
-                >
-                  {isValidConstruct(selectedMapping.sparqlConstruct)
-                    ? 'valid'
-                    : 'incomplete'}
                 </span>
               ) : null}
             </div>
@@ -538,7 +412,7 @@ export function MappingPanel() {
                   <option value="constant">constant</option>
                   <option value="typecast">typecast</option>
                   <option value="language">language</option>
-                  <option value="sparql">sparql (custom)</option>
+                  <option value="formula">formula</option>
                 </select>
               </div>
 
@@ -649,13 +523,11 @@ export function MappingPanel() {
             </>
           )}
 
-          {/* CodeMirror editor or RML snippet */}
-          {isGroupSelected || selectedMapping?.kind === 'sparql' ? (
-            <SparqlEditor
-              value={sparqlToShow}
-              onChange={handleEditorChange}
-              readOnly={isGroupSelected}
-            />
+          {/* Formula expression or RML snippet */}
+          {isGroupSelected ? (
+            <div className="flex-1 overflow-auto p-3 font-mono text-xs bg-muted/10 whitespace-pre text-muted-foreground">
+              {sparqlToShow || '# No formula expression set'}
+            </div>
           ) : (
             <div className="flex-1 overflow-auto p-3 font-mono text-xs bg-muted/10 whitespace-pre text-muted-foreground">
               {rmlSnippet || '# No RML generated — add mappings first'}

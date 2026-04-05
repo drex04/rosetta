@@ -90,7 +90,6 @@ describe('subscribeValidationToMappings', () => {
       sourceHandle: 'prop_bar',
       targetHandle: 'target_prop_id',
       kind: 'direct',
-      sparqlConstruct: '',
     });
 
     expect(useValidationStore.getState().stale).toBe(true);

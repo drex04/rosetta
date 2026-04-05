@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import type { Mapping, MappingGroup } from '@/types/index';
-import { generateGroupConstruct } from '@/lib/sparql';
 
 // ─── Store interface ──────────────────────────────────────────────────────────
 
@@ -73,7 +72,7 @@ interface MappingState {
       strategy: MappingGroup['strategy'];
       separator: string;
       templatePattern: string;
-      sparqlConstruct: string;
+      formulaExpression: string;
       targetClassUri: string;
       targetPropUri: string;
     }>,
@@ -190,8 +189,43 @@ export const useMappingStore = create<MappingStateInternal>((set, get) => ({
     });
   },
 
-  hydrate: (mappings, groups) =>
-    set({ mappings, groups: groups ?? {}, selectedMappingId: null }),
+  hydrate: (mappings, groups) => {
+    // Migrate legacy sparql kind → formula with empty expression
+    const migratedMappings: Record<string, Mapping[]> = {};
+    for (const [sourceId, list] of Object.entries(mappings)) {
+      migratedMappings[sourceId] = list.map((m) => {
+        if ((m.kind as string) === 'sparql') {
+          const { ...rest } = m as Mapping & { sparqlConstruct?: string };
+          delete rest.sparqlConstruct;
+          return { ...rest, kind: 'formula' as const, formulaExpression: '' };
+        }
+        // Strip legacy sparqlConstruct field from any mapping that has it
+        const { sparqlConstruct: _sc, ...clean } = m as Mapping & {
+          sparqlConstruct?: string;
+        };
+        void _sc;
+        return clean as Mapping;
+      });
+    }
+    // Migrate legacy sparqlConstruct on groups → formulaExpression: ''
+    const migratedGroups: Record<string, MappingGroup[]> = {};
+    for (const [sourceId, list] of Object.entries(groups ?? {})) {
+      migratedGroups[sourceId] = list.map((g) => {
+        if ('sparqlConstruct' in g) {
+          const { sparqlConstruct: _, ...rest } = g as typeof g & {
+            sparqlConstruct: string;
+          };
+          return { ...rest, formulaExpression: rest.formulaExpression ?? '' };
+        }
+        return g;
+      });
+    }
+    set({
+      mappings: migratedMappings,
+      groups: migratedGroups,
+      selectedMappingId: null,
+    });
+  },
   reset: () => set({ mappings: {}, groups: {}, selectedMappingId: null }),
 
   createGroup: (sourceId, mappingIds, strategy) => {
@@ -222,7 +256,7 @@ export const useMappingStore = create<MappingStateInternal>((set, get) => ({
       separator: '',
       targetClassUri: first?.targetClassUri ?? '',
       targetPropUri: first?.targetPropUri ?? '',
-      sparqlConstruct: '',
+      formulaExpression: '',
     };
 
     const newGroup: MappingGroup =
@@ -231,8 +265,6 @@ export const useMappingStore = create<MappingStateInternal>((set, get) => ({
         : strategy === 'coalesce'
           ? { ...baseGroup, strategy: 'coalesce' }
           : { ...baseGroup, strategy: 'concat' };
-
-    newGroup.sparqlConstruct = generateGroupConstruct(newGroup, members);
 
     set((s) => ({
       groups: {
@@ -276,10 +308,6 @@ export const useMappingStore = create<MappingStateInternal>((set, get) => ({
             };
             updated = { ...rest, strategy: 'concat' as const };
           }
-          const members = Object.values(s.mappings)
-            .flat()
-            .filter((m) => m.groupId === groupId);
-          updated.sparqlConstruct = generateGroupConstruct(updated, members);
           return updated;
         });
       }

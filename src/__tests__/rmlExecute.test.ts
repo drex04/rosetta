@@ -35,7 +35,6 @@ function makeMapping(overrides: Partial<Mapping> = {}): Mapping {
     id: 'm1',
     sourceId: 's1',
     kind: 'direct',
-    sparqlConstruct: 'CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }',
     sourceClassUri: 'http://example.org/src#Track',
     targetClassUri: 'http://example.org/tgt#Target',
     sourcePropUri: 'http://example.org/src#id',
@@ -56,26 +55,26 @@ describe('executeAllRml', () => {
     expect(result.warnings).toEqual([]);
   });
 
-  it('emits a warning for sparql-kind mappings and does not throw', async () => {
+  it('emits a warning for formula-kind mappings and does not throw', async () => {
     const source = makeSource();
-    const mapping = makeMapping({ kind: 'sparql' });
+    const mapping = makeMapping({ kind: 'formula', formulaExpression: '' });
     const result = await executeAllRml([source], { s1: [mapping] });
-    const sparqlWarning = result.warnings.find((w) =>
-      w.includes('sparql-kind'),
+    const formulaWarning = result.warnings.find((w) =>
+      w.includes('formula mapping'),
     );
-    expect(sparqlWarning).toBeDefined();
-    expect(sparqlWarning).toContain('TestSource');
-    expect(sparqlWarning).toContain('1 sparql-kind');
+    expect(formulaWarning).toBeDefined();
+    expect(formulaWarning).toContain('TestSource');
+    expect(formulaWarning).toContain('1 formula mapping');
   });
 
-  it('does not emit sparql warning for direct-kind mappings', async () => {
+  it('does not emit formula warning for direct-kind mappings', async () => {
     const source = makeSource();
     const mapping = makeMapping({ kind: 'direct' });
     const result = await executeAllRml([source], { s1: [mapping] });
-    const sparqlWarning = result.warnings.find((w) =>
-      w.includes('sparql-kind'),
+    const formulaWarning = result.warnings.find((w) =>
+      w.includes('formula mapping'),
     );
-    expect(sparqlWarning).toBeUndefined();
+    expect(formulaWarning).toBeUndefined();
   });
 
   it('excludes source from sourceSummaries when rawData is blank', async () => {

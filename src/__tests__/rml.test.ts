@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { inferIterator, generateRml, rmlSourceKey } from '@/lib/rml';
+import {
+  inferIterator,
+  generateRml,
+  rmlSourceKey,
+  emitFnOPOM,
+} from '@/lib/rml';
+import { parseFormula } from '@/lib/formulaParser';
 import type { Source } from '@/store/sourcesStore';
 import type { Mapping } from '@/types/index';
 
@@ -57,7 +63,6 @@ function makeMapping(
     targetPropUri: 'http://nato.int/identifier',
     sourceHandle: 'prop_trackId',
     targetHandle: 'target_prop_identifier',
-    sparqlConstruct: '',
     ...overrides,
   };
 }
@@ -128,16 +133,21 @@ describe('generateRml', () => {
     expect(result).toContain('rml:reference');
   });
 
-  it('comments out sparql mapping with manual conversion note', () => {
+  it('formula kind with UPPER emits fnml:functionValue block with fno:executes and grel:toUpperCase', () => {
     const source = makeSource({
       id: 'src1',
       name: 'radar',
       rawData: '{"tracks":[]}',
     });
-    const mapping = makeMapping({ kind: 'sparql' });
+    const mapping = makeMapping({
+      kind: 'formula',
+      formulaExpression: 'UPPER(source.trackId)',
+    });
     const result = generateRml([source], { src1: [mapping] });
 
-    expect(result).toContain('# requires manual conversion');
+    expect(result).toContain('fnml:functionValue');
+    expect(result).toContain('fno:executes');
+    expect(result).toContain('grel:toUpperCase');
   });
 
   it('emits rr:object for constant mapping', () => {
@@ -224,6 +234,76 @@ describe('generateRml', () => {
     const result = generateRml([emptySource, otherSource], { src2: [mapping] });
 
     expect(result).not.toContain('empty.json');
+  });
+
+  it('formula kind with REPLACE emits grel:string_replace with three param predicates', () => {
+    const source = makeSource({
+      id: 'src1',
+      name: 'radar',
+      rawData: '{"tracks":[]}',
+    });
+    const mapping = makeMapping({
+      kind: 'formula',
+      formulaExpression: 'REPLACE(source.name, "old", "new")',
+    });
+    const result = generateRml([source], { src1: [mapping] });
+
+    expect(result).toContain('grel:string_replace');
+    expect(result).toContain('grel:valueParameter');
+    expect(result).toContain('grel:param2Str');
+    expect(result).toContain('grel:param3Str');
+  });
+
+  it('formula kind with CONCAT(a, b, c) emits nested blank node chain', () => {
+    const source = makeSource({
+      id: 'src1',
+      name: 'radar',
+      rawData: '{"tracks":[]}',
+    });
+    const mapping = makeMapping({
+      kind: 'formula',
+      formulaExpression: 'CONCAT(source.first, source.second, source.third)',
+    });
+    const result = generateRml([source], { src1: [mapping] });
+
+    expect(result).toContain('grel:string_concat');
+    // nested chain: two occurrences of fnml:functionValue (outer + inner)
+    const count = (result.match(/fnml:functionValue/g) ?? []).length;
+    expect(count).toBeGreaterThanOrEqual(2);
+  });
+
+  it('formula kind with invalid formulaExpression emits a # formula-error: comment', () => {
+    const source = makeSource({
+      id: 'src1',
+      name: 'radar',
+      rawData: '{"tracks":[]}',
+    });
+    const mapping = makeMapping({
+      kind: 'formula',
+      formulaExpression: 'FOO(x)',
+    });
+    const result = generateRml([source], { src1: [mapping] });
+
+    expect(result).toContain('# formula-error:');
+  });
+
+  it('formula kind with literal containing double-quote emits properly escaped Turtle', () => {
+    const source = makeSource({
+      id: 'src1',
+      name: 'radar',
+      rawData: '{"tracks":[]}',
+    });
+    const mapping = makeMapping({
+      kind: 'formula',
+      formulaExpression: 'UPPER(source.name)',
+      // We'll test turtleEscape directly via emitFnOPOM
+    });
+    // Test turtleEscape indirectly via emitFnOPOM with a literal containing a double-quote
+    const ast = parseFormula('TRIM("say \\"hello\\"")');
+    const counter = { n: 0 };
+    const out = emitFnOPOM(ast, mapping, 'radar', counter);
+    expect(out).toContain('\\"hello\\"');
+    expect(out).not.toMatch(/[^\\]"hello"/);
   });
 
   it('uses http://example.org/ fallback when schemaNode has no properties', () => {

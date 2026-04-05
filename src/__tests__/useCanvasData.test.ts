@@ -121,7 +121,6 @@ describe('useCanvasData', () => {
       sourceHandle: 'prop_p',
       targetHandle: 'target_prop_p',
       kind: 'direct',
-      sparqlConstruct: '',
     });
 
     const { result } = renderHook(() => useCanvasData());

@@ -63,7 +63,7 @@ export type MappingGroup =
       separator: string;
       targetClassUri: string;
       targetPropUri: string;
-      sparqlConstruct: string;
+      formulaExpression?: string;
     }
   | {
       id: string;
@@ -71,7 +71,7 @@ export type MappingGroup =
       separator: string;
       targetClassUri: string;
       targetPropUri: string;
-      sparqlConstruct: string;
+      formulaExpression?: string;
     }
   | {
       id: string;
@@ -80,7 +80,7 @@ export type MappingGroup =
       templatePattern: string;
       targetClassUri: string;
       targetPropUri: string;
-      sparqlConstruct: string;
+      formulaExpression?: string;
     };
 
 // ─── Mapping ──────────────────────────────────────────────────────────────────
@@ -94,14 +94,20 @@ export interface Mapping {
   targetPropUri: string;
   sourceHandle: string; // e.g. 'prop_trackId' — stored directly from connection (RD-02)
   targetHandle: string; // e.g. 'target_prop_identifier' — stored directly from connection (RD-02)
-  kind: 'direct' | 'template' | 'constant' | 'typecast' | 'language' | 'sparql';
-  sparqlConstruct: string;
+  kind:
+    | 'direct'
+    | 'template'
+    | 'constant'
+    | 'typecast'
+    | 'language'
+    | 'formula';
   // kind-specific optional fields
   templatePattern?: string; // template: e.g. "{first} {last}"
   constantValue?: string; // constant: literal value
   constantType?: string; // constant: XSD datatype URI, default xsd:string
   targetDatatype?: string; // typecast: XSD datatype URI
   languageTag?: string; // language: e.g. "en"
+  formulaExpression?: string; // formula: expression string
   groupId?: string; // group membership
   groupOrder?: number; // position within group
 }

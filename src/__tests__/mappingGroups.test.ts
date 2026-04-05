@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useMappingStore } from '@/store/mappingStore';
-import { generateGroupConstruct } from '@/lib/sparql';
 import type { MappingGroup, Mapping } from '@/types/index';
 
 // Helper to reset store between tests
@@ -23,7 +22,6 @@ function addMapping(
     sourceHandle: 'prop_firstName',
     targetHandle: 'target_prop_name',
     kind: 'direct',
-    sparqlConstruct: '',
     ...overrides,
   });
 }
@@ -122,7 +120,7 @@ describe('MappingGroup store', () => {
     expect(inGroup.map((m) => m.id)).not.toContain(id3);
   });
 
-  it('createGroup sparqlConstruct is populated (not empty) after creation', () => {
+  it('createGroup produces a group with formulaExpression field (no sparqlConstruct)', () => {
     const id1 = addMapping({
       sourcePropUri: 'http://example.org/ns#firstName',
     });
@@ -134,7 +132,9 @@ describe('MappingGroup store', () => {
       .getState()
       .getGroupsForSource('src1')
       .find((g) => g.id === groupId);
-    expect(group?.sparqlConstruct).not.toBe('');
+    expect(group).toBeDefined();
+    expect('sparqlConstruct' in (group ?? {})).toBe(false);
+    expect('formulaExpression' in (group ?? {})).toBe(true);
   });
 
   it('allows grouping mappings with same targetClassUri+targetPropUri (duplicate target detection)', () => {
@@ -165,136 +165,6 @@ describe('MappingGroup store', () => {
   });
 });
 
-// ─── generateGroupConstruct unit tests ───────────────────────────────────────
-
-function makeMapping(overrides: Partial<Mapping> = {}): Mapping {
-  return {
-    id: crypto.randomUUID(),
-    sourceId: 'src1',
-    sourceClassUri: 'http://example.org/ns#Person',
-    sourcePropUri: 'http://example.org/ns#field',
-    targetClassUri: 'http://nato.int/ns#Entity',
-    targetPropUri: 'http://nato.int/ns#name',
-    sourceHandle: 'prop_field',
-    targetHandle: 'target_prop_name',
-    kind: 'direct',
-    sparqlConstruct: '',
-    groupOrder: 0,
-    ...overrides,
-  };
-}
-
-describe('generateGroupConstruct', () => {
-  it('concat with 2 members produces SPARQL containing CONCAT, BIND, and STR', () => {
-    const group: MappingGroup = {
-      id: 'g1',
-      strategy: 'concat',
-      separator: ' ',
-      targetClassUri: 'http://nato.int/ns#Entity',
-      targetPropUri: 'http://nato.int/ns#name',
-      sparqlConstruct: '',
-    };
-    const m1 = makeMapping({
-      sourcePropUri: 'http://example.org/ns#firstName',
-      groupOrder: 0,
-    });
-    const m2 = makeMapping({
-      sourcePropUri: 'http://example.org/ns#lastName',
-      groupOrder: 1,
-    });
-    const sparql = generateGroupConstruct(group, [m1, m2]);
-
-    expect(sparql).toContain('CONCAT');
-    expect(sparql).toContain('BIND');
-    expect(sparql).toContain('STR');
-    expect(sparql).toContain('?joinedVal');
-    expect(sparql).toContain('" "'); // separator
-  });
-
-  it('coalesce uses OPTIONAL and COALESCE', () => {
-    const group: MappingGroup = {
-      id: 'g2',
-      strategy: 'coalesce',
-      separator: '',
-      targetClassUri: 'http://nato.int/ns#Entity',
-      targetPropUri: 'http://nato.int/ns#name',
-      sparqlConstruct: '',
-    };
-    const m1 = makeMapping({
-      sourcePropUri: 'http://example.org/ns#primaryName',
-      groupOrder: 0,
-    });
-    const m2 = makeMapping({
-      sourcePropUri: 'http://example.org/ns#alternateName',
-      groupOrder: 1,
-    });
-    const sparql = generateGroupConstruct(group, [m1, m2]);
-
-    expect(sparql).toContain('OPTIONAL');
-    expect(sparql).toContain('COALESCE');
-    expect(sparql).toContain('?joinedVal');
-    expect(sparql).not.toContain('CONCAT');
-  });
-
-  it('template substitution: "{0}, {1}" with 2 members produces correct CONCAT expression', () => {
-    const group: MappingGroup = {
-      id: 'g3',
-      strategy: 'template',
-      separator: '',
-      templatePattern: '{0}, {1}',
-      targetClassUri: 'http://nato.int/ns#Entity',
-      targetPropUri: 'http://nato.int/ns#name',
-      sparqlConstruct: '',
-    };
-    const m1 = makeMapping({
-      sourcePropUri: 'http://example.org/ns#city',
-      groupOrder: 0,
-    });
-    const m2 = makeMapping({
-      sourcePropUri: 'http://example.org/ns#country',
-      groupOrder: 1,
-    });
-    const sparql = generateGroupConstruct(group, [m1, m2]);
-
-    expect(sparql).toContain('CONCAT');
-    expect(sparql).toContain('STR(?v0)');
-    expect(sparql).toContain('STR(?v1)');
-    expect(sparql).toContain('", "'); // literal separator between placeholders
-    expect(sparql).toContain('?joinedVal');
-  });
-
-  it('members are sorted by groupOrder so v0 corresponds to lowest groupOrder', () => {
-    const group: MappingGroup = {
-      id: 'g4',
-      strategy: 'concat',
-      separator: '-',
-      targetClassUri: 'http://nato.int/ns#Entity',
-      targetPropUri: 'http://nato.int/ns#name',
-      sparqlConstruct: '',
-    };
-    // Pass members in reverse order; groupOrder determines output order
-    const mHigh = makeMapping({
-      sourcePropUri: 'http://example.org/ns#second',
-      groupOrder: 1,
-    });
-    const mLow = makeMapping({
-      sourcePropUri: 'http://example.org/ns#first',
-      groupOrder: 0,
-    });
-    const sparql = generateGroupConstruct(group, [mHigh, mLow]);
-
-    // ?v0 should appear before ?v1 in the CONCAT
-    const v0Pos = sparql.indexOf('?v0');
-    const v1Pos = sparql.indexOf('?v1');
-    expect(v0Pos).toBeGreaterThan(-1);
-    expect(v1Pos).toBeGreaterThan(-1);
-    expect(v0Pos).toBeLessThan(v1Pos);
-
-    // first (groupOrder 0) prop local name should appear associated with v0, not v1
-    expect(sparql).toMatch(/src:first\s+\?v0/);
-  });
-});
-
 describe('clearMappingsForSource', () => {
   beforeEach(resetStore);
 
@@ -311,7 +181,6 @@ describe('clearMappingsForSource', () => {
       sourceHandle: 'h1',
       targetHandle: 'h2',
       kind: 'direct',
-      sparqlConstruct: '',
     });
     const m2 = store.addMapping({
       sourceId: SOURCE_ID,
@@ -322,7 +191,6 @@ describe('clearMappingsForSource', () => {
       sourceHandle: 'h3',
       targetHandle: 'h2',
       kind: 'direct',
-      sparqlConstruct: '',
     });
     store.createGroup(SOURCE_ID, [m1, m2], 'concat');
 
@@ -338,3 +206,46 @@ describe('clearMappingsForSource', () => {
     ).toHaveLength(0);
   });
 });
+
+// ─── Type shape tests ─────────────────────────────────────────────────────────
+
+describe('MappingGroup type shape', () => {
+  it('MappingGroup concat variant has formulaExpression, not sparqlConstruct', () => {
+    const group: MappingGroup = {
+      id: 'g1',
+      strategy: 'concat',
+      separator: ',',
+      targetClassUri: 'http://nato.int/ns#Entity',
+      targetPropUri: 'http://nato.int/ns#name',
+      formulaExpression: 'CONCAT(a, b)',
+    };
+    expect(group.formulaExpression).toBe('CONCAT(a, b)');
+    expect('sparqlConstruct' in group).toBe(false);
+  });
+
+  it('MappingGroup formulaExpression is optional (can be omitted)', () => {
+    const group: MappingGroup = {
+      id: 'g2',
+      strategy: 'coalesce',
+      separator: '',
+      targetClassUri: 'http://nato.int/ns#Entity',
+      targetPropUri: 'http://nato.int/ns#name',
+    };
+    expect(group.formulaExpression).toBeUndefined();
+  });
+});
+
+// ─── Unused variable suppression ─────────────────────────────────────────────
+// Ensure Mapping import is used to keep TypeScript happy
+const _mappingTypeCheck: Mapping = {
+  id: 'x',
+  sourceId: 's',
+  sourceClassUri: 'c',
+  sourcePropUri: 'p',
+  targetClassUri: 'tc',
+  targetPropUri: 'tp',
+  sourceHandle: 'sh',
+  targetHandle: 'th',
+  kind: 'direct',
+};
+void _mappingTypeCheck;
