@@ -1,4 +1,6 @@
 import { localName } from '@/lib/rdf';
+import { parseFormula } from '@/lib/formulaParser';
+import type { Expr } from '@/lib/formulaParser';
 import type { Source } from '@/store/sourcesStore';
 import type { Mapping } from '@/types/index';
 
@@ -85,6 +87,155 @@ function deriveSubjectTemplate(
   return `${uriPrefix}{${varName}}`;
 }
 
+// ─── emitFnOPOM ───────────────────────────────────────────────────────────────
+
+function turtleEscape(s: string): string {
+  return s.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+}
+
+/** Map formula function name → { grelFn, params } */
+const FNO_MAP: Record<string, { grelFn: string; params: string[] }> = {
+  UPPER: { grelFn: 'toUpperCase', params: ['valueParameter'] },
+  LOWER: { grelFn: 'toLowerCase', params: ['valueParameter'] },
+  TRIM: { grelFn: 'trim', params: ['valueParameter'] },
+  REPLACE: {
+    grelFn: 'string_replace',
+    params: ['valueParameter', 'param2Str', 'param3Str'],
+  },
+  CONCAT: {
+    grelFn: 'string_concat',
+    params: ['valueParameter', 'valueParameter2'],
+  },
+};
+
+/**
+ * Emit a single argument as a predicateObjectMap parameter block.
+ * Returns the Turtle lines as a string (indented).
+ */
+function emitArg(
+  arg: Expr,
+  paramPredicate: string,
+  indent: string,
+  mappingId: string,
+  counter: { n: number },
+): string {
+  if (arg.type === 'field') {
+    return (
+      `${indent}rr:predicateObjectMap [\n` +
+      `${indent}  rr:predicate grel:${paramPredicate} ;\n` +
+      `${indent}  rr:objectMap [ rml:reference "${arg.path}" ]\n` +
+      `${indent}] ;\n`
+    );
+  } else if (arg.type === 'literal') {
+    return (
+      `${indent}rr:predicateObjectMap [\n` +
+      `${indent}  rr:predicate grel:${paramPredicate} ;\n` +
+      `${indent}  rr:objectMap [ rr:constant "${turtleEscape(arg.value)}" ]\n` +
+      `${indent}] ;\n`
+    );
+  } else if (arg.type === 'call') {
+    // Nested function call — emit inline blank node
+    const inner = emitFnOCallBlock(arg, mappingId, counter, indent + '  ');
+    return (
+      `${indent}rr:predicateObjectMap [\n` +
+      `${indent}  rr:predicate grel:${paramPredicate} ;\n` +
+      `${indent}  rr:objectMap [\n` +
+      `${indent}    fnml:functionValue [\n` +
+      `${inner}` +
+      `${indent}    ]\n` +
+      `${indent}  ]\n` +
+      `${indent}] ;\n`
+    );
+  }
+  return '';
+}
+
+/**
+ * Emit the inner body of a functionValue block (logicalSource, subjectMap, executes POM, param POMs).
+ * Returns lines as a string (indented by `indent`).
+ */
+function emitFnOCallBlock(
+  callExpr: { fn: string; args: Expr[] },
+  mappingId: string,
+  counter: { n: number },
+  indent: string,
+): string {
+  const spec = FNO_MAP[callExpr.fn];
+  if (!spec) return '';
+
+  const args = callExpr.args;
+  let out = '';
+
+  if (callExpr.fn === 'CONCAT' && args.length > 2) {
+    // Chain: CONCAT(a, b, c) → CONCAT(CONCAT(a, b), c)
+    // Build left-associative chain recursively
+    const reduced = args.slice(0, -1).reduce<Expr>((acc, _cur, idx) => {
+      if (idx === 0) {
+        // first reduction: CONCAT(args[0], args[1])
+        return { type: 'call', fn: 'CONCAT', args: [args[0]!, args[1]!] };
+      }
+      return { type: 'call', fn: 'CONCAT', args: [acc, args[idx + 1]!] };
+    }, args[0]!);
+    // Wrap the last arg
+    const lastArg = args[args.length - 1]!;
+    const chainExpr: Expr = {
+      type: 'call',
+      fn: 'CONCAT',
+      args: [reduced, lastArg],
+    };
+    return emitFnOCallBlock(
+      chainExpr as { fn: string; args: Expr[] },
+      mappingId,
+      counter,
+      indent,
+    );
+  }
+
+  out += `${indent}rr:subjectMap [ rr:termType rr:BlankNode ] ;\n`;
+  out += `${indent}rr:predicateObjectMap [\n`;
+  out += `${indent}  rr:predicate fno:executes ;\n`;
+  out += `${indent}  rr:objectMap [ rr:constant grel:${spec.grelFn} ]\n`;
+  out += `${indent}] ;\n`;
+
+  for (let i = 0; i < args.length; i++) {
+    const param = spec.params[i] ?? spec.params[spec.params.length - 1]!;
+    out += emitArg(args[i]!, param, indent, mappingId, counter);
+  }
+
+  return out;
+}
+
+/**
+ * Emit an RML FnO predicateObjectMap for a formula mapping.
+ */
+export function emitFnOPOM(
+  ast: Expr,
+  mapping: Mapping,
+  sourceName: string,
+  counter: { n: number },
+): string {
+  if (ast.type !== 'call') return '';
+
+  const callExpr = ast as { type: 'call'; fn: string; args: Expr[] };
+  counter.n++;
+  const sanitized = sourceName.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+  const innerIndent = '        ';
+
+  let inner = `        rml:logicalSource :${sanitized}_source ;\n`;
+  inner += emitFnOCallBlock(callExpr, mapping.id, counter, innerIndent);
+
+  return (
+    `  rr:predicateObjectMap [\n` +
+    `    rr:predicate <${mapping.targetPropUri}> ;\n` +
+    `    rr:objectMap [\n` +
+    `      fnml:functionValue [\n` +
+    `${inner}` +
+    `      ]\n` +
+    `    ]\n` +
+    `  ] ;\n`
+  );
+}
+
 // ─── generateRml ──────────────────────────────────────────────────────────────
 
 /**
@@ -100,6 +251,9 @@ export function generateRml(
     '@prefix rml: <http://semweb.mmlab.be/ns/rml#> .',
     '@prefix ql: <http://semweb.mmlab.be/ns/ql#> .',
     '@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .',
+    '@prefix fno: <https://w3id.org/function/ontology#> .',
+    '@prefix fnml: <http://semweb.mmlab.be/ns/fnml#> .',
+    '@prefix grel: <http://users.ugent.be/~bjdmeest/function/grel.ttl#> .',
     '',
   ];
 
@@ -146,14 +300,17 @@ export function generateRml(
       lines.push(`    rr:class <${sourceClassUri}> ;`);
       lines.push(`  ] ;`);
 
+      const counter = { n: 0 };
+      const sourceName = source.name;
+
       for (const mapping of mappings) {
-        if (mapping.kind === 'sparql') {
-          lines.push(
-            `  # rr:predicateObjectMap [ # requires manual conversion`,
-          );
-          lines.push(`  #   rr:predicate <${mapping.targetPropUri}> ;`);
-          lines.push(`  #   rr:objectMap [ rml:reference "..." ] ;`);
-          lines.push(`  # ] ;`);
+        if (mapping.kind === 'formula') {
+          try {
+            const ast = parseFormula(mapping.formulaExpression ?? '');
+            lines.push(emitFnOPOM(ast, mapping, sourceName, counter));
+          } catch (e) {
+            lines.push(`  # formula-error: ${(e as Error).message}`);
+          }
         } else if (mapping.kind === 'constant') {
           const val = mapping.constantValue ?? '';
           const dtype =

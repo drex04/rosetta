@@ -17,7 +17,6 @@ import type {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useCanvasData } from '../../hooks/useCanvasData';
-import { generateConstruct } from '@/lib/sparql';
 import { useOntologyStore } from '../../store/ontologyStore';
 import { useSourcesStore } from '../../store/sourcesStore';
 import { useMappingStore } from '../../store/mappingStore';
@@ -428,17 +427,6 @@ function OntologyCanvasInner({ onCanvasChange }: OntologyCanvasProps) {
         );
         if (!sourceProp || !targetProp) return;
 
-        const sparqlConstruct = generateConstruct({
-          sourceId: activeSourceId,
-          sourceClassUri: sourceFlowNode.data.uri,
-          sourcePropUri: sourceProp.uri,
-          sourceHandle,
-          targetClassUri: targetNode.data.uri,
-          targetPropUri: targetProp.uri,
-          targetHandle,
-          kind: 'direct',
-        });
-
         const newMappingId = addMapping({
           sourceId: activeSourceId,
           sourceClassUri: sourceFlowNode.data.uri,
@@ -448,7 +436,6 @@ function OntologyCanvasInner({ onCanvasChange }: OntologyCanvasProps) {
           sourceHandle,
           targetHandle,
           kind: 'direct',
-          sparqlConstruct,
         });
 
         // Auto-group detection: check if target prop already has mappings from this source

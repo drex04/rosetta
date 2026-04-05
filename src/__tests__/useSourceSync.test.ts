@@ -77,7 +77,6 @@ describe('useSourceSync', () => {
             sourceHandle: 'prop_id',
             targetHandle: 'target_prop_identifier',
             kind: 'direct',
-            sparqlConstruct: '',
           },
         ],
       },

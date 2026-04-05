@@ -25,7 +25,6 @@ import { useValidationStore } from '@/store/validationStore';
 import sampleShapesTtl from '@/data/sample-shapes.ttl?raw';
 import { parseTurtle } from '@/lib/rdf';
 import { jsonToSchema } from '@/lib/jsonToSchema';
-import { generateConstruct } from '@/lib/sparql';
 import type { ProjectFile } from '@/types/index';
 import sampleNorwegianRaw from '@/data/sample-source-a-norwegian.json?raw';
 import sampleGermanRaw from '@/data/sample-source-b-german.json?raw';
@@ -144,16 +143,6 @@ export function Header({ onAboutClick }: HeaderProps) {
         (p) => p.label === 'speed',
       );
       if (srcProp && tgtProp) {
-        const sparqlConstruct = generateConstruct({
-          sourceId: idA,
-          sourceClassUri: radarTracksNode.data.uri,
-          sourcePropUri: srcProp.uri,
-          sourceHandle: 'prop_spd_kts',
-          targetClassUri: airTrackNode.data.uri,
-          targetPropUri: tgtProp.uri,
-          targetHandle: 'target_prop_speed',
-          kind: 'direct',
-        });
         useMappingStore.getState().addMapping({
           sourceId: idA,
           sourceClassUri: radarTracksNode.data.uri,
@@ -163,7 +152,6 @@ export function Header({ onAboutClick }: HeaderProps) {
           sourceHandle: 'prop_spd_kts',
           targetHandle: 'target_prop_speed',
           kind: 'direct',
-          sparqlConstruct,
         });
       }
     }
@@ -278,7 +266,8 @@ export function Header({ onAboutClick }: HeaderProps) {
       {/* Left: brand */}
       <div className="flex items-center gap-3">
         <span className="font-semibold text-slate-50 text-2xl select-none">
-          Rosetta Workbench
+          <span className="sm:hidden">Rosetta</span>
+          <span className="hidden sm:inline">Rosetta Workbench</span>
         </span>
       </div>
 
@@ -293,7 +282,7 @@ export function Header({ onAboutClick }: HeaderProps) {
               aria-label="Project menu"
             >
               <FolderSimpleIcon size={13} />
-              Project
+              <span className="hidden sm:inline">Project</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="text-sm">
@@ -357,7 +346,7 @@ export function Header({ onAboutClick }: HeaderProps) {
             aria-label="Open help"
           >
             <QuestionIcon size={13} />
-            Help
+            <span className="hidden sm:inline">Help</span>
           </Button>
           <Button
             variant="ghost"
@@ -367,7 +356,7 @@ export function Header({ onAboutClick }: HeaderProps) {
             onClick={onAboutClick}
           >
             <InfoIcon size={13} />
-            About
+            <span className="hidden sm:inline">About</span>
           </Button>
           <Button
             variant="ghost"
@@ -383,7 +372,7 @@ export function Header({ onAboutClick }: HeaderProps) {
             }
           >
             <GithubLogoIcon size={13} />
-            GitHub
+            <span className="hidden sm:inline">GitHub</span>
           </Button>
         </div>
       </div>

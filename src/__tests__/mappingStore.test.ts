@@ -16,7 +16,6 @@ function makeBase(
     sourceHandle: 'prop_trackId',
     targetHandle: 'target_prop_identifier',
     kind: 'direct',
-    sparqlConstruct: '',
     ...overrides,
   };
 }
@@ -139,21 +138,24 @@ describe('useMappingStore — updateMapping', () => {
 
     useMappingStore
       .getState()
-      .updateMapping(id1, { kind: 'sparql', sparqlConstruct: 'CONSTRUCT {}' });
+      .updateMapping(id1, {
+        kind: 'formula',
+        formulaExpression: 'UPPER(source.name)',
+      });
 
     const list = useMappingStore.getState().mappings['src-1']!;
     const updated = list.find((m) => m.id === id1)!;
     const untouched = list.find((m) => m.id === id2)!;
 
-    expect(updated.kind).toBe('sparql');
-    expect(updated.sparqlConstruct).toBe('CONSTRUCT {}');
+    expect(updated.kind).toBe('formula');
+    expect(updated.formulaExpression).toBe('UPPER(source.name)');
     expect(untouched.kind).toBe('direct');
-    expect(untouched.sparqlConstruct).toBe('');
+    expect(untouched.formulaExpression).toBeUndefined();
   });
 
   it('does not change the id of the patched mapping', () => {
     const id = useMappingStore.getState().addMapping(makeBase());
-    useMappingStore.getState().updateMapping(id, { kind: 'sparql' });
+    useMappingStore.getState().updateMapping(id, { kind: 'formula' });
 
     const list = useMappingStore.getState().mappings['src-1']!;
     expect(list[0]!.id).toBe(id);
@@ -354,7 +356,6 @@ describe('useMappingStore — hydrate', () => {
       sourceHandle: 'prop_newProp',
       targetHandle: 'target_prop_targetProp',
       kind: 'direct',
-      sparqlConstruct: '',
     };
 
     useMappingStore.getState().hydrate({ 'src-new': [hydratedMapping] });
@@ -375,5 +376,59 @@ describe('useMappingStore — hydrate', () => {
     useMappingStore.getState().hydrate({});
 
     expect(useMappingStore.getState().mappings).toEqual({});
+  });
+
+  it('migrates legacy kind=sparql mapping to kind=formula with empty formulaExpression', () => {
+    const legacyMapping = {
+      id: 'legacy-sparql-1',
+      sourceId: 'src-1',
+      sourceClassUri: 'http://example.org/TrackReport',
+      sourcePropUri: 'http://example.org/trackId',
+      targetClassUri: 'http://nato.int/onto#Track',
+      targetPropUri: 'http://nato.int/onto#identifier',
+      sourceHandle: 'prop_trackId',
+      targetHandle: 'target_prop_identifier',
+      kind: 'sparql' as unknown as Mapping['kind'],
+      sparqlConstruct: 'CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }',
+    };
+
+    useMappingStore.getState().hydrate({ 'src-1': [legacyMapping as Mapping] });
+
+    const list = useMappingStore.getState().mappings['src-1']!;
+    expect(list).toHaveLength(1);
+    expect(list[0]!.kind).toBe('formula');
+    expect(list[0]!.formulaExpression).toBe('');
+    expect(
+      (list[0]! as Record<string, unknown>)['sparqlConstruct'],
+    ).toBeUndefined();
+  });
+
+  it('migrates legacy MappingGroup with sparqlConstruct to formulaExpression=""', () => {
+    const legacyGroup = {
+      id: 'group-1',
+      strategy: 'concat' as const,
+      separator: ',',
+      targetClassUri: 'http://nato.int/onto#Track',
+      targetPropUri: 'http://nato.int/onto#identifier',
+      sparqlConstruct: 'CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }',
+    };
+
+    useMappingStore
+      .getState()
+      .hydrate(
+        {},
+        {
+          'src-1': [
+            legacyGroup as unknown as import('@/types/index').MappingGroup,
+          ],
+        },
+      );
+
+    const groups = useMappingStore.getState().groups['src-1']!;
+    expect(groups).toHaveLength(1);
+    expect(groups[0]!.formulaExpression).toBe('');
+    expect(
+      (groups[0]! as Record<string, unknown>)['sparqlConstruct'],
+    ).toBeUndefined();
   });
 });

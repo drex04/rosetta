@@ -23,13 +23,13 @@ export async function executeAllRml(
 
   const warnings: string[] = [];
 
-  // Warn about sparql-kind mappings that cannot execute via RML
+  // Warn about formula-kind mappings that cannot yet execute via RML (stub until Task 3)
   for (const [sourceId, mappings] of Object.entries(mappingsBySource)) {
-    const skipped = mappings.filter((m) => m.kind === 'sparql').length;
+    const skipped = mappings.filter((m) => m.kind === 'formula').length;
     if (skipped > 0) {
       const name = sources.find((s) => s.id === sourceId)?.name ?? sourceId;
       warnings.push(
-        `"${name}": ${skipped} sparql-kind mapping(s) skipped — run manually via SPARQL tab.`,
+        `"${name}": ${skipped} formula mapping(s) skipped — formula execution not yet implemented.`,
       );
     }
   }

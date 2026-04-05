@@ -38,7 +38,6 @@ function makeMapping(propUri: string) {
     sourceHandle: `prop_${propUri.split('#').pop() ?? 'x'}`,
     targetHandle: `target_prop_${propUri.split('#').pop() ?? 'x'}`,
     kind: 'direct' as const,
-    sparqlConstruct: '',
   };
 }
 

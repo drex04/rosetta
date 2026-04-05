@@ -195,7 +195,6 @@ function makeMapping(
     id: crypto.randomUUID(),
     sourceId: 'src1',
     kind: 'direct',
-    sparqlConstruct: '',
     sourceHandle: '',
     targetHandle: '',
     ...overrides,

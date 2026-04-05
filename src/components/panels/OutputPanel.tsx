@@ -1,7 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
   Accordion,
   AccordionContent,
@@ -45,9 +44,11 @@ function FusedJsonLdViewer({ content }: { content: string }) {
   );
 }
 
-// ─── Fused sub-tab ────────────────────────────────────────────────────────────
+// ─── OutputPanel ─────────────────────────────────────────────────────────────
 
-function FusedTab() {
+export function OutputPanel() {
+  const sources = useSourcesStore((s) => s.sources);
+  const mappings = useMappingStore((s) => s.mappings);
   const result = useFusionStore((s) => s.result);
   const jsonLd = useFusionStore((s) => s.jsonLd);
   const loading = useFusionStore((s) => s.loading);
@@ -57,7 +58,6 @@ function FusedTab() {
   const runFusion = useFusionStore((s) => s.runFusion);
   const setStale = useFusionStore((s) => s.setStale);
 
-  // Stale detection: mark results stale when mappings or sources change
   useEffect(() => {
     const unsubM = useMappingStore.subscribe(() => setStale(true));
     const unsubS = useSourcesStore.subscribe(() => setStale(true));
@@ -67,10 +67,117 @@ function FusedTab() {
     };
   }, [setStale]);
 
+  const hasMappings = Object.values(mappings).some((m) => m.length > 0);
+  const hasSparqlOrJoin = false; // sparql kind removed; join detection TBD
+
+  const rmlPreview = useMemo(
+    () => generateRml(sources, mappings),
+    [sources, mappings],
+  );
+  const yarrrmlPreview = useMemo(
+    () => generateYarrrml(sources, mappings),
+    [sources, mappings],
+  );
+
+  function handleDownloadRml() {
+    downloadBlob(rmlPreview, 'mappings.rml.ttl', 'text/turtle');
+  }
+
+  function handleDownloadYarrrml() {
+    downloadBlob(yarrrmlPreview, 'mappings.yarrrml.yml', 'application/yaml');
+  }
+
   return (
-    <div className="flex flex-col flex-1 overflow-hidden">
-      {/* Header row */}
-      <div className="shrink-0 flex items-center gap-2 px-3 py-2 border-b border-border">
+    <div className="flex flex-col h-full overflow-hidden">
+      {/* Export accordions */}
+      <ScrollArea className="shrink-0 max-h-[45%]">
+        <div className="flex flex-col gap-3 p-3">
+          {!hasMappings ? (
+            <p className="text-sm text-muted-foreground">
+              No mappings defined yet. Create mappings in the MAP tab to export
+              RML/YARRRML.
+            </p>
+          ) : (
+            <>
+              {hasSparqlOrJoin && (
+                <Alert className="border-source/40 text-source-text bg-source/5">
+                  <WarningIcon size={14} className="shrink-0" />
+                  <AlertDescription>
+                    Some mappings use <strong>SPARQL</strong> or{' '}
+                    <strong>join</strong> kinds and are annotated as{' '}
+                    <em>requires manual conversion</em> in the exported files.
+                  </AlertDescription>
+                </Alert>
+              )}
+              <p className="text-sm text-muted-foreground">
+                Download production ETL mapping files for use with RML
+                processors (RMLMapper, Morph-KGC, etc.).
+              </p>
+              <Accordion type="multiple" className="w-full">
+                <AccordionItem
+                  value="rml"
+                  className="border border-border rounded-md mb-2"
+                >
+                  <AccordionTrigger className="px-3 py-2 text-sm font-medium hover:no-underline [&>svg]:ml-auto">
+                    <span className="flex-1 text-left">RML</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="shrink-0 mr-1"
+                      title="Download RML"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDownloadRml();
+                      }}
+                    >
+                      <DownloadSimpleIcon size={12} className="mr-1" />
+                      Download
+                    </Button>
+                  </AccordionTrigger>
+                  <AccordionContent className="p-0">
+                    <ScrollArea className="h-[280px]">
+                      <pre className="px-3 py-2 font-mono text-sm text-foreground bg-muted/30 border-t border-border whitespace-pre-wrap">
+                        {rmlPreview}
+                      </pre>
+                    </ScrollArea>
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem
+                  value="yarrrml"
+                  className="border border-border rounded-md"
+                >
+                  <AccordionTrigger className="px-3 py-2 text-sm font-medium hover:no-underline [&>svg]:ml-auto">
+                    <span className="flex-1 text-left">YARRRML</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="shrink-0 mr-1"
+                      title="Download YARRRML"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDownloadYarrrml();
+                      }}
+                    >
+                      <DownloadSimpleIcon size={12} className="mr-1" />
+                      Download
+                    </Button>
+                  </AccordionTrigger>
+                  <AccordionContent className="p-0">
+                    <ScrollArea className="h-[280px]">
+                      <pre className="px-3 py-2 font-mono text-sm text-foreground bg-muted/30 border-t border-border whitespace-pre-wrap">
+                        {yarrrmlPreview}
+                      </pre>
+                    </ScrollArea>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </>
+          )}
+        </div>
+      </ScrollArea>
+
+      {/* Transform & Fuse button row */}
+      <div className="shrink-0 flex items-center gap-2 px-3 py-2 border-t border-b border-border">
         <Button
           variant="default"
           size="sm"
@@ -94,7 +201,6 @@ function FusedTab() {
             <Button
               variant="ghost"
               size="sm"
-              className="h-6 px-2 text-xs"
               title="Download JSON-LD"
               onClick={() =>
                 downloadBlob(
@@ -105,7 +211,7 @@ function FusedTab() {
               }
             >
               <DownloadSimpleIcon size={12} className="mr-1" />
-              Download JSON-LD
+              Download
             </Button>
           )}
         </div>
@@ -121,7 +227,7 @@ function FusedTab() {
         </Alert>
       )}
 
-      {/* Warnings from failed queries/parsing */}
+      {/* Warnings */}
       {result && result.warnings.length > 0 && (
         <Alert className="shrink-0 rounded-none border-x-0 border-source/40 text-source-text bg-source/5">
           <AlertDescription>
@@ -144,7 +250,7 @@ function FusedTab() {
         </div>
       )}
 
-      {/* Fused JSON-LD output viewer */}
+      {/* Fused JSON-LD output */}
       {jsonLd ? (
         <FusedJsonLdViewer content={JSON.stringify(jsonLd, null, 2)} />
       ) : !loading ? (
@@ -153,147 +259,5 @@ function FusedTab() {
         </div>
       ) : null}
     </div>
-  );
-}
-
-// ─── Export sub-tab ──────────────────────────────────────────────────────────
-
-function ExportTab() {
-  const sources = useSourcesStore((s) => s.sources);
-  const mappings = useMappingStore((s) => s.mappings);
-
-  const hasMappings = Object.values(mappings).some((m) => m.length > 0);
-  const hasSparqlOrJoin = Object.values(mappings)
-    .flat()
-    .some((m) => m.kind === 'sparql');
-
-  const rmlPreview = useMemo(
-    () => generateRml(sources, mappings),
-    [sources, mappings],
-  );
-  const yarrrmlPreview = useMemo(
-    () => generateYarrrml(sources, mappings),
-    [sources, mappings],
-  );
-
-  function handleDownloadRml() {
-    downloadBlob(rmlPreview, 'mappings.rml.ttl', 'text/turtle');
-  }
-
-  function handleDownloadYarrrml() {
-    downloadBlob(yarrrmlPreview, 'mappings.yarrrml.yml', 'application/yaml');
-  }
-
-  if (!hasMappings) {
-    return (
-      <div className="p-4 text-sm text-muted-foreground">
-        No mappings defined yet. Create mappings in the MAP tab to export
-        RML/YARRRML.
-      </div>
-    );
-  }
-
-  return (
-    <ScrollArea className="flex-1">
-      <div className="flex flex-col gap-3 p-3">
-        {hasSparqlOrJoin && (
-          <Alert className="border-source/40 text-source-text bg-source/5">
-            <WarningIcon size={14} className="shrink-0" />
-            <AlertDescription>
-              Some mappings use <strong>SPARQL</strong> or <strong>join</strong>{' '}
-              kinds and are annotated as <em>requires manual conversion</em> in
-              the exported files.
-            </AlertDescription>
-          </Alert>
-        )}
-        <p className="text-sm text-muted-foreground">
-          Download production ETL mapping files for use with RML processors
-          (RMLMapper, Morph-KGC, etc.).
-        </p>
-        <Accordion type="multiple" className="w-full">
-          <AccordionItem
-            value="rml"
-            className="border border-border rounded-md mb-2"
-          >
-            <AccordionTrigger className="px-3 py-2 text-sm font-medium hover:no-underline [&>svg]:ml-auto">
-              <span className="flex-1 text-left">RML</span>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 px-2 text-xs shrink-0 mr-1"
-                title="Download RML"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDownloadRml();
-                }}
-              >
-                <DownloadSimpleIcon size={12} className="mr-1" />
-                Download RML
-              </Button>
-            </AccordionTrigger>
-            <AccordionContent className="p-0">
-              <ScrollArea className="h-[280px]">
-                <pre className="px-3 py-2 font-mono text-sm text-foreground bg-muted/30 border-t border-border whitespace-pre-wrap">
-                  {rmlPreview}
-                </pre>
-              </ScrollArea>
-            </AccordionContent>
-          </AccordionItem>
-          <AccordionItem
-            value="yarrrml"
-            className="border border-border rounded-md"
-          >
-            <AccordionTrigger className="px-3 py-2 text-sm font-medium hover:no-underline [&>svg]:ml-auto">
-              <span className="flex-1 text-left">YARRRML</span>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 px-2 text-xs shrink-0 mr-1"
-                title="Download YARRRML"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDownloadYarrrml();
-                }}
-              >
-                <DownloadSimpleIcon size={12} className="mr-1" />
-                Download YARRRML
-              </Button>
-            </AccordionTrigger>
-            <AccordionContent className="p-0">
-              <ScrollArea className="h-[280px]">
-                <pre className="px-3 py-2 font-mono text-sm text-foreground bg-muted/30 border-t border-border whitespace-pre-wrap">
-                  {yarrrmlPreview}
-                </pre>
-              </ScrollArea>
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
-      </div>
-    </ScrollArea>
-  );
-}
-
-// ─── OutputPanel ─────────────────────────────────────────────────────────────
-
-export function OutputPanel() {
-  return (
-    <Tabs defaultValue="fuse" className="flex flex-col h-full gap-0">
-      <div className="shrink-0 px-3 py-1.5 border-b border-border">
-        <TabsList variant="line" className="w-full gap-0">
-          <TabsTrigger value="fuse" className="flex-1 tracking-wide text-xs">
-            Fuse
-          </TabsTrigger>
-          <TabsTrigger value="export" className="flex-1 tracking-wide text-xs">
-            Export
-          </TabsTrigger>
-        </TabsList>
-      </div>
-      <TabsContent value="fuse" className="flex-1 min-h-0 m-0">
-        <FusedTab />
-      </TabsContent>
-      <TabsContent value="export" className="flex-1 min-h-0 m-0">
-        <ExportTab />
-      </TabsContent>
-    </Tabs>
   );
 }
