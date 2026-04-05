@@ -65,6 +65,11 @@
 **Requirements:** (housekeeping — no new REQ IDs)
 **Exit criteria:** StatusBar visible on mobile; violations and fused JSON-LD scroll; source chips have unified hover; LOAD tab Source Data is flat; BUILD tab accepts .ttl/.rdf/.jsonld uploads; FUSE/EXPORT download buttons have text labels.
 
+## Phase 15: Formula Mapping Editor
+**Goal:** Replace the `sparql` mapping kind with a `formula` kind backed by a safe DSL compiler — no eval(), no code execution. Users define string/logic transformations via a form builder (Tier 1), a formula bar (Tier 2), or raw RML preview (Tier 3). The DSL compiles to FnO/grel triples in the RML export.
+**Requirements:** REQ-116 through REQ-122
+**Exit criteria:** `sparql` kind removed from type/UI/stores/RML/YARRRML; `formula` kind added with `formulaExpression` field; `src/lib/formulaParser.ts` parses and validates expressions; `generateRml()` emits correct `fnml:functionValue` blocks; Tier 1 form builder and Tier 2 formula bar render in MAP tab for formula mappings; existing sparql mappings migrate to formula on hydrate.
+
 ## Phase 13: Onboarding & Demo
 **Goal:** Demo-ready product — sample project, guided tour, contextual education, empty states.
 **Requirements:** REQ-68 through REQ-78
