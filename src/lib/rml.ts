@@ -48,6 +48,33 @@ export function inferIterator(jsonString: string): string {
   return '$';
 }
 
+// ─── inferXmlIterator ─────────────────────────────────────────────────────────
+
+/**
+ * Infer an XPath iterator expression from an XML string.
+ * Returns a safe fallback of `/*` if the XML is invalid or empty.
+ */
+export function inferXmlIterator(xmlString: string): string {
+  if (xmlString.trim() === '') return '/*';
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(xmlString, 'application/xml');
+    if (doc.querySelector('parsererror')) return '/*';
+    const root = doc.documentElement;
+    // Find a child element tag that repeats — that's the record iterator
+    const childTags = Array.from(root.children).map((el) => el.tagName);
+    const counts: Record<string, number> = {};
+    for (const tag of childTags) counts[tag] = (counts[tag] ?? 0) + 1;
+    const repeating = Object.entries(counts).find(([, count]) => count > 1);
+    if (repeating) return `/${root.tagName}/${repeating[0]}`;
+    if (root.children.length > 0)
+      return `/${root.tagName}/${root.children[0]!.tagName}`;
+    return `/${root.tagName}`;
+  } catch {
+    return '/*';
+  }
+}
+
 // ─── deriveSubjectTemplate ────────────────────────────────────────────────────
 
 /**

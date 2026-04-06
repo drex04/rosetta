@@ -1,4 +1,4 @@
-import { inferIterator } from '@/lib/rml';
+import { inferIterator, inferXmlIterator } from '@/lib/rml';
 import { localName } from '@/lib/rdf';
 import { parseFormula } from '@/lib/formulaParser';
 import type { Expr } from '@/lib/formulaParser';
@@ -137,7 +137,12 @@ export function generateYarrrml(
   for (const source of sources) {
     if (source.rawData.trim() === '') continue;
 
-    const iterator = inferIterator(source.rawData);
+    const isXml = source.dataFormat === 'xml';
+    const iterator = isXml
+      ? inferXmlIterator(source.rawData)
+      : inferIterator(source.rawData);
+    const ext = isXml ? 'xml' : 'json';
+    const refFormulation = isXml ? 'xpath' : 'jsonpath';
     const safeName = source.name.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
     const uriPrefix = `http://src_${safeName}_#`;
 
@@ -162,7 +167,7 @@ export function generateYarrrml(
       block.push(`  ${mapKey}:`);
       block.push(`    sources:`);
       block.push(
-        `      - ["${escapeYamlString(source.name)}.json~jsonpath", "${escapeYamlString(iterator)}"]`,
+        `      - ["${escapeYamlString(source.name)}.${ext}~${refFormulation}", "${escapeYamlString(iterator)}"]`,
       );
       block.push(`    s: "${escapeYamlString(subjectTemplate)}"`);
       block.push(`    po:`);
