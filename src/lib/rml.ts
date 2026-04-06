@@ -167,22 +167,15 @@ function emitFnOCallBlock(
   let out = '';
 
   if (callExpr.fn === 'CONCAT' && args.length > 2) {
-    // Chain: CONCAT(a, b, c) → CONCAT(CONCAT(a, b), c)
-    // Build left-associative chain recursively
-    const reduced = args.slice(0, -1).reduce<Expr>((acc, _cur, idx) => {
-      if (idx === 0) {
-        // first reduction: CONCAT(args[0], args[1])
-        return { type: 'call', fn: 'CONCAT', args: [args[0]!, args[1]!] };
-      }
-      return { type: 'call', fn: 'CONCAT', args: [acc, args[idx + 1]!] };
-    }, args[0]!);
-    // Wrap the last arg
-    const lastArg = args[args.length - 1]!;
-    const chainExpr: Expr = {
+    // Build left-associative chain: CONCAT(a,b,c,d) → CONCAT(CONCAT(CONCAT(a,b),c),d)
+    let chainExpr: Expr = {
       type: 'call',
       fn: 'CONCAT',
-      args: [reduced, lastArg],
+      args: [args[0]!, args[1]!],
     };
+    for (let i = 2; i < args.length; i++) {
+      chainExpr = { type: 'call', fn: 'CONCAT', args: [chainExpr, args[i]!] };
+    }
     return emitFnOCallBlock(
       chainExpr as { fn: string; args: Expr[] },
       mappingId,

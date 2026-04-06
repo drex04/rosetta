@@ -62,6 +62,17 @@ export function prefixFromUri(uri: string): string {
   return uri;
 }
 
+// ─── Canvas node ID ───────────────────────────────────────────────────────────
+
+/**
+ * Derives a stable, collision-free canvas node ID from a full URI.
+ * Uses encodeURIComponent so two classes with the same local name but different
+ * namespaces (e.g. ex1:Track and ex2:Track) never collide.
+ */
+export function ontologyNodeId(uri: string): string {
+  return `node_${encodeURIComponent(uri)}`;
+}
+
 // ─── Node display helpers ─────────────────────────────────────────────────────
 
 const STANDARD_NAMESPACES: ReadonlyArray<readonly [string, string]> = [
@@ -236,12 +247,7 @@ export async function parseTurtle(
       const bn = q.object as unknown as N3.Term;
 
       // Must be typed owl:Restriction
-      if (
-        !store
-          .match(bn, nn(RDF_TYPE), nn(OWL_RESTRICTION), null)
-          [Symbol.iterator]()
-          .next().value
-      )
+      if (!store.countQuads(bn, nn(RDF_TYPE), nn(OWL_RESTRICTION), null))
         continue;
 
       // Must declare owl:onProperty pointing at a named node
@@ -253,14 +259,20 @@ export async function parseTurtle(
       const propUri = onPropQ.object.value;
       const propTerm = N3.DataFactory.namedNode(propUri) as unknown as N3.Term;
 
-      const isDT = !!store
-        .match(propTerm, nn(RDF_TYPE), nn(OWL_DATATYPE_PROPERTY), null)
-        [Symbol.iterator]()
-        .next().value;
-      const isOP = !!store
-        .match(propTerm, nn(RDF_TYPE), nn(OWL_OBJECT_PROPERTY), null)
-        [Symbol.iterator]()
-        .next().value;
+      const isDT =
+        store.countQuads(
+          propTerm,
+          nn(RDF_TYPE),
+          nn(OWL_DATATYPE_PROPERTY),
+          null,
+        ) > 0;
+      const isOP =
+        store.countQuads(
+          propTerm,
+          nn(RDF_TYPE),
+          nn(OWL_OBJECT_PROPERTY),
+          null,
+        ) > 0;
 
       if (isDT) {
         const key = `${classUri}|${propUri}`;
@@ -297,7 +309,7 @@ export async function parseTurtle(
 
   const nodes: OntologyNode[] = Array.from(classMap.entries()).map(
     ([uri, data]) => ({
-      id: `node_${localName(uri)}`,
+      id: ontologyNodeId(uri),
       type: 'classNode' as const,
       position: { x: COLUMN_X_MASTER, y: 0 }, // overwritten by tree layout below
       data: data as ClassData & Record<string, unknown>,
@@ -335,8 +347,8 @@ export async function parseTurtle(
     // Both domain and range must be known classes
     if (!classMap.has(domainUri) || !classMap.has(rangeUri)) continue;
 
-    const sourceId = `node_${localName(domainUri)}`;
-    const targetId = `node_${localName(rangeUri)}`;
+    const sourceId = ontologyNodeId(domainUri);
+    const targetId = ontologyNodeId(rangeUri);
 
     const label =
       firstLiteral(store, subject as unknown as N3.Term, RDFS_LABEL, nn) ??
@@ -362,8 +374,8 @@ export async function parseTurtle(
   const existingEdgeIds = new Set(edges.map((e) => e.id));
   for (const { domainUri, propUri, rangeUri } of restrictionObjectProps) {
     if (!classMap.has(domainUri) || !classMap.has(rangeUri)) continue;
-    const sourceId = `node_${localName(domainUri)}`;
-    const targetId = `node_${localName(rangeUri)}`;
+    const sourceId = ontologyNodeId(domainUri);
+    const targetId = ontologyNodeId(rangeUri);
     const edgeId = `e_${sourceId}_objectPropertyEdge_${targetId}`;
     if (existingEdgeIds.has(edgeId)) continue;
     existingEdgeIds.add(edgeId);
@@ -393,8 +405,8 @@ export async function parseTurtle(
 
     if (!classMap.has(subUri) || !classMap.has(superUri)) continue;
 
-    const sourceId = `node_${localName(subUri)}`;
-    const targetId = `node_${localName(superUri)}`;
+    const sourceId = ontologyNodeId(subUri);
+    const targetId = ontologyNodeId(superUri);
 
     // Edge flows parent→child (directory-tree style): parent bottom → child left.
     // Note: sourceId=child, targetId=parent in RDF terms, so we swap for the edge.

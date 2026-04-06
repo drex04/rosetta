@@ -101,8 +101,15 @@ export const useOntologyStore = create<OntologyState>((set, get) => ({
   setParseError: (parseError) => set({ parseError }),
   setInvalidateMappingsCallback: (cb) => set({ onInvalidateMappings: cb }),
   loadTurtle: async (text: string) => {
-    const { nodes, edges } = await parseTurtle(text);
-    set({ turtleSource: text, nodes, edges });
+    try {
+      const { nodes, edges } = await parseTurtle(text);
+      set({ turtleSource: text, nodes, edges, parseError: null });
+    } catch (e: unknown) {
+      set({
+        turtleSource: text,
+        parseError: (e as Error)?.message ?? 'Invalid Turtle syntax',
+      });
+    }
   },
   reset: () =>
     set({ nodes: [], edges: [], turtleSource: '', parseError: null }),

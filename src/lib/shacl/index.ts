@@ -48,15 +48,7 @@ export async function validateSource(
   for (const v of violations) {
     v.sourceId = source.id;
 
-    const mapping = mappings.find(
-      (m) =>
-        m.targetPropUri === v.targetPropUri &&
-        m.targetClassUri === v.targetClassUri,
-    );
-
-    const node = ontologyNodes.find(
-      (n) => n.data.uri === mapping?.targetClassUri,
-    );
+    const node = ontologyNodes.find((n) => n.data.uri === v.targetClassUri);
     v.canvasNodeId = node?.id ?? null;
   }
 

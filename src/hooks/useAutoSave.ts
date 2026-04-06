@@ -76,29 +76,23 @@ export function useAutoSave() {
         hydratedRef.current = true;
         return;
       }
+      const ontologyStore = useOntologyStore.getState();
       try {
-        const store = useOntologyStore.getState();
-        void parseTurtle(saved.ontology.turtleSource)
-          .then(({ nodes, edges }) => {
-            const positioned = nodes.map((n) => ({
-              ...n,
-              position: saved.ontology.nodePositions[n.id] ?? n.position,
-            }));
-            store.setTurtleSource(saved.ontology.turtleSource);
-            store.setNodes(positioned);
-            store.setEdges(edges);
-          })
-          .catch((e: unknown) => {
-            // Restore raw text so the editor shows user's work after reload
-            store.setTurtleSource(saved.ontology.turtleSource);
-            store.setParseError(
-              (e as Error)?.message ?? 'Invalid Turtle syntax',
-            );
-            console.warn('rosetta: restored invalid Turtle from IDB');
-          });
-      } catch {
-        console.warn('rosetta: failed to restore project from IDB');
-        setSaveStatus('error');
+        const { nodes, edges } = await parseTurtle(saved.ontology.turtleSource);
+        const positioned = nodes.map((n) => ({
+          ...n,
+          position: saved.ontology.nodePositions[n.id] ?? n.position,
+        }));
+        ontologyStore.setTurtleSource(saved.ontology.turtleSource);
+        ontologyStore.setNodes(positioned);
+        ontologyStore.setEdges(edges);
+      } catch (e: unknown) {
+        // Restore raw text so the editor shows user's work after reload
+        ontologyStore.setTurtleSource(saved.ontology.turtleSource);
+        ontologyStore.setParseError(
+          (e as Error)?.message ?? 'Invalid Turtle syntax',
+        );
+        console.warn('rosetta: restored invalid Turtle from IDB');
       }
 
       // Restore sources ────────────────────────────────────────────────────────
