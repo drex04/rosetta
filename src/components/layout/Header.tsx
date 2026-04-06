@@ -160,7 +160,7 @@ export function Header({ onAboutClick }: HeaderProps) {
   // ── Export Project ─────────────────────────────────────────────────────────
   function handleExportProject(): void {
     const sourcesState = useSourcesStore.getState();
-    const mappings = useMappingStore.getState().mappings;
+    const { mappings, groups } = useMappingStore.getState();
     const snapshot: ProjectFile = {
       version: 1,
       ontology: {
@@ -170,6 +170,7 @@ export function Header({ onAboutClick }: HeaderProps) {
       sources: sourcesState.sources,
       activeSourceId: sourcesState.activeSourceId,
       mappings,
+      groups,
       userShapesTurtle: useValidationStore.getState().snapshot()
         .userShapesTurtle,
       timestamp: new Date().toISOString(),
