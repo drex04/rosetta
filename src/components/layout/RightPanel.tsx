@@ -119,35 +119,35 @@ export function RightPanel({
               <TabsList variant="line" className="flex-1 gap-0">
                 <TabsTrigger
                   value="SOURCE"
-                  className="flex-1 tracking-wide text-xs"
+                  className="flex-1 tracking-wide text-sm"
                   aria-label="Source tab"
                 >
                   LOAD
                 </TabsTrigger>
                 <TabsTrigger
                   value="ONTOLOGY"
-                  className="flex-1 tracking-wide text-xs"
+                  className="flex-1 tracking-wide text-sm"
                   aria-label="Ontology tab"
                 >
                   BUILD
                 </TabsTrigger>
                 <TabsTrigger
                   value="MAP"
-                  className="flex-1 tracking-wide text-xs"
+                  className="flex-1 tracking-wide text-sm"
                   aria-label="Mapping tab"
                 >
                   MAP
                 </TabsTrigger>
                 <TabsTrigger
                   value="OUTPUT"
-                  className="flex-1 tracking-wide text-xs"
+                  className="flex-1 tracking-wide text-sm"
                   aria-label="Output tab"
                 >
                   FUSE
                 </TabsTrigger>
                 <TabsTrigger
                   value="VALIDATE"
-                  className="flex-1 tracking-wide text-xs"
+                  className="flex-1 tracking-wide text-sm"
                   aria-label="SHACL validation tab"
                 >
                   CHECK

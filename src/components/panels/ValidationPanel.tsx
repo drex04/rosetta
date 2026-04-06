@@ -152,8 +152,8 @@ export function ValidationPanel() {
               Violations
             </AccordionTrigger>
             <Button
+              variant="default"
               size="sm"
-              className="h-6 px-2 text-xs shrink-0"
               disabled={loading}
               onClick={(e) => {
                 e.stopPropagation();

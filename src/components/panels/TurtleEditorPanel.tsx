@@ -150,6 +150,7 @@ export function TurtleEditorPanel({
                   variant="ghost"
                   size="sm"
                   className="h-6 px-2 text-sm"
+                  title="Import ontology — accepts .ttl (Turtle), .rdf (RDF/XML), .jsonld (JSON-LD)"
                   onClick={() => {
                     setUploadError(null);
                     uploadInputRef.current?.click();
