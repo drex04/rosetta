@@ -26,6 +26,10 @@ const RDFS_SUBCLASS_OF = 'http://www.w3.org/2000/01/rdf-schema#subClassOf';
 const OWL_CLASS = 'http://www.w3.org/2002/07/owl#Class';
 const OWL_DATATYPE_PROPERTY = 'http://www.w3.org/2002/07/owl#DatatypeProperty';
 const OWL_OBJECT_PROPERTY = 'http://www.w3.org/2002/07/owl#ObjectProperty';
+const OWL_RESTRICTION = 'http://www.w3.org/2002/07/owl#Restriction';
+const OWL_ON_PROPERTY = 'http://www.w3.org/2002/07/owl#onProperty';
+const OWL_ON_CLASS = 'http://www.w3.org/2002/07/owl#onClass';
+const OWL_ON_DATA_RANGE = 'http://www.w3.org/2002/07/owl#onDataRange';
 
 // ─── localName ────────────────────────────────────────────────────────────────
 
@@ -206,6 +210,91 @@ export async function parseTurtle(
     classData.properties.push(prop);
   }
 
+  // ── OWL restriction pass ────────────────────────────────────────────────────
+  // Handles ontologies that associate properties with classes via
+  // `rdfs:subClassOf [ a owl:Restriction ; owl:onProperty <p> ]`
+  // rather than explicit `rdfs:domain` triples.
+
+  const addedDatatypeKeys = new Set<string>(); // `${classUri}|${propUri}`
+  for (const [classUri, classData] of classMap) {
+    for (const prop of classData.properties) {
+      addedDatatypeKeys.add(`${classUri}|${prop.uri}`);
+    }
+  }
+
+  // Collect object-property tuples for edge creation below
+  const restrictionObjectProps: Array<{
+    domainUri: string;
+    propUri: string;
+    rangeUri: string;
+  }> = [];
+
+  for (const [classUri, classData] of classMap) {
+    const classTerm = N3.DataFactory.namedNode(classUri) as unknown as N3.Term;
+    for (const q of store.match(classTerm, nn(RDFS_SUBCLASS_OF), null, null)) {
+      if (q.object.termType !== 'BlankNode') continue;
+      const bn = q.object as unknown as N3.Term;
+
+      // Must be typed owl:Restriction
+      if (
+        !store
+          .match(bn, nn(RDF_TYPE), nn(OWL_RESTRICTION), null)
+          [Symbol.iterator]()
+          .next().value
+      )
+        continue;
+
+      // Must declare owl:onProperty pointing at a named node
+      const onPropQ = store
+        .match(bn, nn(OWL_ON_PROPERTY), null, null)
+        [Symbol.iterator]()
+        .next().value;
+      if (!onPropQ || onPropQ.object.termType !== 'NamedNode') continue;
+      const propUri = onPropQ.object.value;
+      const propTerm = N3.DataFactory.namedNode(propUri) as unknown as N3.Term;
+
+      const isDT = !!store
+        .match(propTerm, nn(RDF_TYPE), nn(OWL_DATATYPE_PROPERTY), null)
+        [Symbol.iterator]()
+        .next().value;
+      const isOP = !!store
+        .match(propTerm, nn(RDF_TYPE), nn(OWL_OBJECT_PROPERTY), null)
+        [Symbol.iterator]()
+        .next().value;
+
+      if (isDT) {
+        const key = `${classUri}|${propUri}`;
+        if (addedDatatypeKeys.has(key)) continue;
+        addedDatatypeKeys.add(key);
+        const range =
+          firstNamedNode(store, bn, OWL_ON_DATA_RANGE, nn) ??
+          firstNamedNode(store, propTerm, RDFS_RANGE, nn) ??
+          'xsd:string';
+        const label =
+          firstLiteral(store, propTerm, RDFS_LABEL, nn) ?? localName(propUri);
+        classData.properties.push({
+          uri: propUri,
+          label,
+          range,
+          kind: 'datatype',
+        });
+      }
+
+      if (isOP) {
+        const rangeUri =
+          firstNamedNode(store, bn, OWL_ON_CLASS, nn) ??
+          firstNamedNode(store, propTerm, RDFS_RANGE, nn);
+        if (rangeUri) {
+          restrictionObjectProps.push({
+            domainUri: classUri,
+            propUri,
+            rangeUri,
+          });
+        }
+      }
+    }
+  }
+
   const nodes: OntologyNode[] = Array.from(classMap.entries()).map(
     ([uri, data]) => ({
       id: `node_${localName(uri)}`,
@@ -266,6 +355,30 @@ export async function parseTurtle(
         label,
         predicate: 'owl:ObjectProperty' as const,
       },
+    });
+  }
+
+  // Object property edges inferred from OWL restrictions
+  const existingEdgeIds = new Set(edges.map((e) => e.id));
+  for (const { domainUri, propUri, rangeUri } of restrictionObjectProps) {
+    if (!classMap.has(domainUri) || !classMap.has(rangeUri)) continue;
+    const sourceId = `node_${localName(domainUri)}`;
+    const targetId = `node_${localName(rangeUri)}`;
+    const edgeId = `e_${sourceId}_objectPropertyEdge_${targetId}`;
+    if (existingEdgeIds.has(edgeId)) continue;
+    existingEdgeIds.add(edgeId);
+    const propTerm = N3.DataFactory.namedNode(propUri) as unknown as N3.Term;
+    const label =
+      firstLiteral(store, propTerm, RDFS_LABEL, nn) ?? localName(propUri);
+    edges.push({
+      id: edgeId,
+      type: 'objectPropertyEdge' as const,
+      source: sourceId,
+      target: targetId,
+      sourceHandle: 'class-right',
+      targetHandle: 'class-left',
+      markerEnd: { type: MarkerType.ArrowClosed },
+      data: { uri: propUri, label, predicate: 'owl:ObjectProperty' as const },
     });
   }
 
