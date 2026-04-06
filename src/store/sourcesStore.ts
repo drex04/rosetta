@@ -57,7 +57,16 @@ export const useSourcesStore = create<SourcesState>((set) => ({
   sources: [],
   activeSourceId: null,
   setActiveSourceId: (activeSourceId) => set({ activeSourceId }),
-  addSource: (source) => set((s) => ({ sources: [...s.sources, source] })),
+  addSource: (source) =>
+    set((s) => {
+      const existingNames = new Set(s.sources.map((src) => src.name));
+      let name = source.name;
+      let counter = 2;
+      while (existingNames.has(name)) {
+        name = `${source.name} ${counter++}`;
+      }
+      return { sources: [...s.sources, { ...source, name }] };
+    }),
   removeSource: (id) =>
     set((s) => {
       const sources = s.sources.filter((src) => src.id !== id);

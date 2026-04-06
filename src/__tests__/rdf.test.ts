@@ -3,6 +3,7 @@ import {
   parseTurtle,
   canvasToTurtle,
   localName,
+  ontologyNodeId,
   COLUMN_X_MASTER,
 } from '@/lib/rdf';
 import { TREE_BASE_Y, TREE_INDENT_X } from '@/lib/layout';
@@ -87,22 +88,27 @@ ex:FighterJet a owl:Class ;
   rdfs:subClassOf ex:Aircraft .
 `;
 
+const BASE = 'http://example.com/onto#';
+const ID_AIRCRAFT = ontologyNodeId(`${BASE}Aircraft`);
+const ID_WEAPON = ontologyNodeId(`${BASE}Weapon`);
+const ID_FIGHTER = ontologyNodeId(`${BASE}FighterJet`);
+
 describe('parseTurtle with sample ontology', () => {
   it('parses classes into nodes', async () => {
     const { nodes } = await parseTurtle(SAMPLE_TURTLE);
     expect(nodes).toHaveLength(3);
     const ids = nodes.map((n) => n.id);
-    expect(ids).toContain('node_Aircraft');
-    expect(ids).toContain('node_Weapon');
-    expect(ids).toContain('node_FighterJet');
+    expect(ids).toContain(ID_AIRCRAFT);
+    expect(ids).toContain(ID_WEAPON);
+    expect(ids).toContain(ID_FIGHTER);
   });
 
   it('assigns tree layout positions (root at base x, children indented)', async () => {
     const { nodes } = await parseTurtle(SAMPLE_TURTLE);
     // Aircraft is the root (parent of FighterJet and Weapon), should be at base x
-    const aircraft = nodes.find((n) => n.id === 'node_Aircraft')!;
-    const weapon = nodes.find((n) => n.id === 'node_Weapon')!;
-    const fighter = nodes.find((n) => n.id === 'node_FighterJet')!;
+    const aircraft = nodes.find((n) => n.id === ID_AIRCRAFT)!;
+    const weapon = nodes.find((n) => n.id === ID_WEAPON)!;
+    const fighter = nodes.find((n) => n.id === ID_FIGHTER)!;
     expect(aircraft.position.x).toBe(COLUMN_X_MASTER);
     expect(aircraft.position.y).toBe(TREE_BASE_Y);
     // Children are indented one level
@@ -115,7 +121,7 @@ describe('parseTurtle with sample ontology', () => {
 
   it('embeds datatype properties in the correct class node', async () => {
     const { nodes } = await parseTurtle(SAMPLE_TURTLE);
-    const aircraft = nodes.find((n) => n.id === 'node_Aircraft');
+    const aircraft = nodes.find((n) => n.id === ID_AIRCRAFT);
     expect(aircraft).toBeDefined();
     expect(aircraft!.data.properties).toHaveLength(2);
     const propLabels = aircraft!.data.properties.map((p) => p.label);
@@ -131,8 +137,8 @@ describe('parseTurtle with sample ontology', () => {
     const objEdges = edges.filter((e) => e.type === 'objectPropertyEdge');
     expect(objEdges).toHaveLength(1);
     const edge = objEdges[0]!;
-    expect(edge.source).toBe('node_Aircraft');
-    expect(edge.target).toBe('node_Weapon');
+    expect(edge.source).toBe(ID_AIRCRAFT);
+    expect(edge.target).toBe(ID_WEAPON);
   });
 
   it('creates subclassEdge for rdfs:subClassOf (parent→child direction)', async () => {
@@ -141,8 +147,8 @@ describe('parseTurtle with sample ontology', () => {
     expect(subEdges).toHaveLength(1);
     const edge = subEdges[0]!;
     // Edge flows parent→child (directory-tree style)
-    expect(edge.source).toBe('node_Aircraft'); // parent
-    expect(edge.target).toBe('node_FighterJet'); // child
+    expect(edge.source).toBe(ID_AIRCRAFT); // parent
+    expect(edge.target).toBe(ID_FIGHTER); // child
     expect(edge.sourceHandle).toBe('class-bottom');
     expect(edge.targetHandle).toBe('class-left');
   });
@@ -156,7 +162,7 @@ describe('parseTurtle with sample ontology', () => {
 
   it('stores rdfs:comment in node data', async () => {
     const { nodes } = await parseTurtle(SAMPLE_TURTLE);
-    const aircraft = nodes.find((n) => n.id === 'node_Aircraft');
+    const aircraft = nodes.find((n) => n.id === ID_AIRCRAFT);
     expect(aircraft!.data.comment).toBe('A flying vehicle');
   });
 });
@@ -212,8 +218,8 @@ describe('edge ID format', () => {
     const { edges } = await parseTurtle(SAMPLE_TURTLE);
     const objEdge = edges.find((e) => e.type === 'objectPropertyEdge');
     expect(objEdge).toBeDefined();
-    expect(objEdge!.id).toMatch(
-      /^e_node_Aircraft_objectPropertyEdge_node_Weapon$/,
+    expect(objEdge!.id).toBe(
+      `e_${ID_AIRCRAFT}_objectPropertyEdge_${ID_WEAPON}`,
     );
   });
 
@@ -221,8 +227,23 @@ describe('edge ID format', () => {
     const { edges } = await parseTurtle(SAMPLE_TURTLE);
     const subEdge = edges.find((e) => e.type === 'subclassEdge');
     expect(subEdge).toBeDefined();
-    expect(subEdge!.id).toMatch(
-      /^e_node_FighterJet_subclassEdge_node_Aircraft$/,
-    );
+    expect(subEdge!.id).toBe(`e_${ID_FIGHTER}_subclassEdge_${ID_AIRCRAFT}`);
+  });
+
+  it('no collision when two classes share the same local name', async () => {
+    const turtle = `
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix ex1:  <http://example.com/ns1#> .
+@prefix ex2:  <http://example.com/ns2#> .
+ex1:Track a owl:Class .
+ex2:Track a owl:Class .
+`;
+    const { nodes } = await parseTurtle(turtle);
+    expect(nodes).toHaveLength(2);
+    const ids = nodes.map((n) => n.id);
+    expect(ids[0]).not.toBe(ids[1]);
+    expect(ids).toContain(ontologyNodeId('http://example.com/ns1#Track'));
+    expect(ids).toContain(ontologyNodeId('http://example.com/ns2#Track'));
   });
 });
