@@ -71,6 +71,6 @@
 **Exit criteria:** `sparql` kind removed from type/UI/stores/RML/YARRRML; `formula` kind added with `formulaExpression` field; `src/lib/formulaParser.ts` parses and validates expressions; `generateRml()` emits correct `fnml:functionValue` blocks; Tier 1 form builder and Tier 2 formula bar render in MAP tab for formula mappings; existing sparql mappings migrate to formula on hydrate.
 
 ## Phase 13: Onboarding & Demo
-**Goal:** Demo-ready product — sample project, guided tour, contextual education, empty states.
-**Requirements:** REQ-68 through REQ-78
-**Exit criteria:** First-time user gets interactive tour; sample NATO project loads with both sources pre-configured; all panels have empty states; About dialog explains the technology.
+**Goal:** Interactive tour, contextual tooltips, keyboard shortcuts, undo/redo, and error handling polish.
+**Requirements:** REQ-68, REQ-71, REQ-74, REQ-76, REQ-77
+**Exit criteria:** First-time user gets interactive tour (react-joyride); all key UI elements have tooltips; undo/redo works across canvas and mapping actions; keyboard shortcuts documented and functional; loading/error states surfaced consistently.
