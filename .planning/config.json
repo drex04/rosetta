@@ -2,7 +2,8 @@
   "version": "1.0",
   "project": "rosetta",
   "workflow": {
-    "auto_advance": true
+    "auto_advance": true,
+    "nyquist_validation": true
   },
   "phases": 7,
   "currentPhase": 1,

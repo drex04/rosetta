@@ -2,6 +2,18 @@
 
 Client-side web app for learning Semantic Web tech (OWL/RDF/SPARQL/SHACL) in the context of NATO defense interoperability. No backend.
 
+## Code Exploration
+
+Use claude-mem smart tools as the primary tools for understanding code. They save 8-19x tokens compared to Read/Grep and provide cross-session memory that prevents re-discovering what was already learned:
+
+- `smart_outline` over `Read` — see file structure without loading the full file (~1,500 tokens vs ~12,000)
+- `smart_unfold` over `Read` with offset/limit — read a specific function by name
+- `smart_search` over `Grep` and `Glob` — AST-aware symbol search across the codebase
+- `search` / `get_observations` — recall decisions, gotchas, and patterns from prior sessions
+- `timeline` — understand recent work in a specific area before starting new tasks
+
+Fall back to `Read` only when you need the full file for editing. Fall back to `Grep`/`Glob` only when smart tools return no results.
+
 ## Tech Stack
 
 React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui (preset: bcivVKZU), Zustand, React Flow (@xyflow/react), N3.js, Comunica, jsonld, rdf-validate-shacl, CodeMirror 6, YASGUI, idb-keyval, react-joyride

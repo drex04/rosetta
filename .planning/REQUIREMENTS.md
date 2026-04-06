@@ -157,13 +157,7 @@ REQ-110: Run SHACL validation against user-defined shapes (replace current auto-
 ## Phase 12: Onboarding & Demo
 
 REQ-68: Interactive walkthrough tour (react-joyride) — 10 steps covering full workflow; launches on first visit
-REQ-69: Sample project bundle: NATO air defense scenario with 2 sources (Nation Alpha + Nation Bravo), pre-built mappings including unit conversions and code translations
-REQ-70: "Load Sample Project" on empty state + toolbar
 REQ-71: Contextual tooltips (Phosphor info icons + shadcn Tooltip) on all key UI elements
-REQ-72: About dialog (shadcn Dialog/Sheet): problem statement, Semantic Web approach, workflow diagram, key concepts glossary, NATO relevance, learn more links
-REQ-73: Empty states on all panels (canvas, INPUT, ONTOLOGY, MAP, OUTPUT tabs)
 REQ-74: Undo/redo support
-REQ-75: SPARQL template library for common mapping patterns (rename, concatenate, restructure, filter, unit convert)
 REQ-76: Keyboard shortcuts
 REQ-77: Comprehensive error handling and loading states (progress indicator for Comunica queries)
-REQ-78: Node palette on right edge of canvas for dragging new class/property nodes onto master ontology

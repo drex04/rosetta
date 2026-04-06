@@ -15,9 +15,9 @@ progress:
 
 ## Current Position
 
-- **Phase:** 11
+- **Phase:** 13
 - **Plan:** 0/? (not started)
-- **Status:** Milestone complete
+- **Status:** In progress — research complete, planning next
 
 ## Phase Status
 
@@ -33,8 +33,11 @@ progress:
 | 8 | Source & Ontology Editing | complete |
 | 9 | Bug Fixes & UI/UX Overhaul | complete |
 | 10 | Canvas Interactions & Panel Integration | complete |
-| 11 | SHACL Authoring | not started |
-| 12 | Onboarding & Demo | not started |
+| 11 | RML-Native Transform | complete |
+| 12 | SHACL Authoring | complete |
+| 13 | Onboarding & Demo | not started |
+| 14 | UI Polish III | complete |
+| 15 | Formula Mapping Editor | complete |
 
 ## Notes
 
@@ -65,4 +68,4 @@ Phase 10 Plan 01 completed 2026-04-01: Inline node editing — double-click repl
 Phase 10 Plan 02 completed 2026-04-01: Bidirectional canvas↔panel navigation and mapping edge kind labels.
 Phase 10 Plan 03 completed 2026-04-01: Edge type editing — double-click picker, source→source picker, onto sync fix, replaceEdge action.
 Phase 10 complete 2026-04-01: All REQ-95 through REQ-100 implemented.
-Next: run `/fh:plan-work` for Phase 11 — SHACL Authoring.
+Next: run `/fh:plan-work 13` for Phase 13 — Onboarding & Demo.
