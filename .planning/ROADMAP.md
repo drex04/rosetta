@@ -71,6 +71,6 @@
 **Exit criteria:** `sparql` kind removed from type/UI/stores/RML/YARRRML; `formula` kind added with `formulaExpression` field; `src/lib/formulaParser.ts` parses and validates expressions; `generateRml()` emits correct `fnml:functionValue` blocks; Tier 1 form builder and Tier 2 formula bar render in MAP tab for formula mappings; existing sparql mappings migrate to formula on hydrate.
 
 ## Phase 13: Onboarding & Demo
-**Goal:** Interactive tour, contextual tooltips, keyboard shortcuts, undo/redo, and error handling polish.
+**Goal:** Interactive tour, contextual tooltips, keyboard shortcuts, undo/redo, and error handling polish. Also: migrate `uiStore` to the IDB snapshot pattern for consistency, implement formula execution in the RML runner, and code-split the bundle to reduce the initial load below 1MB gzipped.
 **Requirements:** REQ-68, REQ-71, REQ-74, REQ-76, REQ-77
-**Exit criteria:** First-time user gets interactive tour (react-joyride); all key UI elements have tooltips; undo/redo works across canvas and mapping actions; keyboard shortcuts documented and functional; loading/error states surfaced consistently.
+**Exit criteria:** First-time user gets interactive tour (react-joyride); all key UI elements have tooltips; undo/redo works across canvas and mapping actions; keyboard shortcuts documented and functional; loading/error states surfaced consistently. `uiStore` no longer uses Zustand `persist`/localStorage — `activeRightTab` is part of the IDB snapshot and project export. Formula-kind mappings execute correctly in `rmlExecute.ts` (no silent skip). Bundle initial chunk is code-split via dynamic `import()` for Comunica, YASGUI, and CodeMirror; main chunk gzip size below 500KB.

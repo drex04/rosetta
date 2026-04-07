@@ -25,9 +25,11 @@ import { useValidationStore } from '@/store/validationStore';
 import sampleShapesTtl from '@/data/sample-shapes.ttl?raw';
 import { parseTurtle } from '@/lib/rdf';
 import { jsonToSchema } from '@/lib/jsonToSchema';
+import { xmlToSchema } from '@/lib/xmlToSchema';
 import type { ProjectFile } from '@/types/index';
 import sampleNorwegianRaw from '@/data/sample-source-a-norwegian.json?raw';
 import sampleGermanRaw from '@/data/sample-source-b-german.json?raw';
+import sampleUkRaw from '@/data/sample-source-c-uk.xml?raw';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -101,8 +103,10 @@ export function Header({ onAboutClick }: HeaderProps) {
 
     const resultA = jsonToSchema(sampleNorwegianRaw, 'Norway');
     const resultB = jsonToSchema(sampleGermanRaw, 'Germany');
+    const resultC = xmlToSchema(sampleUkRaw, 'United Kingdom');
     const idA = generateSourceId();
     const idB = generateSourceId();
+    const idC = generateSourceId();
     const sources = [
       {
         id: idA,
@@ -124,35 +128,58 @@ export function Header({ onAboutClick }: HeaderProps) {
         schemaEdges: resultB.edges,
         parseError: null,
       },
+      {
+        id: idC,
+        name: 'United Kingdom',
+        order: 2,
+        rawData: sampleUkRaw,
+        dataFormat: 'xml' as const,
+        schemaNodes: resultC.nodes,
+        schemaEdges: resultC.edges,
+        parseError: null,
+      },
     ];
     useSourcesStore.setState({ sources, activeSourceId: idA });
     useValidationStore.getState().setUserShapesTurtle(sampleShapesTtl);
 
-    // Add a seed mapping: Norway spd_kts → AirTrack speed
+    // ── Pre-seed Norway mappings (direct) ────────────────────────────────────
+    // Norway source: flat JSON → properties live on the RadarTracks class node
     const radarTracksNode = resultA.nodes.find(
       (n) => n.data.uri === 'http://src_norway_#RadarTracks',
     );
     const airTrackNode = useOntologyStore
       .getState()
       .nodes.find((n) => n.data.uri === 'http://nato.int/onto#AirTrack');
+
     if (radarTracksNode && airTrackNode) {
-      const srcProp = radarTracksNode.data.properties.find(
-        (p) => p.label === 'spd_kts',
-      );
-      const tgtProp = airTrackNode.data.properties.find(
-        (p) => p.label === 'speed',
-      );
-      if (srcProp && tgtProp) {
-        useMappingStore.getState().addMapping({
-          sourceId: idA,
-          sourceClassUri: radarTracksNode.data.uri,
-          sourcePropUri: srcProp.uri,
-          targetClassUri: airTrackNode.data.uri,
-          targetPropUri: tgtProp.uri,
-          sourceHandle: 'prop_spd_kts',
-          targetHandle: 'target_prop_speed',
-          kind: 'direct',
-        });
+      // Pairs of [source property label, target ontology property label]
+      const mappingPairs: Array<[string, string]> = [
+        ['trkNo', 'trackNumber'],
+        ['lat', 'latitude'],
+        ['lon', 'longitude'],
+        ['spd_kts', 'speedKts'],
+        ['time', 'timestamp'],
+      ];
+
+      for (const [srcLabel, tgtLabel] of mappingPairs) {
+        const srcProp = radarTracksNode.data.properties.find(
+          (p) => p.label === srcLabel,
+        );
+        const tgtProp = airTrackNode.data.properties.find(
+          (p) => p.label === tgtLabel,
+        );
+        if (srcProp && tgtProp) {
+          useMappingStore.getState().addMapping({
+            sourceId: idA,
+            sourceClassUri: radarTracksNode.data.uri,
+            sourcePropUri: srcProp.uri,
+            targetClassUri: airTrackNode.data.uri,
+            targetPropUri: tgtProp.uri,
+            sourceHandle: `prop_${srcLabel}`,
+            targetHandle: `target_prop_${tgtLabel}`,
+            kind: 'direct',
+          });
+        }
       }
     }
   }
