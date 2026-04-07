@@ -160,6 +160,21 @@ function OntologyCanvasInner({ onCanvasChange }: OntologyCanvasProps) {
   } | null>(null);
   const [edgePicker, setEdgePicker] = useState<EdgePickerState | null>(null);
   const [groupPrompt, setGroupPrompt] = useState<GroupPromptState | null>(null);
+  const [propMenu, setPropMenu] = useState<{
+    nodeId: string;
+    propUri: string;
+    x: number;
+    y: number;
+  } | null>(null);
+
+  // ─── Close propMenu on outside click ─────────────────────────────────────────
+  useEffect(() => {
+    if (!propMenu) return;
+    const handler = () => setPropMenu(null);
+    document.addEventListener('click', handler, { capture: true });
+    return () =>
+      document.removeEventListener('click', handler, { capture: true });
+  }, [propMenu]);
 
   // ─── fitView on first nodes ──────────────────────────────────────────────────
   useEffect(() => {
@@ -255,6 +270,36 @@ function OntologyCanvasInner({ onCanvasChange }: OntologyCanvasProps) {
       }
     },
     [setNodes, updateSource],
+  );
+
+  // ─── handleStartPropEdit — bumps propRenameTrigger to open inline prop edit ────
+  const handleStartPropEdit = useCallback(
+    (nodeId: string, propUri: string) => {
+      setPropMenu(null);
+      const ontNodes = useOntologyStore.getState().nodes;
+      setNodes(
+        ontNodes.map((n) =>
+          n.id === nodeId
+            ? {
+                ...n,
+                data: {
+                  ...n.data,
+                  propRenameTrigger: {
+                    propUri,
+                    counter:
+                      ((
+                        n.data.propRenameTrigger as
+                          | { propUri: string; counter: number }
+                          | undefined
+                      )?.counter ?? 0) + 1,
+                  },
+                },
+              }
+            : n,
+        ),
+      );
+    },
+    [setNodes],
   );
 
   // ─── onNodesChange ────────────────────────────────────────────────────────────
@@ -672,6 +717,14 @@ function OntologyCanvasInner({ onCanvasChange }: OntologyCanvasProps) {
               ? handleCommitSourceEdit
               : handleCommitOntologyEdit,
           onStartEdit: handleStartEdit,
+          onPropContextMenu: (
+            nodeId: string,
+            propUri: string,
+            x: number,
+            y: number,
+          ) => {
+            setPropMenu({ nodeId, propUri, x, y });
+          },
         },
       })),
     [
@@ -892,12 +945,17 @@ function OntologyCanvasInner({ onCanvasChange }: OntologyCanvasProps) {
 
   // ─── Node double-click → switch panel tab + trigger inline edit ───────────────
   const handleNodeDoubleClick = useCallback(
-    (_: React.MouseEvent, node: RFNode) => {
+    (e: React.MouseEvent, node: RFNode) => {
       if (node.type === 'classNode') {
         setActiveRightTab('ONTOLOGY');
       } else if (node.type === 'sourceNode') {
         setActiveRightTab('SOURCE');
       }
+
+      // Don't fire header edit if the click originated on a property row
+      const target = e.target as HTMLElement;
+      if (target.closest('[data-property-row]')) return;
+
       const onStartEdit = (
         node.data as { onStartEdit?: (id: string) => void } | undefined
       )?.onStartEdit;
@@ -1004,6 +1062,29 @@ function OntologyCanvasInner({ onCanvasChange }: OntologyCanvasProps) {
           onDelete={() => handleDeleteNode(nodeMenu.nodeId, nodeMenu.nodeType)}
           onClose={() => setNodeMenu(null)}
         />
+      )}
+
+      {/* Property context menu */}
+      {propMenu && (
+        <div
+          style={{
+            position: 'fixed',
+            left: propMenu.x,
+            top: propMenu.y,
+            zIndex: 1000,
+          }}
+          className="bg-popover border border-border rounded shadow-md py-1 text-sm"
+          onMouseLeave={() => setPropMenu(null)}
+        >
+          <button
+            className="w-full text-left px-3 py-1.5 hover:bg-accent hover:text-accent-foreground"
+            onClick={() =>
+              handleStartPropEdit(propMenu.nodeId, propMenu.propUri)
+            }
+          >
+            Rename Property
+          </button>
+        </div>
       )}
 
       {/* Add property dialog */}

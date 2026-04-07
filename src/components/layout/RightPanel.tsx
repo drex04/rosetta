@@ -3,6 +3,7 @@ import { SidebarSimpleIcon } from '@phosphor-icons/react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useUiStore } from '@/store/uiStore';
 import { useOntologyStore } from '@/store/ontologyStore';
+import { useSourcesStore } from '@/store/sourcesStore';
 import { TurtleEditorPanel } from '@/components/panels/TurtleEditorPanel';
 import { SourcePanel } from '@/components/panels/SourcePanel';
 import { MappingPanel } from '@/components/panels/MappingPanel';
@@ -25,6 +26,7 @@ export function RightPanel({
   saveStatus,
 }: RightPanelProps) {
   const { activeRightTab, setActiveRightTab } = useUiStore();
+  const activeSourceId = useSourcesStore((s) => s.activeSourceId);
   const turtleSource = useOntologyStore((s) => s.turtleSource);
   const setTurtleSource = useOntologyStore((s) => s.setTurtleSource);
   const parseError = useOntologyStore((s) => s.parseError);
@@ -156,7 +158,10 @@ export function RightPanel({
             </div>
             <div className="flex-1 overflow-hidden">
               <TabsContent value="SOURCE" className="h-full m-0">
-                <SourcePanel resetSourceSchema={resetSourceSchema} />
+                <SourcePanel
+                  key={activeSourceId ?? 'none'}
+                  resetSourceSchema={resetSourceSchema}
+                />
               </TabsContent>
               <TabsContent value="ONTOLOGY" className="h-full m-0">
                 <TurtleEditorPanel

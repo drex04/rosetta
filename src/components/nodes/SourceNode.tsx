@@ -66,7 +66,7 @@ export function SourceNode({ id, data }: NodeProps<SourceNodeType>) {
         type="target"
         position={Position.Left}
         style={{ top: 26 }}
-        className="!w-2.5 !h-2.5 !bg-source !border-source"
+        className="!w-4 !h-4 !bg-source !border-source"
         isConnectable={true}
       />
 
@@ -90,6 +90,12 @@ export function SourceNode({ id, data }: NodeProps<SourceNodeType>) {
           <div
             className="flex flex-col gap-1 py-1 nodrag w-full"
             onMouseDown={(e) => e.stopPropagation()}
+            onBlur={(e) => {
+              // Only commit when focus leaves the container entirely
+              if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                commitHeader();
+              }
+            }}
           >
             <input
               autoFocus
@@ -103,7 +109,6 @@ export function SourceNode({ id, data }: NodeProps<SourceNodeType>) {
                   setHeaderError('');
                 }
               }}
-              onBlur={() => commitHeader()}
               placeholder="Label"
             />
             <input
@@ -117,7 +122,6 @@ export function SourceNode({ id, data }: NodeProps<SourceNodeType>) {
                   setHeaderError('');
                 }
               }}
-              onBlur={() => commitHeader()}
               placeholder="URI"
             />
             {headerError && (
@@ -141,7 +145,13 @@ export function SourceNode({ id, data }: NodeProps<SourceNodeType>) {
           {data.properties.map((prop) => (
             <div
               key={prop.uri}
+              data-property-row
               className="relative flex items-center justify-between px-3 pr-5 py-1.5 bg-background hover:bg-source/10"
+              onContextMenu={(e) => {
+                e.preventDefault();
+                e.stopPropagation(); // don't bubble to node context menu
+                data.onPropContextMenu?.(id, prop.uri, e.clientX, e.clientY);
+              }}
             >
               <span className="text-foreground text-sm font-medium truncate max-w-[55%]">
                 {prop.label}
@@ -153,7 +163,7 @@ export function SourceNode({ id, data }: NodeProps<SourceNodeType>) {
                 id={`prop_${prop.label}`}
                 type="source"
                 position={Position.Right}
-                className="!w-2.5 !h-2.5 !bg-source !border-source"
+                className="!w-4 !h-4 !bg-source !border-source"
                 isConnectable={true}
               />
             </div>
@@ -165,7 +175,7 @@ export function SourceNode({ id, data }: NodeProps<SourceNodeType>) {
         id="class-bottom"
         type="source"
         position={Position.Bottom}
-        className="!w-2.5 !h-2.5 !bg-source !border-source"
+        className="!w-4 !h-4 !bg-source !border-source"
         isConnectable={true}
       />
     </div>
