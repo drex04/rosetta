@@ -31,18 +31,22 @@ export async function executeAllRml(
     const formulaMappings = mappings.filter(
       (m): m is Mapping & { kind: 'formula' } => m.kind === 'formula',
     );
+    if (!formulaMappings.length) continue;
     const sourceName = sources.find((s) => s.id === sourceId)?.name ?? sourceId;
+    const count = formulaMappings.length;
+    const errors: string[] = [];
     for (const m of formulaMappings) {
       try {
         const ast = parseFormula(m.formulaExpression ?? '');
-        // Dry-run evaluate with an empty record to catch runtime errors early
         evaluate(ast, {});
       } catch (e) {
-        warnings.push(
-          `"${sourceName}": formula error — ${(e as Error).message}`,
-        );
+        errors.push((e as Error).message);
       }
     }
+    const detail = errors.length > 0 ? ` — ${errors[0]}` : '';
+    warnings.push(
+      `"${sourceName}": ${count} formula mapping${count > 1 ? 's' : ''}${detail}`,
+    );
   }
 
   const rmlTurtle = generateRml(sources, mappingsBySource);
