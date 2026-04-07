@@ -132,5 +132,6 @@ export interface ProjectFile {
   mappings: Record<string, Mapping[]>;
   groups?: Record<string, MappingGroup[]>;
   userShapesTurtle?: string;
+  activeRightTab?: import('@/store/uiStore').RightTab;
   timestamp: string;
 }

@@ -22,6 +22,7 @@ import { useOntologyStore, SEED_TURTLE } from '@/store/ontologyStore';
 import { useSourcesStore, generateSourceId } from '@/store/sourcesStore';
 import { useMappingStore } from '@/store/mappingStore';
 import { useValidationStore } from '@/store/validationStore';
+import { useUiStore } from '@/store/uiStore';
 import sampleShapesTtl from '@/data/sample-shapes.ttl?raw';
 import { parseTurtle } from '@/lib/rdf';
 import { jsonToSchema } from '@/lib/jsonToSchema';
@@ -200,6 +201,7 @@ export function Header({ onAboutClick }: HeaderProps) {
       groups,
       userShapesTurtle: useValidationStore.getState().snapshot()
         .userShapesTurtle,
+      activeRightTab: useUiStore.getState().activeRightTab,
       timestamp: new Date().toISOString(),
     };
     downloadBlob(
@@ -271,6 +273,9 @@ export function Header({ onAboutClick }: HeaderProps) {
                 .getState()
                 .hydrate({ userShapesTurtle: parsed.userShapesTurtle });
             }
+            useUiStore
+              .getState()
+              .setActiveRightTab(parsed.activeRightTab ?? 'SOURCE');
             setImportError(null);
           })
           .catch(() => {

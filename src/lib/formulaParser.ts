@@ -298,6 +298,47 @@ export function parseFormula(input: string): Expr {
 /** Validate an already-parsed AST. Returns array of error strings (empty = valid). */
 // (already exported above)
 
+// ---------------------------------------------------------------------------
+// Evaluator
+// ---------------------------------------------------------------------------
+
+/**
+ * Evaluate a parsed formula AST against a data record.
+ * Returns a string or number; never throws on missing fields (returns '').
+ */
+export function evaluate(
+  expr: Expr,
+  record: Record<string, unknown>,
+): string | number {
+  switch (expr.type) {
+    case 'literal':
+      return expr.value;
+    case 'field': {
+      const val = record[expr.path];
+      if (val === undefined || val === null) return '';
+      return String(val);
+    }
+    case 'call': {
+      const args = expr.args.map((a) => evaluate(a, record));
+      const strs = args.map(String);
+      switch (expr.fn) {
+        case 'CONCAT':
+          return strs.join('');
+        case 'UPPER':
+          return strs[0]!.toUpperCase();
+        case 'LOWER':
+          return strs[0]!.toLowerCase();
+        case 'TRIM':
+          return strs[0]!.trim();
+        case 'REPLACE':
+          return strs[0]!.replaceAll(strs[1]!, strs[2]!);
+        default:
+          throw new Error(`Unknown function: ${expr.fn}`);
+      }
+    }
+  }
+}
+
 /** Parse and validate in one step. Never throws. */
 export function parseAndValidate(input: string): ParseResult {
   try {

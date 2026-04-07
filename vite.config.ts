@@ -19,6 +19,26 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: (id) => {
+          if (id.includes('node_modules/n3')) return 'vendor-n3';
+          if (id.includes('node_modules/jsonld')) return 'vendor-jsonld';
+          if (
+            id.includes('node_modules/@comake/rmlmapper-js') ||
+            id.includes('node_modules/rmlmapper')
+          )
+            return 'vendor-rml';
+          if (
+            id.includes('node_modules/@codemirror') ||
+            id.includes('node_modules/@lezer')
+          )
+            return 'vendor-codemirror';
+        },
+      },
+    },
+  },
   optimizeDeps: {
     include: ['@comake/rmlmapper-js'],
   },
