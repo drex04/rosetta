@@ -20,8 +20,15 @@ export interface ClassData {
   comment?: string;
   properties: PropertyData[];
   editTrigger?: number;
+  propRenameTrigger?: { propUri: string; counter: number };
   onCommitEdit?: (nodeId: string, patch: ClassEditPatch) => void;
   onContextMenu?: (nodeId: string, x: number, y: number) => void;
+  onPropContextMenu?: (
+    nodeId: string,
+    propUri: string,
+    x: number,
+    y: number,
+  ) => void;
 }
 
 export type OntologyNode = import('@xyflow/react').Node<

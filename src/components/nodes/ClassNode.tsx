@@ -20,6 +20,19 @@ export function ClassNode({ id, data }: NodeProps<OntologyNode>) {
   const [draftPropType, setDraftPropType] = useState('');
   const [propError, setPropError] = useState('');
 
+  // ── propRenameTrigger effect — programmatic entry from property context menu ──
+  useEffect(() => {
+    if (!data.propRenameTrigger) return;
+    const { propUri } = data.propRenameTrigger;
+    const prop = data.properties.find((p) => p.uri === propUri);
+    if (!prop) return;
+    setEditingPropUri(propUri);
+    setDraftPropLabel(prop.label ?? prop.uri);
+    setDraftPropType(prop.dataType ?? 'xsd:string');
+    setPropError('');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data.propRenameTrigger]);
+
   // ── editTrigger effect — programmatic entry from canvas double-click / context menu ──
   // Intentional: sync draft only when editTrigger fires, not on every label/uri change —
   // adding data.label/data.uri as deps would overwrite in-progress edits on external renames.
@@ -91,7 +104,7 @@ export function ClassNode({ id, data }: NodeProps<OntologyNode>) {
         type="target"
         position={Position.Left}
         style={{ top: 26 }}
-        className="!w-2.5 !h-2.5 !bg-master !border-master"
+        className="!w-4 !h-4 !bg-master !border-master"
         isConnectable={true}
       />
 
@@ -110,6 +123,12 @@ export function ClassNode({ id, data }: NodeProps<OntologyNode>) {
           <div
             className="flex flex-col gap-1 py-1 nodrag w-full"
             onMouseDown={(e) => e.stopPropagation()}
+            onBlur={(e) => {
+              // Only commit when focus leaves the container entirely
+              if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                commitHeader();
+              }
+            }}
           >
             <input
               autoFocus
@@ -123,7 +142,6 @@ export function ClassNode({ id, data }: NodeProps<OntologyNode>) {
                   setHeaderError('');
                 }
               }}
-              onBlur={() => commitHeader()}
               placeholder="Label"
             />
             <input
@@ -137,7 +155,6 @@ export function ClassNode({ id, data }: NodeProps<OntologyNode>) {
                   setHeaderError('');
                 }
               }}
-              onBlur={() => commitHeader()}
               placeholder="URI (e.g. ex:MyClass)"
             />
             {headerError && (
@@ -162,7 +179,13 @@ export function ClassNode({ id, data }: NodeProps<OntologyNode>) {
           {data.properties.map((prop) => (
             <div
               key={prop.uri}
+              data-property-row
               className="relative flex items-center justify-between px-3 pr-5 py-1.5 bg-background hover:bg-muted/50"
+              onContextMenu={(e) => {
+                e.preventDefault();
+                e.stopPropagation(); // don't bubble to node context menu
+                data.onPropContextMenu?.(id, prop.uri, e.clientX, e.clientY);
+              }}
               onDoubleClick={() => {
                 setEditingPropUri(prop.uri);
                 setDraftPropLabel(prop.label ?? prop.uri);
@@ -174,7 +197,7 @@ export function ClassNode({ id, data }: NodeProps<OntologyNode>) {
                 id={`target_prop_${prop.label}`}
                 type="target"
                 position={Position.Left}
-                className="!w-2.5 !h-2.5 !bg-master !border-master"
+                className="!w-4 !h-4 !bg-master !border-master"
                 isConnectable={true}
               />
               {editingPropUri === prop.uri ? (
@@ -240,7 +263,7 @@ export function ClassNode({ id, data }: NodeProps<OntologyNode>) {
         id="class-bottom"
         type="source"
         position={Position.Bottom}
-        className="!w-2.5 !h-2.5 !bg-master !border-master"
+        className="!w-4 !h-4 !bg-master !border-master"
         isConnectable={true}
       />
     </div>
