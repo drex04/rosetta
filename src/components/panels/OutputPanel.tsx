@@ -91,7 +91,7 @@ export function OutputPanel() {
     <div className="flex flex-col h-full overflow-hidden">
       {/* Export accordions */}
       <ScrollArea className="shrink-0 max-h-[45%]">
-        <div className="flex flex-col gap-3 p-3">
+        <div className="flex flex-col gap-3 p-3 overflow-x-hidden min-w-0">
           {!hasMappings ? (
             <p className="text-sm text-muted-foreground">
               No mappings defined yet. Create mappings in the MAP tab to export
@@ -134,9 +134,12 @@ export function OutputPanel() {
                       Download
                     </Button>
                   </AccordionTrigger>
-                  <AccordionContent className="p-0">
+                  <AccordionContent className="p-0 overflow-hidden">
                     <ScrollArea className="h-[280px]">
-                      <pre className="px-3 py-2 font-mono text-sm text-foreground bg-muted/30 border-t border-border whitespace-pre-wrap">
+                      <pre
+                        className="px-3 py-2 font-mono text-sm leading-relaxed text-foreground bg-muted/30 border-t border-border whitespace-pre-wrap break-all"
+                        style={{ fontSize: '0.875rem' }}
+                      >
                         {rmlPreview}
                       </pre>
                     </ScrollArea>
@@ -162,9 +165,12 @@ export function OutputPanel() {
                       Download
                     </Button>
                   </AccordionTrigger>
-                  <AccordionContent className="p-0">
+                  <AccordionContent className="p-0 overflow-hidden">
                     <ScrollArea className="h-[280px]">
-                      <pre className="px-3 py-2 font-mono text-sm text-foreground bg-muted/30 border-t border-border whitespace-pre-wrap">
+                      <pre
+                        className="px-3 py-2 font-mono text-sm leading-relaxed text-foreground bg-muted/30 border-t border-border whitespace-pre-wrap break-all"
+                        style={{ fontSize: '0.875rem' }}
+                      >
                         {yarrrmlPreview}
                       </pre>
                     </ScrollArea>
