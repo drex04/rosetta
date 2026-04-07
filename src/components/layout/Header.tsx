@@ -1,6 +1,11 @@
 import { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -307,17 +312,22 @@ export function Header({ onAboutClick }: HeaderProps) {
       {/* Right: project menu + auxiliary buttons */}
       <div className="flex items-center gap-2">
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-slate-300 hover:text-white hover:bg-slate-700"
-              aria-label="Project menu"
-            >
-              <FolderSimpleIcon size={13} />
-              <span className="hidden sm:inline">Project</span>
-            </Button>
-          </DropdownMenuTrigger>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-slate-300 hover:text-white hover:bg-slate-700"
+                  aria-label="Project menu"
+                >
+                  <FolderSimpleIcon size={13} />
+                  <span className="hidden sm:inline">Project</span>
+                </Button>
+              </DropdownMenuTrigger>
+            </TooltipTrigger>
+            <TooltipContent>New, load, import or export project</TooltipContent>
+          </Tooltip>
           <DropdownMenuContent align="end" className="text-sm">
             <DropdownMenuItem
               className="text-sm gap-2 cursor-pointer"
@@ -372,41 +382,56 @@ export function Header({ onAboutClick }: HeaderProps) {
         />
 
         <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-slate-300 hover:text-white hover:bg-slate-700"
-            aria-label="Open help"
-          >
-            <QuestionIcon size={13} />
-            <span className="hidden sm:inline">Help</span>
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-slate-300 hover:text-white hover:bg-slate-700"
-            aria-label="About Rosetta"
-            onClick={onAboutClick}
-          >
-            <InfoIcon size={13} />
-            <span className="hidden sm:inline">About</span>
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-slate-300 hover:text-white hover:bg-slate-700"
-            aria-label="View source on GitHub"
-            onClick={() =>
-              window.open(
-                'https://github.com/drex04/rosetta',
-                '_blank',
-                'noopener,noreferrer',
-              )
-            }
-          >
-            <GithubLogoIcon size={13} />
-            <span className="hidden sm:inline">GitHub</span>
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-slate-300 hover:text-white hover:bg-slate-700"
+                aria-label="Open help"
+              >
+                <QuestionIcon size={13} />
+                <span className="hidden sm:inline">Help</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Open help documentation</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-slate-300 hover:text-white hover:bg-slate-700"
+                aria-label="About Rosetta"
+                onClick={onAboutClick}
+              >
+                <InfoIcon size={13} />
+                <span className="hidden sm:inline">About</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>About Rosetta Workbench</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-slate-300 hover:text-white hover:bg-slate-700"
+                aria-label="View source on GitHub"
+                onClick={() =>
+                  window.open(
+                    'https://github.com/drex04/rosetta',
+                    '_blank',
+                    'noopener,noreferrer',
+                  )
+                }
+              >
+                <GithubLogoIcon size={13} />
+                <span className="hidden sm:inline">GitHub</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>View source on GitHub</TooltipContent>
+          </Tooltip>
         </div>
       </div>
     </header>

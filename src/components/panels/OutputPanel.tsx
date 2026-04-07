@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,6 +19,7 @@ import { generateYarrrml } from '@/lib/yarrrml';
 import { useMappingStore } from '@/store/mappingStore';
 import { useSourcesStore } from '@/store/sourcesStore';
 import { useFusionStore } from '@/store/fusionStore';
+import { toast } from 'sonner';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -66,6 +67,15 @@ export function OutputPanel() {
       unsubS();
     };
   }, [setStale]);
+
+  // Toast on fusion error
+  const prevErrorRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (error && error !== prevErrorRef.current) {
+      toast.error(`Transform & Fuse failed: ${error}`);
+    }
+    prevErrorRef.current = error;
+  }, [error]);
 
   const hasMappings = Object.values(mappings).some((m) => m.length > 0);
   const hasSparqlOrJoin = false; // sparql kind removed; join detection TBD

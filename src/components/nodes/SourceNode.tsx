@@ -53,11 +53,15 @@ export function SourceNode({ id, data }: NodeProps<SourceNodeType>) {
     }
   };
 
+  const isSearchHighlighted =
+    (data as { isSearchHighlighted?: boolean }).isSearchHighlighted ?? false;
+
   return (
     <div
       className={[
         'bg-white border-2 border-source rounded-md shadow-md min-w-[200px] text-sm font-sans overflow-visible',
         isHighlighted ? 'ring-2 ring-destructive ring-offset-2' : '',
+        isSearchHighlighted ? 'ring-2 ring-blue-400 ring-offset-1' : '',
       ].join(' ')}
       onContextMenu={handleContextMenu}
     >

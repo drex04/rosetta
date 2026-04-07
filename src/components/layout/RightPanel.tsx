@@ -1,6 +1,11 @@
 import { useState, useEffect, Suspense, lazy, type RefObject } from 'react';
 import { SidebarSimpleIcon } from '@phosphor-icons/react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { useUiStore } from '@/store/uiStore';
 import { useOntologyStore } from '@/store/ontologyStore';
 import { useSourcesStore } from '@/store/sourcesStore';
@@ -127,41 +132,70 @@ export function RightPanel({
                 <SidebarSimpleIcon size={24} />
               </button>
               <TabsList variant="line" className="flex-1 gap-0">
-                <TabsTrigger
-                  value="SOURCE"
-                  className="flex-1 tracking-wide text-sm"
-                  aria-label="Source tab"
-                >
-                  LOAD
-                </TabsTrigger>
-                <TabsTrigger
-                  value="ONTOLOGY"
-                  className="flex-1 tracking-wide text-sm"
-                  aria-label="Ontology tab"
-                >
-                  BUILD
-                </TabsTrigger>
-                <TabsTrigger
-                  value="MAP"
-                  className="flex-1 tracking-wide text-sm"
-                  aria-label="Mapping tab"
-                >
-                  MAP
-                </TabsTrigger>
-                <TabsTrigger
-                  value="OUTPUT"
-                  className="flex-1 tracking-wide text-sm"
-                  aria-label="Output tab"
-                >
-                  FUSE
-                </TabsTrigger>
-                <TabsTrigger
-                  value="VALIDATE"
-                  className="flex-1 tracking-wide text-sm"
-                  aria-label="SHACL validation tab"
-                >
-                  CHECK
-                </TabsTrigger>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <TabsTrigger
+                      value="SOURCE"
+                      className="flex-1 tracking-wide text-sm"
+                      aria-label="Source tab"
+                    >
+                      LOAD
+                    </TabsTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>Load and preview source data</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <TabsTrigger
+                      value="ONTOLOGY"
+                      className="flex-1 tracking-wide text-sm"
+                      aria-label="Ontology tab"
+                    >
+                      BUILD
+                    </TabsTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>Edit the master OWL ontology</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <TabsTrigger
+                      value="MAP"
+                      className="flex-1 tracking-wide text-sm"
+                      aria-label="Mapping tab"
+                    >
+                      MAP
+                    </TabsTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    Create field mappings between sources and ontology
+                  </TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <TabsTrigger
+                      value="OUTPUT"
+                      className="flex-1 tracking-wide text-sm"
+                      aria-label="Output tab"
+                    >
+                      FUSE
+                    </TabsTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    Transform and fuse data sources
+                  </TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <TabsTrigger
+                      value="VALIDATE"
+                      className="flex-1 tracking-wide text-sm"
+                      aria-label="SHACL validation tab"
+                    >
+                      CHECK
+                    </TabsTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>Run SHACL validation</TooltipContent>
+                </Tooltip>
               </TabsList>
             </div>
             <div className="flex-1 overflow-hidden">
