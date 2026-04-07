@@ -1,0 +1,94 @@
+# NATO Air Defense Master Ontology
+# Used as the seed ontology for the Rosetta example project.
+# Namespace: http://nato.int/onto#
+# Vocabulary: OWL/RDFS with XSD datatypes
+
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix nato: <https://nato.int/ontology#> .
+
+# ── Classes ────────────────────────────────────────────────────────────────────
+
+nato:Track a owl:Class ;
+  rdfs:label "Track" .
+
+nato:AirTrack a owl:Class ;
+  rdfs:label "Air Track" ;
+  rdfs:subClassOf nato:Track .
+
+# ── Shared Track properties ────────────────────────────────────────────────────
+
+nato:trackNumber a owl:DatatypeProperty ;
+  rdfs:label "Track Number" ;
+  rdfs:comment "Unique track identifier assigned by the reporting sensor (e.g. A-0042, UK-T0234)." ;
+  rdfs:domain nato:Track ;
+  rdfs:range xsd:string .
+
+nato:timestamp a owl:DatatypeProperty ;
+  rdfs:label "Timestamp" ;
+  rdfs:comment "UTC date-time of the track report in ISO 8601 format." ;
+  rdfs:domain nato:Track ;
+  rdfs:range xsd:dateTime .
+
+nato:sensorId a owl:DatatypeProperty ;
+  rdfs:label "Sensor ID" ;
+  rdfs:comment "Identifier of the radar or sensor system that produced this track." ;
+  rdfs:domain nato:Track ;
+  rdfs:range xsd:string .
+
+nato:countryCode a owl:DatatypeProperty ;
+  rdfs:label "Country Code" ;
+  rdfs:comment "ISO 3166-1 alpha-3 code of the nation operating the reporting sensor (e.g. NOR, DEU, GBR)." ;
+  rdfs:domain nato:Track ;
+  rdfs:range xsd:string .
+
+nato:trackQuality a owl:DatatypeProperty ;
+  rdfs:label "Track Quality" ;
+  rdfs:comment "Overall confidence in the track report, expressed as a float in the range 0.0 (unreliable) to 1.0 (fully confirmed)." ;
+  rdfs:domain nato:Track ;
+  rdfs:range xsd:float .
+
+# ── Air Track properties ───────────────────────────────────────────────────────
+
+nato:latitude a owl:DatatypeProperty ;
+  rdfs:label "Latitude" ;
+  rdfs:comment "WGS-84 geodetic latitude in decimal degrees, positive north." ;
+  rdfs:domain nato:AirTrack ;
+  rdfs:range xsd:float .
+
+nato:longitude a owl:DatatypeProperty ;
+  rdfs:label "Longitude" ;
+  rdfs:comment "WGS-84 geodetic longitude in decimal degrees, positive east." ;
+  rdfs:domain nato:AirTrack ;
+  rdfs:range xsd:float .
+
+nato:altitudeFt a owl:DatatypeProperty ;
+  rdfs:label "Altitude (ft)" ;
+  rdfs:comment "Altitude in feet above mean sea level (MSL). Negative values indicate below sea level." ;
+  rdfs:domain nato:AirTrack ;
+  rdfs:range xsd:float .
+
+nato:speedKts a owl:DatatypeProperty ;
+  rdfs:label "Speed (kts)" ;
+  rdfs:comment "Ground speed in knots (nautical miles per hour)." ;
+  rdfs:domain nato:AirTrack ;
+  rdfs:range xsd:float .
+
+nato:headingDeg a owl:DatatypeProperty ;
+  rdfs:label "Heading (deg)" ;
+  rdfs:comment "Magnetic heading in degrees, 0 = north, clockwise." ;
+  rdfs:domain nato:AirTrack ;
+  rdfs:range xsd:float .
+
+nato:iffCode a owl:DatatypeProperty ;
+  rdfs:label "IFF Code" ;
+  rdfs:comment "STANAG 1241 / APP-6D identity designator: FRIEND, HOSTILE, UNKNOWN, SUSPECT, ASSUMED-FRIEND, or NEUTRAL." ;
+  rdfs:domain nato:AirTrack ;
+  rdfs:range xsd:string .
+
+nato:iffConfidence a owl:DatatypeProperty ;
+  rdfs:label "IFF Confidence" ;
+  rdfs:comment "Confidence in the IFF identification, expressed as a float in the range 0.0 to 1.0." ;
+  rdfs:domain nato:AirTrack ;
+  rdfs:range xsd:float .

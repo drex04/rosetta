@@ -1,55 +1,94 @@
 {
   "erkannte_ziele": [
     {
-      "ziel_id": "TRK-0091",
+      "ziel_id": "DEU-Z0089",
       "position": {
-        "breite": 52.52,
-        "laenge": 13.405,
+        "breite": 52.5174,
+        "laenge": 13.4082,
         "hoehe_m": 9750
       },
       "geschwindigkeit_kmh": 833,
-      "kurs_grad": 90,
+      "kurs_grad": 87,
       "identifikation": {
         "typ": "FEINDLICH",
-        "sicherheit": 0.88
+        "sicherheit": 0.91
       },
-      "radar": "ADLER-2000",
+      "spurqualitaet": 0.88,
+      "radar": "ADLER-2000-ALPHA",
       "land": "DEU",
-      "zeitstempel": "2026-03-24T14:23:05Z"
+      "zeitstempel": "2026-04-07T09:15:05Z"
     },
     {
-      "ziel_id": "TRK-0104",
+      "ziel_id": "DEU-Z0094",
       "position": {
-        "breite": 48.1351,
-        "laenge": 11.582,
+        "breite": 48.1372,
+        "laenge": 11.5755,
         "hoehe_m": 3200
       },
       "geschwindigkeit_kmh": 555,
-      "kurs_grad": 315,
+      "kurs_grad": 312,
       "identifikation": {
         "typ": "FREUNDLICH",
         "sicherheit": 0.97
       },
-      "radar": "ADLER-2000",
+      "spurqualitaet": 0.95,
+      "radar": "ADLER-2000-BRAVO",
       "land": "DEU",
-      "zeitstempel": "2026-03-24T14:23:08Z"
+      "zeitstempel": "2026-04-07T09:15:08Z"
     },
     {
-      "ziel_id": "TRK-0117",
+      "ziel_id": "DEU-Z0101",
       "position": {
-        "breite": 53.5753,
-        "laenge": 10.0153,
+        "breite": 53.5507,
+        "laenge": 10.0007,
         "hoehe_m": 610
       },
       "geschwindigkeit_kmh": 222,
-      "kurs_grad": 200,
+      "kurs_grad": 198,
       "identifikation": {
         "typ": "NEUTRAL",
-        "sicherheit": 0.65
+        "sicherheit": 0.63
       },
-      "radar": "ADLER-2000",
+      "spurqualitaet": 0.59,
+      "radar": "ADLER-2000-ALPHA",
       "land": "DEU",
-      "zeitstempel": "2026-03-24T14:23:19Z"
+      "zeitstempel": "2026-04-07T09:15:19Z"
+    },
+    {
+      "ziel_id": "DEU-Z0107",
+      "position": {
+        "breite": 51.2265,
+        "laenge": 6.7734,
+        "hoehe_m": 12500
+      },
+      "geschwindigkeit_kmh": 926,
+      "kurs_grad": 44,
+      "identifikation": {
+        "typ": "UNBEKANNT",
+        "sicherheit": 0.38
+      },
+      "spurqualitaet": 0.34,
+      "radar": "ADLER-2000-CHARLIE",
+      "land": "DEU",
+      "zeitstempel": "2026-04-07T09:15:27Z"
+    },
+    {
+      "ziel_id": "DEU-Z0113",
+      "position": {
+        "breite": 54.3211,
+        "laenge": 10.1354,
+        "hoehe_m": 7800
+      },
+      "geschwindigkeit_kmh": 741,
+      "kurs_grad": 172,
+      "identifikation": {
+        "typ": "FREUNDLICH",
+        "sicherheit": 0.95
+      },
+      "spurqualitaet": 0.92,
+      "radar": "ADLER-2000-BRAVO",
+      "land": "DEU",
+      "zeitstempel": "2026-04-07T09:15:39Z"
     }
   ]
 }

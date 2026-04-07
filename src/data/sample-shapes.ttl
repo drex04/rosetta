@@ -1,66 +1,137 @@
-# Example NATO air defense SHACL shapes
-@prefix sh: <http://www.w3.org/ns/shacl#> .
-@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-@prefix nato: <http://nato.int/onto#> .
+# NATO Air Defense SHACL Shapes
+# Validates mapped RDF data against the nato: master ontology.
+# Both nato:Track (shared) and nato:AirTrack (air-specific) are covered.
 
-nato:AirTrackShape a sh:NodeShape ;
-  sh:targetClass nato:AirTrack ;
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix nato: <https://nato.int/ontology#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 
-  # Track number — required identifier
-  sh:property [
-    sh:path nato:trackNumber ;
-    sh:minCount 1 ;
-    sh:datatype xsd:string ;
-    sh:name "Track Number" ;
-  ] ;
+# ---------------------------------------------------------------------------
+# nato:TrackShape — validates instances of nato:Track (base class)
+# ---------------------------------------------------------------------------
 
-  # Timestamp — required on every track report
-  sh:property [
-    sh:path nato:timestamp ;
-    sh:minCount 1 ;
-    sh:datatype xsd:string ;
-    sh:name "Timestamp" ;
-  ] ;
+nato:TrackShape
+    a sh:NodeShape ;
+    sh:targetClass nato:Track ;
 
-  # Speed — numeric, knots
-  sh:property [
-    sh:path nato:speed ;
-    sh:datatype xsd:float ;
-    sh:name "Speed" ;
-  ] ;
+    # trackNumber — required string identifier
+    sh:property [
+        sh:path        nato:trackNumber ;
+        sh:minCount    1 ;
+        sh:datatype    xsd:string ;
+        sh:name        "Track Number" ;
+        sh:description "Unique alphanumeric identifier assigned to a tracked object." ;
+    ] ;
 
-  # Latitude — numeric, degrees
-  sh:property [
-    sh:path nato:latitude ;
-    sh:datatype xsd:float ;
-    sh:name "Latitude" ;
-  ] ;
+    # timestamp — required ISO dateTime of last observation
+    sh:property [
+        sh:path        nato:timestamp ;
+        sh:minCount    1 ;
+        sh:datatype    xsd:dateTime ;
+        sh:name        "Timestamp" ;
+        sh:description "Date-time of the most recent sensor observation." ;
+    ] ;
 
-  # Longitude — numeric, degrees
-  sh:property [
-    sh:path nato:longitude ;
-    sh:datatype xsd:float ;
-    sh:name "Longitude" ;
-  ] ;
+    # sensorId — optional identifier of the reporting sensor
+    sh:property [
+        sh:path        nato:sensorId ;
+        sh:datatype    xsd:string ;
+        sh:name        "Sensor ID" ;
+        sh:description "Identifier of the sensor that produced this track." ;
+    ] ;
 
-  # Altitude — numeric, feet
-  sh:property [
-    sh:path nato:altitude ;
-    sh:datatype xsd:float ;
-    sh:name "Altitude" ;
-  ] ;
+    # countryCode — optional ISO 3166-1 alpha-3 country code
+    sh:property [
+        sh:path        nato:countryCode ;
+        sh:datatype    xsd:string ;
+        sh:pattern     "^[A-Z]{3}$" ;
+        sh:name        "Country Code" ;
+        sh:description "ISO 3166-1 alpha-3 country code of the track origin (e.g. NOR, DEU, GBR)." ;
+    ] ;
 
-  # IFF code — constrained to valid NATO IFF designators
-  sh:property [
-    sh:path nato:iffCode ;
-    sh:datatype xsd:string ;
-    sh:pattern "^(FRI|HOS|UNK|SUS)$" ;
-    sh:name "IFF Code" ;
-  ] ;
+    # trackQuality — optional confidence score in [0, 1]
+    sh:property [
+        sh:path         nato:trackQuality ;
+        sh:datatype     xsd:float ;
+        sh:minInclusive 0 ;
+        sh:maxInclusive 1 ;
+        sh:name         "Track Quality" ;
+        sh:description  "Sensor confidence score for this track, normalised to [0, 1]." ;
+    ] .
 
-  # Sensor name — free string
-  sh:property [
-    sh:path nato:sensorName ;
-    sh:datatype xsd:string ;
-    sh:name "Sensor Name" ;
-  ] .
+
+# ---------------------------------------------------------------------------
+# nato:AirTrackShape — validates instances of nato:AirTrack (air-specific)
+# ---------------------------------------------------------------------------
+
+nato:AirTrackShape
+    a sh:NodeShape ;
+    sh:targetClass nato:AirTrack ;
+
+    # latitude — WGS-84 latitude in decimal degrees
+    sh:property [
+        sh:path         nato:latitude ;
+        sh:datatype     xsd:float ;
+        sh:minInclusive -90 ;
+        sh:maxInclusive 90 ;
+        sh:name         "Latitude" ;
+        sh:description  "WGS-84 latitude of the air track in decimal degrees." ;
+    ] ;
+
+    # longitude — WGS-84 longitude in decimal degrees
+    sh:property [
+        sh:path         nato:longitude ;
+        sh:datatype     xsd:float ;
+        sh:minInclusive -180 ;
+        sh:maxInclusive 180 ;
+        sh:name         "Longitude" ;
+        sh:description  "WGS-84 longitude of the air track in decimal degrees." ;
+    ] ;
+
+    # altitudeFt — pressure altitude in feet (negative values allowed for below sea-level)
+    sh:property [
+        sh:path         nato:altitudeFt ;
+        sh:datatype     xsd:float ;
+        sh:minInclusive -1500 ;
+        sh:name         "Altitude (ft)" ;
+        sh:description  "Pressure altitude in feet; -1500 ft is the practical lower bound." ;
+    ] ;
+
+    # speedKts — ground speed in knots (non-negative)
+    sh:property [
+        sh:path         nato:speedKts ;
+        sh:datatype     xsd:float ;
+        sh:minInclusive 0 ;
+        sh:name         "Speed (kts)" ;
+        sh:description  "Ground speed of the air track in knots." ;
+    ] ;
+
+    # headingDeg — magnetic heading in degrees [0, 360]
+    sh:property [
+        sh:path         nato:headingDeg ;
+        sh:datatype     xsd:float ;
+        sh:minInclusive 0 ;
+        sh:maxInclusive 360 ;
+        sh:name         "Heading (deg)" ;
+        sh:description  "Magnetic heading of the air track in degrees." ;
+    ] ;
+
+    # iffCode — NATO IFF classification
+    sh:property [
+        sh:path        nato:iffCode ;
+        sh:datatype    xsd:string ;
+        sh:pattern     "^(FRIEND|HOSTILE|UNKNOWN|SUSPECT|ASSUMED_FRIEND|NEUTRAL)$" ;
+        sh:name        "IFF Code" ;
+        sh:description "Identification Friend or Foe classification per NATO STANAG 1241." ;
+    ] ;
+
+    # iffConfidence — IFF confidence score in [0, 1]
+    sh:property [
+        sh:path         nato:iffConfidence ;
+        sh:datatype     xsd:float ;
+        sh:minInclusive 0 ;
+        sh:maxInclusive 1 ;
+        sh:name         "IFF Confidence" ;
+        sh:description  "Confidence level of the IFF classification, normalised to [0, 1]." ;
+    ] .
