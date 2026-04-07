@@ -138,6 +138,7 @@ export function RightPanel({
                       value="SOURCE"
                       className="flex-1 tracking-wide text-sm"
                       aria-label="Source tab"
+                      data-tour="load-tab"
                     >
                       LOAD
                     </TabsTrigger>
@@ -150,6 +151,7 @@ export function RightPanel({
                       value="ONTOLOGY"
                       className="flex-1 tracking-wide text-sm"
                       aria-label="Ontology tab"
+                      data-tour="ontology-tab"
                     >
                       BUILD
                     </TabsTrigger>
@@ -162,6 +164,7 @@ export function RightPanel({
                       value="MAP"
                       className="flex-1 tracking-wide text-sm"
                       aria-label="Mapping tab"
+                      data-tour="map-tab"
                     >
                       MAP
                     </TabsTrigger>
@@ -176,6 +179,7 @@ export function RightPanel({
                       value="OUTPUT"
                       className="flex-1 tracking-wide text-sm"
                       aria-label="Output tab"
+                      data-tour="output-tab"
                     >
                       FUSE
                     </TabsTrigger>
@@ -190,6 +194,7 @@ export function RightPanel({
                       value="VALIDATE"
                       className="flex-1 tracking-wide text-sm"
                       aria-label="SHACL validation tab"
+                      data-tour="validate-tab"
                     >
                       CHECK
                     </TabsTrigger>
