@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  NATO Air Track Report — United Kingdom
+  Format: STANAG 5516 / C2SIM-inspired XML encoding
+  Classification: UNCLASSIFIED // EXERCISE ONLY
+  Source system: UK Giraffe AMB / Sentinel radar network
+-->
+<TrackReport version="2.1" origin="GBR" classification="UNCLASSIFIED">
+
+  <AirTrack id="UK-T0234">
+    <TrackId>UK-T0234</TrackId>
+    <Position>
+      <Lat>51.5074</Lat>
+      <Lon>-0.1278</Lon>
+      <AltFt>25000</AltFt>
+    </Position>
+    <Kinematics>
+      <SpeedKts>420</SpeedKts>
+      <HeadingDeg>045</HeadingDeg>
+    </Kinematics>
+    <Identification>
+      <IffCode>FRIEND</IffCode>
+      <Confidence>0.93</Confidence>
+    </Identification>
+    <Quality>0.89</Quality>
+    <SensorId>GIRAFFE-4A</SensorId>
+    <Country>GBR</Country>
+    <Timestamp>2026-04-07T09:15:00Z</Timestamp>
+  </AirTrack>
+
+  <AirTrack id="UK-T0251">
+    <TrackId>UK-T0251</TrackId>
+    <Position>
+      <Lat>53.4808</Lat>
+      <Lon>-2.2426</Lon>
+      <AltFt>38000</AltFt>
+    </Position>
+    <Kinematics>
+      <SpeedKts>480</SpeedKts>
+      <HeadingDeg>180</HeadingDeg>
+    </Kinematics>
+    <Identification>
+      <IffCode>HOSTILE</IffCode>
+      <Confidence>0.81</Confidence>
+    </Identification>
+    <Quality>0.77</Quality>
+    <SensorId>SENTINEL-R1</SensorId>
+    <Country>GBR</Country>
+    <Timestamp>2026-04-07T09:15:09Z</Timestamp>
+  </AirTrack>
+
+  <AirTrack id="UK-T0267">
+    <TrackId>UK-T0267</TrackId>
+    <Position>
+      <Lat>55.8642</Lat>
+      <Lon>-4.2518</Lon>
+      <AltFt>8500</AltFt>
+    </Position>
+    <Kinematics>
+      <SpeedKts>195</SpeedKts>
+      <HeadingDeg>270</HeadingDeg>
+    </Kinematics>
+    <Identification>
+      <IffCode>UNKNOWN</IffCode>
+      <Confidence>0.54</Confidence>
+    </Identification>
+    <Quality>0.50</Quality>
+    <SensorId>GIRAFFE-4A</SensorId>
+    <Country>GBR</Country>
+    <Timestamp>2026-04-07T09:15:22Z</Timestamp>
+  </AirTrack>
+
+  <AirTrack id="UK-T0289">
+    <TrackId>UK-T0289</TrackId>
+    <Position>
+      <Lat>50.8198</Lat>
+      <Lon>-1.0873</Lon>
+      <AltFt>15000</AltFt>
+    </Position>
+    <Kinematics>
+      <SpeedKts>340</SpeedKts>
+      <HeadingDeg>090</HeadingDeg>
+    </Kinematics>
+    <Identification>
+      <IffCode>ASSUMED_FRIEND</IffCode>
+      <Confidence>0.76</Confidence>
+    </Identification>
+    <Quality>0.83</Quality>
+    <SensorId>SENTINEL-R1</SensorId>
+    <Country>GBR</Country>
+    <Timestamp>2026-04-07T09:15:41Z</Timestamp>
+  </AirTrack>
+
+</TrackReport>

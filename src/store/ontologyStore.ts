@@ -6,26 +6,12 @@ import type {
   ClassData,
 } from '@/types/index';
 import { parseTurtle } from '@/lib/rdf';
+import sampleOntologyTtl from '@/data/sample-ontology.ttl?raw';
 
 // ─── Seed ontology ────────────────────────────────────────────────────────────
+// Loaded from src/data/sample-ontology.ttl — edit that file to change the seed.
 
-export const SEED_TURTLE = `\
-@prefix owl: <http://www.w3.org/2002/07/owl#> .
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-@prefix nato: <http://nato.int/onto#> .
-
-nato:Track a owl:Class ;
-  rdfs:label "Track" .
-
-nato:AirTrack a owl:Class ;
-  rdfs:label "Air Track" ;
-  rdfs:subClassOf nato:Track .
-
-nato:speed a owl:DatatypeProperty ;
-  rdfs:domain nato:AirTrack ;
-  rdfs:range xsd:float .
-`;
+export const SEED_TURTLE = sampleOntologyTtl;
 
 // ─── Store interface ──────────────────────────────────────────────────────────
 
