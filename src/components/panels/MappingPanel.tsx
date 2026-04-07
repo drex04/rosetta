@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useMappingStore } from '@/store/mappingStore';
 import { useSourcesStore } from '@/store/sourcesStore';
 import { useOntologyStore } from '@/store/ontologyStore';
-import { localName } from '@/lib/rdf';
+import { localName, shortenRange } from '@/lib/rdf';
 import { getPropRange } from '@/lib/mappingHelpers';
 import { generateRml } from '@/lib/rml';
 import { parseAndValidate } from '@/lib/formulaParser';
@@ -581,7 +581,7 @@ export function MappingPanel() {
                   </span>
                   {sourceRange ? (
                     <span className="font-mono text-muted-foreground text-sm shrink-0">
-                      {sourceRange}
+                      {shortenRange(sourceRange)}
                     </span>
                   ) : null}
                   <span className="text-muted-foreground shrink-0">→</span>
@@ -590,7 +590,7 @@ export function MappingPanel() {
                   </span>
                   {targetRange ? (
                     <span className="font-mono text-muted-foreground text-sm shrink-0">
-                      {targetRange}
+                      {shortenRange(targetRange)}
                     </span>
                   ) : null}
                 </span>
