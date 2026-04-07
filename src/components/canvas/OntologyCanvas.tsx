@@ -9,6 +9,7 @@ import {
   applyNodeChanges,
   useReactFlow,
 } from '@xyflow/react';
+import { MagnifyingGlassIcon } from '@phosphor-icons/react';
 import type {
   NodeChange,
   Connection,
@@ -88,6 +89,7 @@ const edgeTypes = {
 
 interface OntologyCanvasProps {
   onCanvasChange?: (nodes: OntologyNode[], edges: OntologyEdge[]) => void;
+  onOpenSearchRef?: React.MutableRefObject<(() => void) | null>;
 }
 
 // Only these change types modify the RDF graph — position/select/dimensions do not
@@ -95,7 +97,10 @@ const STRUCTURAL_CHANGE_TYPES = new Set(['add', 'remove', 'reset']);
 
 // ─── Inner component (needs useReactFlow) ────────────────────────────────────
 
-function OntologyCanvasInner({ onCanvasChange }: OntologyCanvasProps) {
+function OntologyCanvasInner({
+  onCanvasChange,
+  onOpenSearchRef,
+}: OntologyCanvasProps) {
   const { nodes, edges } = useCanvasData();
   const setNodes = useOntologyStore((s) => s.setNodes);
   const addNode = useOntologyStore((s) => s.addNode);
@@ -128,7 +133,7 @@ function OntologyCanvasInner({ onCanvasChange }: OntologyCanvasProps) {
   const highlightedCanvasNodeId = useValidationStore(
     (s) => s.highlightedCanvasNodeId,
   );
-  const { screenToFlowPosition } = useReactFlow();
+  const { screenToFlowPosition, fitView } = useReactFlow();
 
   // Offset ref to stagger rapidly-added nodes
   const addNodeOffset = useRef(0);
@@ -149,6 +154,39 @@ function OntologyCanvasInner({ onCanvasChange }: OntologyCanvasProps) {
       if (minimapHideTimer.current) clearTimeout(minimapHideTimer.current);
     };
   }, []);
+
+  // ─── Search state ────────────────────────────────────────────────────────────
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    if (onOpenSearchRef) {
+      onOpenSearchRef.current = () => setSearchOpen(true);
+    }
+  }, [onOpenSearchRef]);
+
+  // Derive matching node ids from canvas nodes
+  const matchingIds = useMemo(() => {
+    if (!searchQuery.trim()) return new Set<string>();
+    const q = searchQuery.toLowerCase();
+    const matched = new Set<string>();
+    for (const n of nodes) {
+      const label = (n.data.label as string | undefined) ?? '';
+      if (label.toLowerCase().includes(q) || n.id.toLowerCase().includes(q)) {
+        matched.add(n.id);
+      }
+    }
+    return matched;
+  }, [nodes, searchQuery]);
+
+  const matchCount = matchingIds.size;
+
+  // fitView to matching nodes when search is active
+  useEffect(() => {
+    if (!searchQuery.trim() || matchingIds.size === 0) return;
+    const matchingNodes = nodes.filter((n) => matchingIds.has(n.id));
+    void fitView({ nodes: matchingNodes, padding: 0.3, duration: 400 });
+  }, [matchingIds, searchQuery, nodes, fitView]);
 
   // ─── UI state ───────────────────────────────────────────────────────────────
   const [canvasMenu, setCanvasMenu] = useState<ContextMenuState | null>(null);
@@ -725,6 +763,8 @@ function OntologyCanvasInner({ onCanvasChange }: OntologyCanvasProps) {
           ) => {
             setPropMenu({ nodeId, propUri, x, y });
           },
+          isSearchHighlighted:
+            searchQuery.trim().length > 0 && matchingIds.has(n.id),
         },
       })),
     [
@@ -733,6 +773,8 @@ function OntologyCanvasInner({ onCanvasChange }: OntologyCanvasProps) {
       handleCommitSourceEdit,
       handleCommitOntologyEdit,
       handleStartEdit,
+      searchQuery,
+      matchingIds,
     ],
   );
 
@@ -1004,6 +1046,36 @@ function OntologyCanvasInner({ onCanvasChange }: OntologyCanvasProps) {
         </div>
         <Controls aria-label="Canvas controls" />
         <Background />
+        {/* Search panel */}
+        {searchOpen && (
+          <Panel position="top-center" className="mt-2">
+            <div className="flex items-center gap-1.5 bg-background border border-border rounded-md shadow-md px-2 py-1">
+              <MagnifyingGlassIcon
+                size={14}
+                className="text-muted-foreground shrink-0"
+              />
+              <input
+                autoFocus
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    setSearchOpen(false);
+                    setSearchQuery('');
+                  }
+                }}
+                placeholder="Search nodes…"
+                className="bg-transparent text-sm outline-none w-48 placeholder:text-muted-foreground"
+              />
+              {searchQuery && (
+                <span className="text-xs text-muted-foreground shrink-0">
+                  {matchCount} found
+                </span>
+              )}
+            </div>
+          </Panel>
+        )}
+
         <Panel position="top-left" className="flex gap-1.5 p-1.5">
           {activeSourceId && (
             <Button
@@ -1174,10 +1246,16 @@ function OntologyCanvasInner({ onCanvasChange }: OntologyCanvasProps) {
 
 // ─── Public wrapper (provides ReactFlow context) ──────────────────────────────
 
-export function OntologyCanvas({ onCanvasChange }: OntologyCanvasProps) {
+export function OntologyCanvas({
+  onCanvasChange,
+  onOpenSearchRef,
+}: OntologyCanvasProps) {
   return (
     <ReactFlowProvider>
-      <OntologyCanvasInner onCanvasChange={onCanvasChange} />
+      <OntologyCanvasInner
+        onCanvasChange={onCanvasChange}
+        onOpenSearchRef={onOpenSearchRef}
+      />
     </ReactFlowProvider>
   );
 }

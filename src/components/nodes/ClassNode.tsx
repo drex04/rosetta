@@ -94,9 +94,15 @@ export function ClassNode({ id, data }: NodeProps<OntologyNode>) {
     }
   };
 
+  const isSearchHighlighted =
+    (data as { isSearchHighlighted?: boolean }).isSearchHighlighted ?? false;
+
   return (
     <div
-      className="bg-background border-2 border-master rounded-md shadow-md min-w-[200px] text-sm font-sans overflow-visible"
+      className={[
+        'bg-background border-2 border-master rounded-md shadow-md min-w-[200px] text-sm font-sans overflow-visible',
+        isSearchHighlighted ? 'ring-2 ring-blue-400 ring-offset-1' : '',
+      ].join(' ')}
       onContextMenu={handleContextMenu}
     >
       <Handle

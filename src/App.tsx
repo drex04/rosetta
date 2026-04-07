@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { AppLayout } from './components/layout/AppLayout';
 import { SourceSelector } from './components/layout/SourceSelector';
@@ -6,6 +6,7 @@ import { RightPanel } from './components/layout/RightPanel';
 import { OntologyCanvas } from './components/canvas/OntologyCanvas';
 import { ConfirmDialog } from './components/ui/confirm-dialog';
 import { Toaster } from './components/ui/sonner';
+import { TooltipProvider } from './components/ui/tooltip';
 import { useOntologyStore } from './store/ontologyStore';
 import { useMappingStore } from './store/mappingStore';
 import { subscribeValidationToMappings } from './store/validationStore';
@@ -13,10 +14,16 @@ import { useOntologySync } from './hooks/useOntologySync';
 import { useSourceSync } from './hooks/useSourceSync';
 import { useAutoSave } from './hooks/useAutoSave';
 import { useInvalidateMappings } from './hooks/useInvalidateMappings';
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import type { OntologyNode, OntologyEdge } from './types/index';
 
 function App() {
   useInvalidateMappings();
+  const openSearchRef = useRef<(() => void) | null>(null);
+  useKeyboardShortcuts({
+    onOpenSearch: () => openSearchRef.current?.(),
+    onDelete: () => {}, // React Flow handles Delete key natively for selected nodes/edges
+  });
   const {
     onEditorChange,
     onCanvasChange,
@@ -66,41 +73,46 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <AppLayout>
-        <div className="flex flex-col flex-1 min-h-0">
-          <SourceSelector />
-          <div className="flex flex-1 overflow-hidden">
-            <ErrorBoundary>
-              <div className="flex-1 relative">
-                <OntologyCanvas onCanvasChange={handleCanvasChange} />
-              </div>
-            </ErrorBoundary>
-            <RightPanel
-              onEditorChange={onEditorChange}
-              resetSourceSchema={resetSourceSchema}
-              isCanvasSyncPending={isCanvasSyncPending}
-              saveStatus={saveStatus}
+      <TooltipProvider delayDuration={500}>
+        <AppLayout>
+          <div className="flex flex-col flex-1 min-h-0">
+            <SourceSelector />
+            <div className="flex flex-1 overflow-hidden">
+              <ErrorBoundary>
+                <div className="flex-1 relative">
+                  <OntologyCanvas
+                    onCanvasChange={handleCanvasChange}
+                    onOpenSearchRef={openSearchRef}
+                  />
+                </div>
+              </ErrorBoundary>
+              <RightPanel
+                onEditorChange={onEditorChange}
+                resetSourceSchema={resetSourceSchema}
+                isCanvasSyncPending={isCanvasSyncPending}
+                saveStatus={saveStatus}
+              />
+            </div>
+            <ConfirmDialog
+              open={pendingSync !== null}
+              onOpenChange={(o) => {
+                if (!o) setPendingSync(null);
+              }}
+              title="Unsaved editor changes"
+              description="You have unsaved edits in the Turtle editor. Proceeding will overwrite them with the canvas state."
+              cancelLabel="Keep editing"
+              confirmLabel="Proceed"
+              onCancel={() => setPendingSync(null)}
+              onConfirm={() => {
+                if (pendingSync)
+                  void onCanvasChange(pendingSync.nodes, pendingSync.edges);
+                setPendingSync(null);
+              }}
             />
+            <Toaster />
           </div>
-          <ConfirmDialog
-            open={pendingSync !== null}
-            onOpenChange={(o) => {
-              if (!o) setPendingSync(null);
-            }}
-            title="Unsaved editor changes"
-            description="You have unsaved edits in the Turtle editor. Proceeding will overwrite them with the canvas state."
-            cancelLabel="Keep editing"
-            confirmLabel="Proceed"
-            onCancel={() => setPendingSync(null)}
-            onConfirm={() => {
-              if (pendingSync)
-                void onCanvasChange(pendingSync.nodes, pendingSync.edges);
-              setPendingSync(null);
-            }}
-          />
-          <Toaster />
-        </div>
-      </AppLayout>
+        </AppLayout>
+      </TooltipProvider>
     </ErrorBoundary>
   );
 }
