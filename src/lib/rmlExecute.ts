@@ -2,6 +2,7 @@ import { parseTurtle } from '@comake/rmlmapper-js';
 import type { Source } from '../store/sourcesStore';
 import type { Mapping } from '../types/index';
 import { generateRml, rmlSourceKey } from './rml';
+import { parseFormula, evaluate } from './formulaParser';
 
 interface FusionSourceResult {
   sourceId: string;
@@ -23,14 +24,24 @@ export async function executeAllRml(
 
   const warnings: string[] = [];
 
-  // Warn about formula-kind mappings that cannot yet execute via RML (stub until Task 3)
+  // Validate formula-kind mappings by evaluating against a dummy record.
+  // This surfaces parse/arity errors early without blocking RML execution
+  // (formulas are executed by the RML mapper via FnO predicateObjectMaps).
   for (const [sourceId, mappings] of Object.entries(mappingsBySource)) {
-    const skipped = mappings.filter((m) => m.kind === 'formula').length;
-    if (skipped > 0) {
-      const name = sources.find((s) => s.id === sourceId)?.name ?? sourceId;
-      warnings.push(
-        `"${name}": ${skipped} formula mapping(s) skipped — formula execution not yet implemented.`,
-      );
+    const formulaMappings = mappings.filter(
+      (m): m is Mapping & { kind: 'formula' } => m.kind === 'formula',
+    );
+    const sourceName = sources.find((s) => s.id === sourceId)?.name ?? sourceId;
+    for (const m of formulaMappings) {
+      try {
+        const ast = parseFormula(m.formulaExpression ?? '');
+        // Dry-run evaluate with an empty record to catch runtime errors early
+        evaluate(ast, {});
+      } catch (e) {
+        warnings.push(
+          `"${sourceName}": formula error — ${(e as Error).message}`,
+        );
+      }
     }
   }
 

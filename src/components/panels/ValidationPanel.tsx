@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, Suspense, lazy } from 'react';
 import { useSourcesStore } from '@/store/sourcesStore';
 import { useValidationStore } from '@/store/validationStore';
 import { useOntologyStore } from '@/store/ontologyStore';
@@ -10,7 +10,11 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import { TurtleEditorPanel } from '@/components/panels/TurtleEditorPanel';
+const TurtleEditorPanel = lazy(() =>
+  import('@/components/panels/TurtleEditorPanel').then((m) => ({
+    default: m.TurtleEditorPanel,
+  })),
+);
 import { localName } from '@/lib/rdf';
 import {
   ArrowCounterClockwiseIcon,
@@ -131,13 +135,21 @@ export function ValidationPanel() {
           </div>
           <AccordionContent className="pb-0">
             <div className="h-56 border-t border-border overflow-hidden">
-              <TurtleEditorPanel
-                turtleSource={userShapesTurtle}
-                onEditorChange={setUserShapesTurtle}
-                filename="shapes.ttl"
-                hideDownload
-                hideHeader
-              />
+              <Suspense
+                fallback={
+                  <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
+                    Loading…
+                  </div>
+                }
+              >
+                <TurtleEditorPanel
+                  turtleSource={userShapesTurtle}
+                  onEditorChange={setUserShapesTurtle}
+                  filename="shapes.ttl"
+                  hideDownload
+                  hideHeader
+                />
+              </Suspense>
             </div>
           </AccordionContent>
         </AccordionItem>

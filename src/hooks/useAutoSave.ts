@@ -4,6 +4,7 @@ import { useOntologyStore, SEED_TURTLE } from '@/store/ontologyStore';
 import { useSourcesStore, migrateSource } from '@/store/sourcesStore';
 import { useMappingStore } from '@/store/mappingStore';
 import { useValidationStore } from '@/store/validationStore';
+import { useUiStore } from '@/store/uiStore';
 import { parseTurtle } from '@/lib/rdf';
 import type { Mapping, MappingGroup, ProjectFile } from '@/types/index';
 
@@ -124,6 +125,9 @@ export function useAutoSave() {
         .getState()
         .hydrate({ userShapesTurtle: saved.userShapesTurtle });
 
+      // Restore active right tab ───────────────────────────────────────────────
+      useUiStore.getState().setActiveRightTab(saved.activeRightTab ?? 'SOURCE');
+
       hydratedRef.current = true;
     });
   }, []);
@@ -162,6 +166,7 @@ export function useAutoSave() {
             groups,
             userShapesTurtle: useValidationStore.getState().snapshot()
               .userShapesTurtle,
+            activeRightTab: useUiStore.getState().activeRightTab,
             timestamp: new Date().toISOString(),
           };
           await set(IDB_KEY, snapshot);
@@ -196,12 +201,21 @@ export function useAutoSave() {
       }
     });
 
+    let prevActiveRightTab = useUiStore.getState().activeRightTab;
+    const unsubUi = useUiStore.subscribe((s) => {
+      if (s.activeRightTab !== prevActiveRightTab) {
+        prevActiveRightTab = s.activeRightTab;
+        scheduleSave();
+      }
+    });
+
     // Cleanup on unmount (R-02)
     return () => {
       unsubOntology();
       unsubSources();
       unsubMapping();
       unsubValidation();
+      unsubUi();
       if (debounceTimer.current !== null) {
         clearTimeout(debounceTimer.current);
         debounceTimer.current = null;

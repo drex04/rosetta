@@ -1,11 +1,19 @@
-import { useState, useEffect, type RefObject } from 'react';
+import { useState, useEffect, Suspense, lazy, type RefObject } from 'react';
 import { SidebarSimpleIcon } from '@phosphor-icons/react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useUiStore } from '@/store/uiStore';
 import { useOntologyStore } from '@/store/ontologyStore';
 import { useSourcesStore } from '@/store/sourcesStore';
-import { TurtleEditorPanel } from '@/components/panels/TurtleEditorPanel';
-import { SourcePanel } from '@/components/panels/SourcePanel';
+const TurtleEditorPanel = lazy(() =>
+  import('@/components/panels/TurtleEditorPanel').then((m) => ({
+    default: m.TurtleEditorPanel,
+  })),
+);
+const SourcePanel = lazy(() =>
+  import('@/components/panels/SourcePanel').then((m) => ({
+    default: m.SourcePanel,
+  })),
+);
 import { MappingPanel } from '@/components/panels/MappingPanel';
 import { OutputPanel } from '@/components/panels/OutputPanel';
 import { ValidationPanel } from '@/components/panels/ValidationPanel';
@@ -158,22 +166,38 @@ export function RightPanel({
             </div>
             <div className="flex-1 overflow-hidden">
               <TabsContent value="SOURCE" className="h-full m-0">
-                <SourcePanel
-                  key={activeSourceId ?? 'none'}
-                  resetSourceSchema={resetSourceSchema}
-                />
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
+                      Loading…
+                    </div>
+                  }
+                >
+                  <SourcePanel
+                    key={activeSourceId ?? 'none'}
+                    resetSourceSchema={resetSourceSchema}
+                  />
+                </Suspense>
               </TabsContent>
               <TabsContent value="ONTOLOGY" className="h-full m-0">
-                <TurtleEditorPanel
-                  turtleSource={turtleSource}
-                  onEditorChange={onEditorChange}
-                  parseError={parseError}
-                  isCanvasSyncPending={isCanvasSyncPending}
-                  onUpload={(turtle) => {
-                    setTurtleSource(turtle);
-                    onEditorChange(turtle);
-                  }}
-                />
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
+                      Loading…
+                    </div>
+                  }
+                >
+                  <TurtleEditorPanel
+                    turtleSource={turtleSource}
+                    onEditorChange={onEditorChange}
+                    parseError={parseError}
+                    isCanvasSyncPending={isCanvasSyncPending}
+                    onUpload={(turtle) => {
+                      setTurtleSource(turtle);
+                      onEditorChange(turtle);
+                    }}
+                  />
+                </Suspense>
               </TabsContent>
               <TabsContent value="MAP" className="h-full m-0">
                 <MappingPanel />
