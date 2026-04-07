@@ -15,6 +15,7 @@ import { useSourceSync } from './hooks/useSourceSync';
 import { useAutoSave } from './hooks/useAutoSave';
 import { useInvalidateMappings } from './hooks/useInvalidateMappings';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { TourProvider } from './components/onboarding/TourProvider';
 import type { OntologyNode, OntologyEdge } from './types/index';
 
 function App() {
@@ -73,13 +74,14 @@ function App() {
 
   return (
     <ErrorBoundary>
+      <TourProvider />
       <TooltipProvider delayDuration={500}>
         <AppLayout>
           <div className="flex flex-col flex-1 min-h-0">
             <SourceSelector />
             <div className="flex flex-1 overflow-hidden">
               <ErrorBoundary>
-                <div className="flex-1 relative">
+                <div className="flex-1 relative" data-tour="canvas">
                   <OntologyCanvas
                     onCanvasChange={handleCanvasChange}
                     onOpenSearchRef={openSearchRef}

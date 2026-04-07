@@ -189,6 +189,7 @@ export function SourceSelector() {
           onClick={handleAddSource}
           className="flex items-center gap-1 shrink-0 text-sm px-2 py-0.5 rounded border border-dashed border-source/50 text-source hover:border-source hover:bg-source/5 transition-colors"
           aria-label="Add source"
+          data-tour="add-source"
         >
           <PlusIcon size={12} />
           Add Source

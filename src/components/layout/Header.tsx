@@ -21,6 +21,7 @@ import {
   UploadSimpleIcon,
   DownloadSimpleIcon,
   GithubLogoIcon,
+  CompassIcon,
 } from '@phosphor-icons/react';
 import { del } from 'idb-keyval';
 import { useOntologyStore, SEED_TURTLE } from '@/store/ontologyStore';
@@ -80,6 +81,7 @@ interface HeaderProps {
 }
 
 export function Header({ onAboutClick }: HeaderProps) {
+  const setTourRunning = useUiStore((s) => s.setTourRunning);
   const turtleSource = useOntologyStore((s) => s.turtleSource);
   const nodes = useOntologyStore((s) => s.nodes);
   const setTurtleSource = useOntologyStore((s) => s.setTurtleSource);
@@ -382,6 +384,21 @@ export function Header({ onAboutClick }: HeaderProps) {
         />
 
         <div className="flex items-center gap-1">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-slate-300 hover:text-white hover:bg-slate-700"
+                aria-label="Take the tour"
+                onClick={() => setTourRunning(true)}
+              >
+                <CompassIcon size={13} />
+                <span className="hidden sm:inline">Tour</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Take the tour</TooltipContent>
+          </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
