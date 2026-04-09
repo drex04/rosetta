@@ -36,6 +36,7 @@ progress:
 | 11 | RML-Native Transform | complete |
 | 12 | SHACL Authoring | complete |
 | 13 | Onboarding & Demo | not started |
+| 16 | Bug Fixes & Polish | not started |
 | 14 | UI Polish III | complete |
 | 15 | Formula Mapping Editor | complete |
 

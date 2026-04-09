@@ -70,6 +70,11 @@
 **Requirements:** REQ-116 through REQ-122
 **Exit criteria:** `sparql` kind removed from type/UI/stores/RML/YARRRML; `formula` kind added with `formulaExpression` field; `src/lib/formulaParser.ts` parses and validates expressions; `generateRml()` emits correct `fnml:functionValue` blocks; Tier 1 form builder and Tier 2 formula bar render in MAP tab for formula mappings; existing sparql mappings migrate to formula on hydrate.
 
+## Phase 16: Bug Fixes & Polish
+**Goal:** Fix nine bugs in onboarding flows, edge context menus, and MAP tab UX identified after Phase 13 completion.
+**Requirements:** (housekeeping — no new REQ IDs)
+**Exit criteria:** "Start Fresh" clears all stores; tour auto-starts without beacon; edge context menu kind/type changes work; ObjectProperty edge labels persist; mapping edge labels are unabbreviated; MAP tab has no RML tier; delete X is visually destructive; FormBuilder funcType survives tab switches; example project seeds Germany mappings.
+
 ## Phase 13: Onboarding & Demo
 **Goal:** Interactive tour, contextual tooltips, keyboard shortcuts, undo/redo, and error handling polish. Also: migrate `uiStore` to the IDB snapshot pattern for consistency, implement formula execution in the RML runner, and code-split the bundle to reduce the initial load below 1MB gzipped.
 **Requirements:** REQ-68, REQ-71, REQ-74, REQ-76, REQ-77
