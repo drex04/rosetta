@@ -1,7 +1,12 @@
 import type { Step } from 'react-joyride';
+import type { RightTab } from '@/store/uiStore';
 
-// react-joyride's Step type omits disableBeacon in some package versions
-type StepWithBeacon = Step & { disableBeacon?: boolean };
+// react-joyride's Step type omits disableBeacon in some package versions.
+// data.tab declares which right panel tab to activate before the step.
+type StepWithBeacon = Step & {
+  disableBeacon?: boolean;
+  data?: { tab: RightTab | null };
+};
 
 export const tourSteps: StepWithBeacon[] = [
   {
@@ -11,6 +16,7 @@ export const tourSteps: StepWithBeacon[] = [
       'Start by loading your source systems here. Each source can be JSON or XML data from a different nation or system.',
     placement: 'right',
     disableBeacon: true,
+    data: { tab: 'SOURCE' },
   },
   {
     target: '[data-tour="add-source"]',
@@ -19,6 +25,7 @@ export const tourSteps: StepWithBeacon[] = [
       'Click here to add a new data source. Give it a name and paste in the raw JSON or XML from that system.',
     placement: 'bottom',
     disableBeacon: true,
+    data: { tab: 'SOURCE' },
   },
   {
     target: '[data-tour="ontology-tab"]',
@@ -27,6 +34,7 @@ export const tourSteps: StepWithBeacon[] = [
       'The ONTOLOGY tab shows your shared data model — the classes and properties all sources will be mapped to.',
     placement: 'right',
     disableBeacon: true,
+    data: { tab: 'ONTOLOGY' },
   },
   {
     target: '[data-tour="canvas"]',
@@ -35,6 +43,7 @@ export const tourSteps: StepWithBeacon[] = [
       'Source schema nodes appear on the left (amber). Ontology class nodes appear on the right (blue). Drag edges between them to create mappings.',
     placement: 'center',
     disableBeacon: true,
+    data: { tab: null },
   },
   {
     target: '[data-tour="map-tab"]',
@@ -43,6 +52,7 @@ export const tourSteps: StepWithBeacon[] = [
       'The MAP tab lists all field mappings for the active source. You can edit mapping kinds and formula expressions here.',
     placement: 'right',
     disableBeacon: true,
+    data: { tab: 'MAP' },
   },
   {
     target: '[data-tour="output-tab"]',
@@ -51,6 +61,7 @@ export const tourSteps: StepWithBeacon[] = [
       'Transform all sources into a unified RDF graph and export as JSON-LD, RML, or YARRRML for downstream ETL pipelines.',
     placement: 'right',
     disableBeacon: true,
+    data: { tab: 'OUTPUT' },
   },
   {
     target: '[data-tour="validate-tab"]',
@@ -59,6 +70,7 @@ export const tourSteps: StepWithBeacon[] = [
       'Run SHACL validation to check that your mappings satisfy the ontology constraints. Violations are listed with the affected property.',
     placement: 'right',
     disableBeacon: true,
+    data: { tab: 'VALIDATE' },
   },
   {
     target: '[data-tour="project-menu"]',
@@ -67,5 +79,6 @@ export const tourSteps: StepWithBeacon[] = [
       'Ready to map your own data? Open the project menu to clear this example and start fresh. You can also import an existing .rosetta.json project file.',
     placement: 'bottom',
     disableBeacon: true,
+    data: { tab: null },
   },
 ];
