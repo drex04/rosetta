@@ -125,12 +125,14 @@ function App() {
                   />
                 </div>
               </ErrorBoundary>
-              <RightPanel
-                onEditorChange={onEditorChange}
-                resetSourceSchema={resetSourceSchema}
-                isCanvasSyncPending={isCanvasSyncPending}
-                saveStatus={saveStatus}
-              />
+              <ErrorBoundary>
+                <RightPanel
+                  onEditorChange={onEditorChange}
+                  resetSourceSchema={resetSourceSchema}
+                  isCanvasSyncPending={isCanvasSyncPending}
+                  saveStatus={saveStatus}
+                />
+              </ErrorBoundary>
             </div>
             <ConfirmDialog
               open={pendingSync !== null}
