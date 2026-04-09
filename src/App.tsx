@@ -9,8 +9,12 @@ import { Toaster } from './components/ui/sonner';
 import { TooltipProvider } from './components/ui/tooltip';
 import { useOntologyStore } from './store/ontologyStore';
 import { useMappingStore } from './store/mappingStore';
-import { subscribeValidationToMappings } from './store/validationStore';
+import {
+  subscribeValidationToMappings,
+  useValidationStore,
+} from './store/validationStore';
 import { useUiStore } from './store/uiStore';
+import { useSourcesStore } from './store/sourcesStore';
 import { useOntologySync } from './hooks/useOntologySync';
 import { useSourceSync } from './hooks/useSourceSync';
 import { useAutoSave } from './hooks/useAutoSave';
@@ -27,6 +31,7 @@ function App() {
   const [showModal, setShowModal] = useState(
     () => !localStorage.getItem('rosetta-tour-seen'),
   );
+  const [loadingExample, setLoadingExample] = useState(false);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   useKeyboardShortcuts({
     searchInputRef,
@@ -84,12 +89,28 @@ function App() {
       <TourProvider />
       <OnboardingModal
         open={showModal}
+        loading={loadingExample}
         onLoadExample={async () => {
-          await loadExampleProject();
+          if (loadingExample) return;
+          setLoadingExample(true);
           setShowModal(false);
-          setTourRunning(true);
+          try {
+            await loadExampleProject();
+            setTourRunning(true);
+          } catch (err) {
+            console.error('[loadExampleProject] failed:', err);
+          } finally {
+            setLoadingExample(false);
+          }
         }}
-        onStartFresh={() => setShowModal(false)}
+        onStartFresh={() => {
+          useOntologyStore.getState().reset();
+          useSourcesStore.getState().reset();
+          useMappingStore.getState().reset();
+          useValidationStore.getState().reset();
+          localStorage.setItem('rosetta-tour-seen', '1');
+          setShowModal(false);
+        }}
       />
       <TooltipProvider delayDuration={500}>
         <AppLayout>

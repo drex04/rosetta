@@ -1,10 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useMappingStore } from '@/store/mappingStore';
 import { useSourcesStore } from '@/store/sourcesStore';
 import { useOntologyStore } from '@/store/ontologyStore';
 import { localName, shortenRange } from '@/lib/rdf';
 import { getPropRange } from '@/lib/mappingHelpers';
-import { generateRml } from '@/lib/rml';
 import { parseAndValidate } from '@/lib/formulaParser';
 import * as AccordionPrimitive from '@radix-ui/react-accordion';
 import { CaretDownIcon } from '@phosphor-icons/react';
@@ -33,9 +32,16 @@ const FN_NAMES = Object.keys(FN_META) as Array<keyof typeof FN_META>;
 interface FormBuilderProps {
   mapping: Mapping;
   updateMapping: (id: string, patch: Partial<Omit<Mapping, 'id'>>) => void;
+  fn: string;
+  onFnChange: (fn: string) => void;
 }
 
-function FormBuilder({ mapping, updateMapping }: FormBuilderProps) {
+function FormBuilder({
+  mapping,
+  updateMapping,
+  fn: localFn,
+  onFnChange,
+}: FormBuilderProps) {
   const expr = mapping.formulaExpression ?? '';
 
   // Derive initial state from AST if parseable
@@ -65,9 +71,6 @@ function FormBuilder({ mapping, updateMapping }: FormBuilderProps) {
   const derived = deriveFromExpr(expr);
   const isComplex = expr !== '' && derived === null;
 
-  // Controlled state derived from current expression on each render
-  // We use a key-based approach via parent, so we just read from expr
-  const [localFn, setLocalFn] = useState<string>(derived?.fn ?? 'CONCAT');
   const [localArgs, setLocalArgs] = useState<string[]>(
     derived?.args ?? ['', ''],
   );
@@ -76,7 +79,7 @@ function FormBuilder({ mapping, updateMapping }: FormBuilderProps) {
   // sync form state. We detect this by comparing reconstructed expr.
   const reconstructed = `${localFn}(${localArgs.join(', ')})`;
   if (expr !== '' && expr !== reconstructed && derived !== null) {
-    if (derived.fn !== localFn) setLocalFn(derived.fn);
+    if (derived.fn !== localFn) onFnChange(derived.fn);
     if (JSON.stringify(derived.args) !== JSON.stringify(localArgs))
       setLocalArgs(derived.args);
   }
@@ -103,7 +106,7 @@ function FormBuilder({ mapping, updateMapping }: FormBuilderProps) {
   }
 
   function handleFnChange(newFn: string) {
-    setLocalFn(newFn);
+    onFnChange(newFn);
     const newMeta = FN_META[newFn];
     let newArgs = [...localArgs];
     if (newMeta) {
@@ -288,15 +291,6 @@ export function MappingPanel() {
   const selectedGroup = groups.find((g) => g.id === selectedGroupId) ?? null;
 
   const isGroupSelected = selectedGroup !== null;
-
-  // eslint-disable-next-line react-hooks/preserve-manual-memoization
-  const rmlSnippet = useMemo(() => {
-    if (!selectedMapping || isGroupSelected) return '';
-    const source = sources.find((s) => s.id === selectedMapping.sourceId);
-    if (!source) return '';
-    return generateRml([source], { [source.id]: [selectedMapping] });
-    // eslint-disable-next-line react-hooks/preserve-manual-memoization
-  }, [selectedMapping, isGroupSelected, sources]);
 
   function handleSelectMapping(id: string) {
     setSelectedMappingId(selectedMappingId === id ? null : id);
@@ -597,7 +591,7 @@ export function MappingPanel() {
                 <button
                   type="button"
                   onClick={(e) => handleDeleteMapping(e, mapping.id)}
-                  className="ml-2 shrink-0 text-muted-foreground hover:text-destructive transition-colors leading-none"
+                  className="ml-2 shrink-0 text-destructive/60 hover:text-destructive transition-colors leading-none"
                   aria-label={`Remove mapping ${localName(mapping.sourcePropUri)} → ${localName(mapping.targetPropUri)}`}
                 >
                   ×
@@ -627,11 +621,7 @@ export function MappingPanel() {
 
           {/* ── Group detail ── */}
           {isGroupSelected && selectedGroup !== null && (
-            <GroupDetail
-              group={selectedGroup}
-              rmlSnippet={''}
-              updateGroup={updateGroup}
-            />
+            <GroupDetail group={selectedGroup} updateGroup={updateGroup} />
           )}
 
           {/* ── Individual mapping detail ── */}
@@ -640,7 +630,6 @@ export function MappingPanel() {
               key={selectedMapping.id}
               mapping={selectedMapping}
               updateMapping={updateMapping}
-              rmlSnippet={rmlSnippet}
             />
           )}
         </div>
@@ -653,7 +642,6 @@ export function MappingPanel() {
 
 interface GroupDetailProps {
   group: MappingGroup;
-  rmlSnippet: string;
   updateGroup: (
     groupId: string,
     patch: Partial<{
@@ -722,16 +710,34 @@ function GroupDetail({ group, updateGroup }: GroupDetailProps) {
 interface MappingDetailProps {
   mapping: Mapping;
   updateMapping: (id: string, patch: Partial<Omit<Mapping, 'id'>>) => void;
-  rmlSnippet: string;
 }
 
-function MappingDetail({
-  mapping,
-  updateMapping,
-  rmlSnippet,
-}: MappingDetailProps) {
-  type FormulaTier = 'form' | 'formula' | 'rml';
+function MappingDetail({ mapping, updateMapping }: MappingDetailProps) {
+  type FormulaTier = 'form' | 'formula';
   const [formulaTier, setFormulaTier] = useState<FormulaTier>('form');
+
+  // Derive formula fn from expression for stable state across tab switches
+  function deriveFormulaTierFn(
+    expression: string,
+  ): { fn: string; args: string[] } | null {
+    if (!expression) return null;
+    const result = parseAndValidate(expression);
+    if (result.errors.length > 0) return null;
+    if (result.ast.type !== 'call') return null;
+    const fnName = result.ast.fn.toUpperCase();
+    if (!FN_META[fnName]) return null;
+    const allSimple = result.ast.args.every(
+      (a) => a.type === 'field' || a.type === 'literal',
+    );
+    if (!allSimple) return null;
+    return { fn: fnName, args: [] };
+  }
+  const derivedForMappingDetail = deriveFormulaTierFn(
+    mapping.formulaExpression ?? '',
+  );
+  const [formulaFn, setFormulaFn] = useState<string>(
+    () => derivedForMappingDetail?.fn ?? 'CONCAT',
+  );
 
   return (
     <>
@@ -873,7 +879,7 @@ function MappingDetail({
         <div key={mapping.id} className="flex flex-col flex-1 overflow-hidden">
           {/* Tier toggle */}
           <div className="shrink-0 flex items-center gap-1 px-3 py-1.5 border-b border-border bg-muted/10">
-            {(['form', 'formula', 'rml'] as FormulaTier[]).map((t) => (
+            {(['form', 'formula'] as FormulaTier[]).map((t) => (
               <button
                 key={t}
                 type="button"
@@ -884,7 +890,7 @@ function MappingDetail({
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                {t === 'form' ? 'Form' : t === 'formula' ? 'Formula' : 'RML'}
+                {t === 'form' ? 'Form' : 'Formula'}
               </button>
             ))}
           </div>
@@ -892,7 +898,12 @@ function MappingDetail({
           {/* Tier content */}
           <div className="flex-1 overflow-auto">
             {formulaTier === 'form' && (
-              <FormBuilder mapping={mapping} updateMapping={updateMapping} />
+              <FormBuilder
+                mapping={mapping}
+                updateMapping={updateMapping}
+                fn={formulaFn}
+                onFnChange={setFormulaFn}
+              />
             )}
             {formulaTier === 'formula' && (
               <FormulaBar
@@ -902,19 +913,7 @@ function MappingDetail({
                 }
               />
             )}
-            {formulaTier === 'rml' && (
-              <div className="p-3 font-mono text-xs bg-muted/10 whitespace-pre text-muted-foreground min-h-full">
-                {rmlSnippet || '# No RML generated — add mappings first'}
-              </div>
-            )}
           </div>
-        </div>
-      )}
-
-      {/* Non-formula RML snippet */}
-      {mapping.kind !== 'formula' && (
-        <div className="flex-1 overflow-auto p-3 font-mono text-xs bg-muted/10 whitespace-pre text-muted-foreground">
-          {rmlSnippet || '# No RML generated — add mappings first'}
         </div>
       )}
     </>
