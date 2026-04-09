@@ -3,11 +3,17 @@ import { Button } from '@/components/ui/button';
 
 interface Props {
   open: boolean;
+  loading?: boolean;
   onLoadExample: () => void;
   onStartFresh: () => void;
 }
 
-export function OnboardingModal({ open, onLoadExample, onStartFresh }: Props) {
+export function OnboardingModal({
+  open,
+  loading,
+  onLoadExample,
+  onStartFresh,
+}: Props) {
   return (
     <Dialog.Root open={open}>
       <Dialog.Portal>
@@ -26,11 +32,21 @@ export function OnboardingModal({ open, onLoadExample, onStartFresh }: Props) {
             example, or start with a blank canvas.
           </Dialog.Description>
           <div className="flex justify-end gap-2">
-            <Button variant="outline" size="sm" onClick={onStartFresh}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onStartFresh}
+              disabled={loading}
+            >
               Start Fresh
             </Button>
-            <Button variant="default" size="sm" onClick={onLoadExample}>
-              Load Example &amp; Start Tour
+            <Button
+              variant="default"
+              size="sm"
+              onClick={onLoadExample}
+              disabled={loading}
+            >
+              {loading ? 'Loading…' : 'Load Example & Start Tour'}
             </Button>
           </div>
         </Dialog.Content>

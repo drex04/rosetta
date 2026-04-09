@@ -6,27 +6,16 @@ import type { RightTab } from '@/store/uiStore';
 
 const TOUR_KEY = 'rosetta-tour-seen';
 
-const TAB_FOR_STEP: Record<number, RightTab | null> = {
-  0: 'SOURCE',
-  1: 'SOURCE',
-  2: 'ONTOLOGY',
-  3: null,
-  4: 'MAP',
-  5: 'OUTPUT',
-  6: 'VALIDATE',
-  7: null,
-};
-
 export function TourProvider() {
   const tourRunning = useUiStore((s) => s.tourRunning);
   const setTourRunning = useUiStore((s) => s.setTourRunning);
   const setActiveRightTab = useUiStore((s) => s.setActiveRightTab);
 
   function handleEvent(data: EventData) {
-    const { status, type, index } = data;
+    const { status, type, step } = data;
 
     if (type === 'step:before') {
-      const tab = TAB_FOR_STEP[index as number];
+      const tab = (step.data as { tab?: RightTab | null } | undefined)?.tab;
       if (tab) setActiveRightTab(tab);
     }
 
@@ -45,7 +34,6 @@ export function TourProvider() {
       onEvent={handleEvent}
       options={{
         showProgress: true,
-        buttons: ['back', 'close', 'primary', 'skip'],
         blockTargetInteraction: false,
         primaryColor: '#3b82f6',
         zIndex: 10000,
