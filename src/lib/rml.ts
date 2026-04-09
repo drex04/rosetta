@@ -307,8 +307,9 @@ export function generateRml(
       lines.push(`  rml:logicalSource [`);
       lines.push(`    rml:source "${rmlSourceKey(source)}" ;`);
       if (isXml) {
+        const iterator = inferXmlIterator(source.rawData);
         lines.push(`    rml:referenceFormulation ql:XPath ;`);
-        lines.push(`    rml:iterator "/*" ;`);
+        lines.push(`    rml:iterator "${iterator}" ;`);
       } else {
         const iterator = inferIterator(source.rawData);
         lines.push(`    rml:referenceFormulation ql:JSONPath ;`);

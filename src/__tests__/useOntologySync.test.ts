@@ -122,4 +122,29 @@ describe('useOntologySync', () => {
       '@prefix nato: <http://nato.int/onto#> .',
     );
   });
+
+  it('canvas change clears pending editor state after a successful overwrite', async () => {
+    const { useOntologySync } = await import('../hooks/useOntologySync');
+
+    mockParseTurtle.mockRejectedValue(new Error('Parse error'));
+    mockCanvasToTurtle.mockResolvedValue('@prefix ex: <http://example.org/> .');
+
+    const { result } = renderHook(() => useOntologySync());
+
+    act(() => {
+      result.current.onEditorChange('invalid turtle');
+    });
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(700);
+    });
+
+    expect(result.current.hasPendingEdits.current).toBe(true);
+
+    await act(async () => {
+      await result.current.onCanvasChange([MOCK_NODE], [MOCK_EDGE]);
+    });
+
+    expect(result.current.hasPendingEdits.current).toBe(false);
+  });
 });

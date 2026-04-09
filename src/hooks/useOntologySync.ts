@@ -165,6 +165,7 @@ export function useOntologySync() {
         const turtle = await canvasToTurtle(nodes, edges);
         useOntologyStore.getState().setTurtleSource(turtle);
         useOntologyStore.getState().setParseError(null);
+        hasPendingEdits.current = false;
       } catch (err) {
         useOntologyStore
           .getState()
