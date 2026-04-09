@@ -352,7 +352,10 @@ export const useMappingStore = create<MappingStateInternal>((set, get) => ({
     for (const [sourceId, list] of Object.entries(state.mappings)) {
       const kept: Mapping[] = [];
       for (const m of list) {
-        if (!validPropertyUris.has(m.targetPropUri)) {
+        if (
+          !validPropertyUris.has(m.targetPropUri) ||
+          !validPropertyUris.has(m.sourcePropUri)
+        ) {
           invalid.push(m);
         } else {
           kept.push(m);

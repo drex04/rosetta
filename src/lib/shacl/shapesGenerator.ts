@@ -79,24 +79,19 @@ export function generateShapes(ontologyNodes: OntologyNode[]): N3.Store {
 export async function generateShapesTurtle(
   nodes: OntologyNode[],
 ): Promise<string> {
-  const blocks: string[] = [];
+  const validNodes = nodes.filter((n) => n.data.uri);
+  if (validNodes.length === 0) return '';
 
-  for (const node of nodes) {
-    const classUri = node.data.uri;
-    if (!classUri) continue;
+  const store = generateShapes(validNodes);
+  const writer = new N3.Writer({ prefixes: { sh: SH, xsd: XSD } });
+  store.forEach((q) => writer.addQuad(q));
+  const turtleStr = await new Promise<string>((res, rej) =>
+    writer.end((err, result) => (err ? rej(err) : res(result))),
+  );
 
-    const store = generateShapes([node]);
-
-    const writer = new N3.Writer({ prefixes: { sh: SH, xsd: XSD } });
-    store.forEach((q) => writer.addQuad(q));
-    const turtleStr = await new Promise<string>((res, rej) =>
-      writer.end((err, result) => (err ? rej(err) : res(result))),
-    );
-
-    blocks.push(
-      `# Auto-generated — derived from ${localName(classUri)}\n${turtleStr}`,
-    );
-  }
-
-  return blocks.join('\n\n');
+  const header =
+    '# Auto-generated — derived from ' +
+    validNodes.map((n) => localName(n.data.uri)).join(', ') +
+    '\n';
+  return header + turtleStr;
 }

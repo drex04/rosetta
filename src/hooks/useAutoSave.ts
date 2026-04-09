@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { get, set } from 'idb-keyval';
 import { useOntologyStore, SEED_TURTLE } from '@/store/ontologyStore';
 import { useSourcesStore, migrateSource } from '@/store/sourcesStore';
@@ -102,9 +102,16 @@ export function useAutoSave() {
           const migratedSources = saved.sources.map((s) =>
             migrateSource(s as unknown as Record<string, unknown>),
           );
+          // Guard against dangling activeSourceId pointing to a deleted source.
+          const savedActive = saved.activeSourceId ?? null;
+          const activeSourceId =
+            savedActive !== null &&
+            migratedSources.some((s) => s.id === savedActive)
+              ? savedActive
+              : null;
           useSourcesStore.setState({
             sources: migratedSources,
-            activeSourceId: saved.activeSourceId ?? null,
+            activeSourceId,
           });
         }
       } catch {
@@ -142,7 +149,7 @@ export function useAutoSave() {
   }, [saveStatus]);
 
   // Shared debounced IDB write ─────────────────────────────────────────────────
-  function scheduleSave() {
+  const scheduleSave = useCallback(() => {
     if (!hydratedRef.current) return;
     if (debounceTimer.current) clearTimeout(debounceTimer.current);
     setSaveStatus('saving');
@@ -177,7 +184,7 @@ export function useAutoSave() {
         }
       })();
     }, 500);
-  }
+  }, []);
 
   // Subscribe to ontologyStore changes ─────────────────────────────────────────
   useEffect(() => {
@@ -221,7 +228,7 @@ export function useAutoSave() {
         debounceTimer.current = null;
       }
     };
-  }, []);
+  }, [scheduleSave]);
 
   return { saveStatus };
 }
