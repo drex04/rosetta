@@ -1,5 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { useOntologyStore } from '../store/ontologyStore';
+import {
+  useOntologyStore,
+  setInvalidateMappingsCallback,
+} from '../store/ontologyStore';
 import { useSourcesStore } from '../store/sourcesStore';
 import type { OntologyNode, PropertyData } from '../types/index';
 import type { Source } from '../store/sourcesStore';
@@ -50,8 +53,8 @@ beforeEach(() => {
     edges: [],
     turtleSource: '',
     parseError: null,
-    onInvalidateMappings: null,
   });
+  setInvalidateMappingsCallback(null);
   useSourcesStore.setState({ sources: [], activeSourceId: null });
 });
 
@@ -88,7 +91,7 @@ describe('updateNode', () => {
 describe('updateProperty', () => {
   it('updates property label only and does NOT fire onInvalidateMappings', () => {
     const cb = vi.fn();
-    useOntologyStore.setState({ onInvalidateMappings: cb });
+    setInvalidateMappingsCallback(cb);
     useOntologyStore
       .getState()
       .addNode(makeNode('test-1', [makeProperty('ex:name', 'name')]));
@@ -107,7 +110,7 @@ describe('updateProperty', () => {
 
   it('fires onInvalidateMappings with the old URI when property URI changes', () => {
     const cb = vi.fn();
-    useOntologyStore.setState({ onInvalidateMappings: cb });
+    setInvalidateMappingsCallback(cb);
     useOntologyStore
       .getState()
       .addNode(makeNode('test-1', [makeProperty('ex:name', 'name')]));
