@@ -43,6 +43,12 @@ const ValidationPanel = lazy(() =>
 import { StatusBar } from '@/components/layout/StatusBar';
 import type { SaveStatus } from '@/hooks/useAutoSave';
 
+const PanelFallback = () => (
+  <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
+    Loading…
+  </div>
+);
+
 interface RightPanelProps {
   onEditorChange: (value: string) => void;
   resetSourceSchema?: () => void;
@@ -257,35 +263,17 @@ export function RightPanel({
                 </Suspense>
               </TabsContent>
               <TabsContent value="MAP" className="h-full m-0">
-                <Suspense
-                  fallback={
-                    <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
-                      Loading…
-                    </div>
-                  }
-                >
+                <Suspense fallback={<PanelFallback />}>
                   <MappingPanel />
                 </Suspense>
               </TabsContent>
               <TabsContent value="OUTPUT" className="h-full m-0">
-                <Suspense
-                  fallback={
-                    <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
-                      Loading…
-                    </div>
-                  }
-                >
+                <Suspense fallback={<PanelFallback />}>
                   <OutputPanel />
                 </Suspense>
               </TabsContent>
               <TabsContent value="VALIDATE" className="h-full m-0">
-                <Suspense
-                  fallback={
-                    <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
-                      Loading…
-                    </div>
-                  }
-                >
+                <Suspense fallback={<PanelFallback />}>
                   <ValidationPanel />
                 </Suspense>
               </TabsContent>
