@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -80,21 +80,27 @@ export function OutputPanel() {
   const hasMappings = Object.values(mappings).some((m) => m.length > 0);
   const hasSparqlOrJoin = false; // sparql kind removed; join detection TBD
 
+  const [openAccordionItems, setOpenAccordionItems] = useState<string[]>([]);
+  const rmlOpen = openAccordionItems.includes('rml');
+  const yarrrmlOpen = openAccordionItems.includes('yarrrml');
+
   const rmlPreview = useMemo(
-    () => generateRml(sources, mappings),
-    [sources, mappings],
+    () => (rmlOpen ? generateRml(sources, mappings) : null),
+    [rmlOpen, sources, mappings],
   );
   const yarrrmlPreview = useMemo(
-    () => generateYarrrml(sources, mappings),
-    [sources, mappings],
+    () => (yarrrmlOpen ? generateYarrrml(sources, mappings) : null),
+    [yarrrmlOpen, sources, mappings],
   );
 
   function handleDownloadRml() {
-    downloadBlob(rmlPreview, 'mappings.rml.ttl', 'text/turtle');
+    const content = rmlPreview ?? generateRml(sources, mappings);
+    downloadBlob(content, 'mappings.rml.ttl', 'text/turtle');
   }
 
   function handleDownloadYarrrml() {
-    downloadBlob(yarrrmlPreview, 'mappings.yarrrml.yml', 'application/yaml');
+    const content = yarrrmlPreview ?? generateYarrrml(sources, mappings);
+    downloadBlob(content, 'mappings.yarrrml.yml', 'application/yaml');
   }
 
   return (
@@ -123,7 +129,12 @@ export function OutputPanel() {
                 Download production ETL mapping files for use with RML
                 processors (RMLMapper, Morph-KGC, etc.).
               </p>
-              <Accordion type="multiple" className="w-full">
+              <Accordion
+                type="multiple"
+                className="w-full"
+                value={openAccordionItems}
+                onValueChange={setOpenAccordionItems}
+              >
                 <AccordionItem
                   value="rml"
                   className="border border-border rounded-md mb-2"

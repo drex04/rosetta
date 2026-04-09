@@ -23,6 +23,19 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: (id) => {
+          if (
+            id.includes('OutputPanel') ||
+            id.includes('rmlExecute') ||
+            id.includes('rmlmapper-js')
+          )
+            return 'panel-output';
+          if (
+            id.includes('ValidationPanel') ||
+            id.includes('validationStore') ||
+            id.includes('rdf-validate-shacl')
+          )
+            return 'panel-validate';
+          if (id.includes('MappingPanel')) return 'panel-map';
           if (id.includes('node_modules/n3')) return 'vendor-n3';
           if (id.includes('node_modules/jsonld')) return 'vendor-jsonld';
           if (
