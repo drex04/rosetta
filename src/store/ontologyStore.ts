@@ -20,18 +20,10 @@ interface OntologyState {
   edges: OntologyEdge[];
   turtleSource: string;
   parseError: string | null;
-  /**
-   * Optional callback registered externally (e.g. App.tsx) to handle
-   * mapping invalidation when nodes/properties are removed.
-   * Called with the list of property URIs that were removed.
-   */
-  onInvalidateMappings: ((propertyUris: string[]) => void) | null;
   setNodes: (nodes: OntologyNode[]) => void;
   setEdges: (edges: OntologyEdge[]) => void;
   setTurtleSource: (turtle: string) => void;
   setParseError: (error: string | null) => void;
-  /** Register an external callback for mapping invalidation. */
-  setInvalidateMappingsCallback: (cb: (propertyUris: string[]) => void) => void;
   /** Parse turtle text, update turtleSource, nodes, and edges atomically. */
   loadTurtle: (text: string) => Promise<void>;
   /** Reset all ontology state to empty. */
@@ -75,6 +67,20 @@ interface OntologyState {
   replaceEdge: (oldId: string, newEdge: OntologyEdge) => void;
 }
 
+// ─── Invalidation callback (module-level) ────────────────────────────────────
+// Stored outside Zustand state so registration does not trigger re-renders of
+// components subscribed to the store. Set once by App.tsx at mount.
+
+let invalidateMappingsCallback: ((propertyUris: string[]) => void) | null =
+  null;
+
+/** Register an external callback for mapping invalidation. */
+export function setInvalidateMappingsCallback(
+  cb: ((propertyUris: string[]) => void) | null,
+): void {
+  invalidateMappingsCallback = cb;
+}
+
 // ─── Store ────────────────────────────────────────────────────────────────────
 
 export const useOntologyStore = create<OntologyState>((set, get) => ({
@@ -82,12 +88,10 @@ export const useOntologyStore = create<OntologyState>((set, get) => ({
   edges: [],
   turtleSource: '',
   parseError: null,
-  onInvalidateMappings: null,
   setNodes: (nodes) => set({ nodes }),
   setEdges: (edges) => set({ edges }),
   setTurtleSource: (turtleSource) => set({ turtleSource }),
   setParseError: (parseError) => set({ parseError }),
-  setInvalidateMappingsCallback: (cb) => set({ onInvalidateMappings: cb }),
   loadTurtle: async (text: string) => {
     try {
       const { nodes, edges } = await parseTurtle(text);
@@ -107,7 +111,7 @@ export const useOntologyStore = create<OntologyState>((set, get) => ({
   addNode: (node) => set((s) => ({ nodes: [...s.nodes, node] })),
 
   removeNode: (nodeId) => {
-    const { nodes, edges, onInvalidateMappings } = get();
+    const { nodes, edges } = get();
     const target = nodes.find((n) => n.id === nodeId);
     if (!target) return;
     const propertyUris = target.data.properties.map((p) => p.uri);
@@ -116,7 +120,7 @@ export const useOntologyStore = create<OntologyState>((set, get) => ({
       edges: edges.filter((e) => e.source !== nodeId && e.target !== nodeId),
     });
     if (propertyUris.length > 0) {
-      onInvalidateMappings?.(propertyUris);
+      invalidateMappingsCallback?.(propertyUris);
     }
   },
 
@@ -133,7 +137,6 @@ export const useOntologyStore = create<OntologyState>((set, get) => ({
     })),
 
   removePropertyFromNode: (nodeId, propertyUri) => {
-    const { onInvalidateMappings } = get();
     set((s) => ({
       nodes: s.nodes.map((n) =>
         n.id === nodeId
@@ -149,7 +152,7 @@ export const useOntologyStore = create<OntologyState>((set, get) => ({
           : n,
       ),
     }));
-    onInvalidateMappings?.([propertyUri]);
+    invalidateMappingsCallback?.([propertyUri]);
   },
 
   addEdge: (edge) => set((s) => ({ edges: [...s.edges, edge] })),
@@ -178,7 +181,6 @@ export const useOntologyStore = create<OntologyState>((set, get) => ({
     }),
 
   updateProperty: (nodeId, propertyUri, patch) => {
-    const { onInvalidateMappings } = get();
     const node = get().nodes.find((n) => n.id === nodeId);
     if (!node) return;
     const prop = node.data.properties.find((p) => p.uri === propertyUri);
@@ -199,7 +201,7 @@ export const useOntologyStore = create<OntologyState>((set, get) => ({
       ),
     }));
     if (patch.uri !== undefined && patch.uri !== propertyUri) {
-      onInvalidateMappings?.([propertyUri]);
+      invalidateMappingsCallback?.([propertyUri]);
     }
   },
 }));

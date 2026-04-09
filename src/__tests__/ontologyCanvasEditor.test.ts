@@ -1,5 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { useOntologyStore } from '../store/ontologyStore';
+import {
+  useOntologyStore,
+  setInvalidateMappingsCallback,
+} from '../store/ontologyStore';
 import type { OntologyNode, OntologyEdge, PropertyData } from '../types/index';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -49,8 +52,8 @@ beforeEach(() => {
     edges: [],
     turtleSource: '',
     parseError: null,
-    onInvalidateMappings: null,
   });
+  setInvalidateMappingsCallback(null);
 });
 
 // ─── addNode ─────────────────────────────────────────────────────────────────
@@ -111,7 +114,7 @@ describe('removeNode', () => {
 
   it('fires onInvalidateMappings with property URIs of the removed node', () => {
     const cb = vi.fn();
-    useOntologyStore.getState().setInvalidateMappingsCallback(cb);
+    setInvalidateMappingsCallback(cb);
     const prop = makeProperty('http://example.org#speed');
     useOntologyStore.getState().addNode(makeNode('A', [prop]));
     useOntologyStore.getState().removeNode('A');
@@ -121,7 +124,7 @@ describe('removeNode', () => {
 
   it('does NOT fire onInvalidateMappings when node has no properties', () => {
     const cb = vi.fn();
-    useOntologyStore.getState().setInvalidateMappingsCallback(cb);
+    setInvalidateMappingsCallback(cb);
     useOntologyStore.getState().addNode(makeNode('A'));
     useOntologyStore.getState().removeNode('A');
     expect(cb).not.toHaveBeenCalled();
@@ -185,7 +188,7 @@ describe('removePropertyFromNode', () => {
 
   it('fires onInvalidateMappings with the removed property URI', () => {
     const cb = vi.fn();
-    useOntologyStore.getState().setInvalidateMappingsCallback(cb);
+    setInvalidateMappingsCallback(cb);
     const prop = makeProperty('http://example.org#speed');
     useOntologyStore.getState().addNode(makeNode('A', [prop]));
     useOntologyStore

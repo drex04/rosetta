@@ -7,7 +7,10 @@ import { OntologyCanvas } from './components/canvas/OntologyCanvas';
 import { ConfirmDialog } from './components/ui/confirm-dialog';
 import { Toaster } from './components/ui/sonner';
 import { TooltipProvider } from './components/ui/tooltip';
-import { useOntologyStore } from './store/ontologyStore';
+import {
+  useOntologyStore,
+  setInvalidateMappingsCallback,
+} from './store/ontologyStore';
 import { useMappingStore } from './store/mappingStore';
 import {
   subscribeValidationToMappings,
@@ -56,19 +59,18 @@ function App() {
   }, []);
 
   useEffect(() => {
-    useOntologyStore
-      .getState()
-      .setInvalidateMappingsCallback((propertyUris: string[]) => {
-        const uriSet = new Set(propertyUris);
-        const store = useMappingStore.getState();
-        for (const list of Object.values(store.mappings)) {
-          for (const m of list as { id: string; targetPropUri: string }[]) {
-            if (uriSet.has(m.targetPropUri)) {
-              store.removeMapping(m.id);
-            }
+    setInvalidateMappingsCallback((propertyUris: string[]) => {
+      const uriSet = new Set(propertyUris);
+      const store = useMappingStore.getState();
+      for (const list of Object.values(store.mappings)) {
+        for (const m of list as { id: string; targetPropUri: string }[]) {
+          if (uriSet.has(m.targetPropUri)) {
+            store.removeMapping(m.id);
           }
         }
-      });
+      }
+    });
+    return () => setInvalidateMappingsCallback(null);
   }, []);
 
   const handleCanvasChange = useCallback(
