@@ -529,3 +529,110 @@ describe('generateShapesTurtle', () => {
     expect(await generateShapesTurtle([node])).toBe('');
   });
 });
+
+describe('executeConstruct — multi-mapping per subject', () => {
+  it('produces distinct target blank nodes for two mappings on one subject', () => {
+    // Regression: previously generated deterministic blank node IDs based on
+    // subject URI, so two mappings applied to the same subject collapsed into
+    // one target node and only the last triple survived.
+    const { namedNode, quad, literal, defaultGraph } = N3.DataFactory;
+    const instances = new N3.Store();
+    const subject = namedNode('http://src.org/item1');
+    instances.addQuad(
+      quad(
+        subject,
+        namedNode(RDF_TYPE),
+        namedNode('http://src.org/Item'),
+        defaultGraph(),
+      ),
+    );
+    instances.addQuad(
+      quad(
+        subject,
+        namedNode('http://src.org/name'),
+        literal('Alice'),
+        defaultGraph(),
+      ),
+    );
+    instances.addQuad(
+      quad(
+        subject,
+        namedNode('http://src.org/age'),
+        literal('30'),
+        defaultGraph(),
+      ),
+    );
+
+    const mappings: Mapping[] = [
+      makeMapping({
+        sourceClassUri: 'http://src.org/Item',
+        sourcePropUri: 'http://src.org/name',
+        targetClassUri: 'http://tgt.org/Person',
+        targetPropUri: 'http://tgt.org/label',
+      }),
+      makeMapping({
+        sourceClassUri: 'http://src.org/Item',
+        sourcePropUri: 'http://src.org/age',
+        targetClassUri: 'http://tgt.org/Person',
+        targetPropUri: 'http://tgt.org/years',
+      }),
+    ];
+
+    const out = executeConstruct(instances, mappings);
+    const labelQuads = out.getQuads(
+      null,
+      namedNode('http://tgt.org/label'),
+      null,
+      null,
+    );
+    const yearsQuads = out.getQuads(
+      null,
+      namedNode('http://tgt.org/years'),
+      null,
+      null,
+    );
+    expect(labelQuads).toHaveLength(1);
+    expect(yearsQuads).toHaveLength(1);
+    expect(labelQuads[0]!.object.value).toBe('Alice');
+    expect(yearsQuads[0]!.object.value).toBe('30');
+  });
+});
+
+describe('xmlToInstances', () => {
+  it('emits rdf:type triples for nested XML elements', () => {
+    const xml = '<root><person><name>Alice</name><age>30</age></person></root>';
+    const node: SourceNodeData = {
+      id: 'n1',
+      type: 'sourceNode',
+      position: { x: 0, y: 0 },
+      data: {
+        uri: 'http://ex.org/Root',
+        label: 'Root',
+        prefix: 'http://ex.org/',
+        properties: [],
+      },
+    } as SourceNodeData;
+
+    const store = xmlToInstances(xml, [node]);
+    const typeQuads = store.getQuads(null, RDF_TYPE, null, null);
+    const typeUris = typeQuads.map((q) => q.object.value);
+    expect(typeUris).toContain('http://ex.org/Root');
+    expect(typeUris).toContain('http://ex.org/Person');
+  });
+
+  it('returns empty store on parser error', () => {
+    const node: SourceNodeData = {
+      id: 'n1',
+      type: 'sourceNode',
+      position: { x: 0, y: 0 },
+      data: {
+        uri: 'http://ex.org/Root',
+        label: 'Root',
+        prefix: 'http://ex.org/',
+        properties: [],
+      },
+    } as SourceNodeData;
+    const store = xmlToInstances('<broken<', [node]);
+    expect(store.size).toBe(0);
+  });
+});
