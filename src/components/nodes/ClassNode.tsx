@@ -4,6 +4,7 @@ import type { NodeProps } from '@xyflow/react';
 import { GraphIcon } from '@phosphor-icons/react';
 import type { OntologyNode } from '@/types/index';
 import { prefixFromUri, shortenUri, shortenRange } from '@/lib/rdf';
+import { cn } from '@/lib/utils';
 
 export function ClassNode({ id, data }: NodeProps<OntologyNode>) {
   const shortUri = shortenUri(data.uri, data.prefix || prefixFromUri(data.uri));
@@ -96,12 +97,14 @@ export function ClassNode({ id, data }: NodeProps<OntologyNode>) {
 
   const isSearchHighlighted =
     (data as { isSearchHighlighted?: boolean }).isSearchHighlighted ?? false;
+  const matchedPropUris: string[] =
+    (data as { matchedPropUris?: string[] }).matchedPropUris ?? [];
 
   return (
     <div
       className={[
         'bg-background border-2 border-master rounded-md shadow-md min-w-[200px] text-sm font-sans overflow-visible',
-        isSearchHighlighted ? 'ring-2 ring-blue-400 ring-offset-1' : '',
+        isSearchHighlighted ? 'ring-2 ring-primary ring-offset-2' : '',
       ].join(' ')}
       onContextMenu={handleContextMenu}
     >
@@ -186,7 +189,12 @@ export function ClassNode({ id, data }: NodeProps<OntologyNode>) {
             <div
               key={prop.uri}
               data-property-row
-              className="relative flex items-center justify-between px-3 pr-5 py-1.5 bg-background hover:bg-muted/50"
+              className={cn(
+                'relative flex items-center justify-between px-3 pr-5 py-1.5',
+                matchedPropUris.includes(prop.uri)
+                  ? 'bg-primary/10'
+                  : 'bg-background hover:bg-muted/50',
+              )}
               onContextMenu={(e) => {
                 e.preventDefault();
                 e.stopPropagation(); // don't bubble to node context menu

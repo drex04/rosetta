@@ -31,6 +31,8 @@ import { MappingEdge } from '../edges/MappingEdge';
 import { CanvasContextMenu } from './CanvasContextMenu';
 import { NodeContextMenu } from './NodeContextMenu';
 import { AddPropertyDialog } from './AddPropertyDialog';
+import { EdgeContextMenu } from './EdgeContextMenu';
+import type { EdgeCtxMenu } from './EdgeContextMenu';
 import type {
   OntologyNode,
   OntologyEdge,
@@ -89,7 +91,7 @@ const edgeTypes = {
 
 interface OntologyCanvasProps {
   onCanvasChange?: (nodes: OntologyNode[], edges: OntologyEdge[]) => void;
-  onOpenSearchRef?: React.MutableRefObject<(() => void) | null>;
+  searchInputRef?: React.RefObject<HTMLInputElement | null>;
 }
 
 // Only these change types modify the RDF graph — position/select/dimensions do not
@@ -99,7 +101,7 @@ const STRUCTURAL_CHANGE_TYPES = new Set(['add', 'remove', 'reset']);
 
 function OntologyCanvasInner({
   onCanvasChange,
-  onOpenSearchRef,
+  searchInputRef,
 }: OntologyCanvasProps) {
   const { nodes, edges } = useCanvasData();
   const setNodes = useOntologyStore((s) => s.setNodes);
@@ -156,36 +158,49 @@ function OntologyCanvasInner({
   }, []);
 
   // ─── Search state ────────────────────────────────────────────────────────────
-  const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  useEffect(() => {
-    if (onOpenSearchRef) {
-      onOpenSearchRef.current = () => setSearchOpen(true);
-    }
-  }, [onOpenSearchRef]);
+  // Derive matching node ids and matched property URIs from canvas nodes
+  const { matchingIds, matchedPropUrisMap } = useMemo(() => {
+    const matchingIds = new Set<string>();
+    const matchedPropUrisMap = new Map<string, string[]>();
 
-  // Derive matching node ids from canvas nodes
-  const matchingIds = useMemo(() => {
-    if (!searchQuery.trim()) return new Set<string>();
+    if (!searchQuery.trim()) return { matchingIds, matchedPropUrisMap };
     const q = searchQuery.toLowerCase();
-    const matched = new Set<string>();
-    for (const n of nodes) {
-      const label = (n.data.label as string | undefined) ?? '';
-      if (label.toLowerCase().includes(q) || n.id.toLowerCase().includes(q)) {
-        matched.add(n.id);
+
+    for (const node of nodes) {
+      const d = node.data as {
+        label?: string;
+        uri?: string;
+        properties?: { uri: string; label?: string }[];
+      };
+      const labelHit = d.label?.toLowerCase().includes(q);
+      const uriHit = d.uri?.toLowerCase().includes(q);
+      const propHits = (d.properties ?? [])
+        .filter(
+          (p) =>
+            p.uri.toLowerCase().includes(q) ||
+            (p.label ?? '').toLowerCase().includes(q),
+        )
+        .map((p) => p.uri);
+
+      if (labelHit || uriHit || propHits.length > 0) {
+        matchingIds.add(node.id);
+        if (propHits.length > 0) matchedPropUrisMap.set(node.id, propHits);
       }
     }
-    return matched;
+    return { matchingIds, matchedPropUrisMap };
   }, [nodes, searchQuery]);
-
-  const matchCount = matchingIds.size;
 
   // fitView to matching nodes when search is active
   useEffect(() => {
     if (!searchQuery.trim() || matchingIds.size === 0) return;
     const matchingNodes = nodes.filter((n) => matchingIds.has(n.id));
-    void fitView({ nodes: matchingNodes, padding: 0.3, duration: 400 });
+    void fitView({
+      nodes: matchingNodes as OntologyNode[],
+      padding: 0.3,
+      duration: 400,
+    });
   }, [matchingIds, searchQuery, nodes, fitView]);
 
   // ─── UI state ───────────────────────────────────────────────────────────────
@@ -198,6 +213,7 @@ function OntologyCanvasInner({
   } | null>(null);
   const [edgePicker, setEdgePicker] = useState<EdgePickerState | null>(null);
   const [groupPrompt, setGroupPrompt] = useState<GroupPromptState | null>(null);
+  const [edgeCtxMenu, setEdgeCtxMenu] = useState<EdgeCtxMenu | null>(null);
   const [propMenu, setPropMenu] = useState<{
     nodeId: string;
     propUri: string;
@@ -765,6 +781,7 @@ function OntologyCanvasInner({
           },
           isSearchHighlighted:
             searchQuery.trim().length > 0 && matchingIds.has(n.id),
+          matchedPropUris: matchedPropUrisMap.get(n.id) ?? [],
         },
       })),
     [
@@ -775,6 +792,7 @@ function OntologyCanvasInner({
       handleStartEdit,
       searchQuery,
       matchingIds,
+      matchedPropUrisMap,
     ],
   );
 
@@ -953,21 +971,49 @@ function OntologyCanvasInner({
     [edgePicker, addOntologyEdge, replaceEdge, updateSource, onCanvasChange],
   );
 
-  // ─── Edge double-click → open edge picker in edit mode ──────────────────────
+  // ─── Resolve edge type from id / ontology store ──────────────────────────────
+  const ontologyEdges = useOntologyStore((s) => s.edges);
+
+  function resolveEdgeType(
+    edgeId: string,
+    ontoEdges: OntologyEdge[],
+  ): 'mapping' | 'subclassEdge' | 'objectPropertyEdge' {
+    if (edgeId.startsWith('mapping_')) return 'mapping';
+    const ontoEdge = ontoEdges.find((e) => e.id === edgeId);
+    return (ontoEdge?.type ?? 'subclassEdge') as
+      | 'subclassEdge'
+      | 'objectPropertyEdge';
+  }
+
+  // ─── Edge double-click → context menu ────────────────────────────────────────
   const handleEdgeDoubleClick = useCallback(
-    (e: React.MouseEvent, edge: Edge) => {
-      // Only handle schema edges — not mapping edges (those have their own click flow)
-      if (edge.type !== 'subclassEdge' && edge.type !== 'objectPropertyEdge')
-        return;
-      setEdgePicker({
-        x: e.clientX,
-        y: e.clientY,
-        connection: null,
-        mode: 'edit',
+    (_event: React.MouseEvent, edge: Edge) => {
+      const edgeType = resolveEdgeType(edge.id, ontologyEdges);
+      setEdgeCtxMenu({
         edgeId: edge.id,
+        edgeType,
+        edgeData: (edge.data as Record<string, unknown>) ?? {},
+        x: _event.clientX,
+        y: _event.clientY,
       });
     },
-    [],
+    [ontologyEdges],
+  );
+
+  // ─── Edge right-click → context menu ─────────────────────────────────────────
+  const handleEdgeContextMenu = useCallback(
+    (event: React.MouseEvent, edge: Edge) => {
+      event.preventDefault();
+      const edgeType = resolveEdgeType(edge.id, ontologyEdges);
+      setEdgeCtxMenu({
+        edgeId: edge.id,
+        edgeType,
+        edgeData: (edge.data as Record<string, unknown>) ?? {},
+        x: event.clientX,
+        y: event.clientY,
+      });
+    },
+    [ontologyEdges],
   );
 
   // ─── Edge click → select mapping + switch tab (REQ-103) ──────────────────────
@@ -1022,7 +1068,9 @@ function OntologyCanvasInner({
         isValidConnection={isValidConnection}
         onEdgeClick={handleEdgeClick}
         onEdgeDoubleClick={handleEdgeDoubleClick}
+        onEdgeContextMenu={handleEdgeContextMenu}
         onNodeDoubleClick={handleNodeDoubleClick}
+        onPaneClick={() => setEdgeCtxMenu(null)}
         nodesDraggable={true}
         fitView
         onInit={(instance) => {
@@ -1047,34 +1095,29 @@ function OntologyCanvasInner({
         <Controls aria-label="Canvas controls" />
         <Background />
         {/* Search panel */}
-        {searchOpen && (
-          <Panel position="top-center" className="mt-2">
-            <div className="flex items-center gap-1.5 bg-background border border-border rounded-md shadow-md px-2 py-1">
-              <MagnifyingGlassIcon
-                size={14}
-                className="text-muted-foreground shrink-0"
-              />
-              <input
-                autoFocus
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Escape') {
-                    setSearchOpen(false);
-                    setSearchQuery('');
-                  }
-                }}
-                placeholder="Search nodes…"
-                className="bg-transparent text-sm outline-none w-48 placeholder:text-muted-foreground"
-              />
-              {searchQuery && (
-                <span className="text-xs text-muted-foreground shrink-0">
-                  {matchCount} found
-                </span>
-              )}
-            </div>
-          </Panel>
-        )}
+        <Panel position="top-right" className="mt-2 mr-2">
+          <div className="flex items-center gap-1.5 bg-background border border-border rounded-md shadow-md px-2 py-1">
+            <MagnifyingGlassIcon
+              size={14}
+              className="text-muted-foreground shrink-0"
+            />
+            <input
+              ref={searchInputRef}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') setSearchQuery('');
+              }}
+              placeholder="Search nodes…"
+              className="bg-transparent text-sm outline-none w-40 placeholder:text-muted-foreground"
+            />
+            {searchQuery && (
+              <span className="text-xs text-muted-foreground shrink-0">
+                {matchingIds.size} found
+              </span>
+            )}
+          </div>
+        </Panel>
 
         <Panel position="top-left" className="flex gap-1.5 p-1.5">
           {activeSourceId && (
@@ -1133,6 +1176,14 @@ function OntologyCanvasInner({
           }}
           onDelete={() => handleDeleteNode(nodeMenu.nodeId, nodeMenu.nodeType)}
           onClose={() => setNodeMenu(null)}
+        />
+      )}
+
+      {/* Edge context menu */}
+      {edgeCtxMenu && (
+        <EdgeContextMenu
+          menu={edgeCtxMenu}
+          onClose={() => setEdgeCtxMenu(null)}
         />
       )}
 
@@ -1248,13 +1299,13 @@ function OntologyCanvasInner({
 
 export function OntologyCanvas({
   onCanvasChange,
-  onOpenSearchRef,
+  searchInputRef,
 }: OntologyCanvasProps) {
   return (
     <ReactFlowProvider>
       <OntologyCanvasInner
         onCanvasChange={onCanvasChange}
-        onOpenSearchRef={onOpenSearchRef}
+        searchInputRef={searchInputRef}
       />
     </ReactFlowProvider>
   );

@@ -5,6 +5,7 @@ import { CirclesThreeIcon } from '@phosphor-icons/react';
 import type { SourceNodeData as SourceNodeType } from '@/types/index';
 import { prefixFromUri, shortenUri, shortenRange } from '@/lib/rdf';
 import { useValidationStore } from '@/store/validationStore';
+import { cn } from '@/lib/utils';
 
 export function SourceNode({ id, data }: NodeProps<SourceNodeType>) {
   const shortUri = shortenUri(data.uri, data.prefix || prefixFromUri(data.uri));
@@ -55,13 +56,15 @@ export function SourceNode({ id, data }: NodeProps<SourceNodeType>) {
 
   const isSearchHighlighted =
     (data as { isSearchHighlighted?: boolean }).isSearchHighlighted ?? false;
+  const matchedPropUris: string[] =
+    (data as { matchedPropUris?: string[] }).matchedPropUris ?? [];
 
   return (
     <div
       className={[
         'bg-white border-2 border-source rounded-md shadow-md min-w-[200px] text-sm font-sans overflow-visible',
         isHighlighted ? 'ring-2 ring-destructive ring-offset-2' : '',
-        isSearchHighlighted ? 'ring-2 ring-blue-400 ring-offset-1' : '',
+        isSearchHighlighted ? 'ring-2 ring-primary ring-offset-2' : '',
       ].join(' ')}
       onContextMenu={handleContextMenu}
     >
@@ -150,7 +153,12 @@ export function SourceNode({ id, data }: NodeProps<SourceNodeType>) {
             <div
               key={prop.uri}
               data-property-row
-              className="relative flex items-center justify-between px-3 pr-5 py-1.5 bg-background hover:bg-source/10"
+              className={cn(
+                'relative flex items-center justify-between px-3 pr-5 py-1.5',
+                matchedPropUris.includes(prop.uri)
+                  ? 'bg-primary/10'
+                  : 'bg-background hover:bg-source/10',
+              )}
               onContextMenu={(e) => {
                 e.preventDefault();
                 e.stopPropagation(); // don't bubble to node context menu

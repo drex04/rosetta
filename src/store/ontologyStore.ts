@@ -56,6 +56,8 @@ interface OntologyState {
   addEdge: (edge: OntologyEdge) => void;
   /** Remove an edge by id. */
   removeEdge: (edgeId: string) => void;
+  /** Update an edge by id with a partial patch. */
+  updateEdge: (id: string, patch: Partial<Omit<OntologyEdge, 'id'>>) => void;
   /** Update a node's label or URI. Safe no-op when nodeId does not exist. */
   updateNode: (
     nodeId: string,
@@ -154,6 +156,13 @@ export const useOntologyStore = create<OntologyState>((set, get) => ({
 
   removeEdge: (edgeId) =>
     set((s) => ({ edges: s.edges.filter((e) => e.id !== edgeId) })),
+
+  updateEdge: (id, patch) =>
+    set((s) => ({
+      edges: s.edges.map((e) =>
+        e.id === id ? ({ ...e, ...patch } as OntologyEdge) : e,
+      ),
+    })),
 
   updateNode: (nodeId, patch) =>
     set((s) => ({
