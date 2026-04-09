@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { CheckIcon } from '@phosphor-icons/react';
 import { useOntologyStore } from '@/store/ontologyStore';
 import { useMappingStore } from '@/store/mappingStore';
+import { useUiStore } from '@/store/uiStore';
 import type { ObjectPropertyEdgeData, SubclassEdgeData } from '@/types';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -37,6 +38,8 @@ type MappingKind = (typeof MAPPING_KINDS)[number];
 export function EdgeContextMenu({ menu, onClose }: Props) {
   const updateMapping = useMappingStore((s) => s.updateMapping);
   const removeMapping = useMappingStore((s) => s.removeMapping);
+  const setSelectedMappingId = useMappingStore((s) => s.setSelectedMappingId);
+  const setActiveRightTab = useUiStore((s) => s.setActiveRightTab);
   const updateEdge = useOntologyStore((s) => s.updateEdge);
   const removeEdge = useOntologyStore((s) => s.removeEdge);
   const ontologyEdges = useOntologyStore((s) => s.edges);
@@ -65,10 +68,11 @@ export function EdgeContextMenu({ menu, onClose }: Props) {
                   key={kind}
                   className="w-full text-left px-3 py-1.5 hover:bg-muted cursor-pointer flex items-center gap-2 capitalize"
                   onClick={() => {
-                    updateMapping(
-                      (menu.edgeData as { mappingId: string }).mappingId,
-                      { kind: kind as MappingKind },
-                    );
+                    const mappingId = (menu.edgeData as { mappingId: string })
+                      .mappingId;
+                    updateMapping(mappingId, { kind: kind as MappingKind });
+                    setSelectedMappingId(mappingId);
+                    setActiveRightTab('MAP');
                     onClose();
                   }}
                 >
