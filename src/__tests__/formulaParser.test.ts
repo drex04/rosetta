@@ -3,6 +3,7 @@ import {
   parseFormula,
   validateFormula,
   parseAndValidate,
+  evaluate,
   type Expr,
 } from '../lib/formulaParser';
 
@@ -235,5 +236,59 @@ describe('parseAndValidate', () => {
   it('returns errors for missing closing paren', () => {
     const result = parseAndValidate('CONCAT(source.a, source.b');
     expect(result.errors.length).toBeGreaterThan(0);
+  });
+});
+
+// ─── evaluate ─────────────────────────────────────────────────────────────────
+
+describe('evaluate', () => {
+  it('evaluates a literal expr', () => {
+    const expr = parseFormula('CONCAT("hello", "world")');
+    expect(evaluate(expr, {})).toBe('helloworld');
+  });
+
+  it('CONCAT joins field values', () => {
+    const expr = parseFormula('CONCAT(source.first, source.last)');
+    expect(evaluate(expr, { first: 'John', last: 'Doe' })).toBe('JohnDoe');
+  });
+
+  it('UPPER uppercases the field value', () => {
+    const expr = parseFormula('UPPER(source.name)');
+    expect(evaluate(expr, { name: 'hello' })).toBe('HELLO');
+  });
+
+  it('LOWER lowercases the field value', () => {
+    const expr = parseFormula('LOWER(source.name)');
+    expect(evaluate(expr, { name: 'HELLO' })).toBe('hello');
+  });
+
+  it('TRIM strips whitespace', () => {
+    const expr = parseFormula('TRIM(source.name)');
+    expect(evaluate(expr, { name: '  hello  ' })).toBe('hello');
+  });
+
+  it('REPLACE substitutes occurrences', () => {
+    const expr = parseFormula('REPLACE(source.id, "-", "_")');
+    expect(evaluate(expr, { id: 'track-42-a' })).toBe('track_42_a');
+  });
+
+  it('returns empty string for missing field', () => {
+    const expr = parseFormula('UPPER(source.missing)');
+    expect(evaluate(expr, {})).toBe('');
+  });
+
+  it('returns empty string for null field', () => {
+    const expr = parseFormula('LOWER(source.val)');
+    expect(evaluate(expr, { val: null })).toBe('');
+  });
+
+  it('throws for unknown function', () => {
+    // Build an AST with an unknown fn manually since parseFormula only accepts known fns
+    const expr: Expr = {
+      type: 'call',
+      fn: 'UNKNOWN',
+      args: [{ type: 'literal', value: 'x' }],
+    };
+    expect(() => evaluate(expr, {})).toThrow('Unknown function: UNKNOWN');
   });
 });
