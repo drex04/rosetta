@@ -19,6 +19,9 @@ export const test = base.extend<{ freshPage: Page }>({
 
       // Zustand persist key for uiStore
       localStorage.removeItem('rosetta-ui');
+
+      // Suppress the about/onboarding dialog so it doesn't block test interactions
+      localStorage.setItem('rosetta-onboarding-v1', 'seen');
     });
 
     await page.reload({ waitUntil: 'networkidle' });

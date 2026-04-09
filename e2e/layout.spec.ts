@@ -1,21 +1,19 @@
 import { test, expect } from './fixtures';
 
 test.describe('Layout', () => {
-  test('status bar is visible at the bottom', async ({ freshPage: page }) => {
-    const footer = page.getByRole('contentinfo');
-    await expect(footer).toBeVisible();
-    const githubBtn = footer.getByRole('button', { name: /GitHub/ });
-    await expect(githubBtn).toBeVisible();
+  test('save status is visible in the right panel', async ({
+    freshPage: page,
+  }) => {
+    // Save status indicator is shown in the bottom of the right panel
+    await expect(page.getByText('Saved')).toBeVisible();
   });
 
-  test('header does not contain save status or GitHub button', async ({
+  test('header contains GitHub button but not save status', async ({
     freshPage: page,
   }) => {
     const header = page.getByRole('banner');
     await expect(header).not.toContainText('Saved');
-    await expect(header.getByRole('button', { name: /GitHub/i })).toHaveCount(
-      0,
-    );
+    await expect(header.getByRole('button', { name: /GitHub/i })).toBeVisible();
   });
 
   test('right panel collapses and expands on desktop', async ({

@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { PlusIcon } from '@phosphor-icons/react';
 import { useSourcesStore, generateSourceId } from '@/store/sourcesStore';
 import { useMappingStore } from '@/store/mappingStore';
+import { useValidationStore } from '@/store/validationStore';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 interface DeleteTarget {
@@ -18,6 +19,7 @@ export function SourceSelector() {
   const removeMappingsForSource = useMappingStore(
     (s) => s.removeMappingsForSource,
   );
+  const validationResults = useValidationStore((s) => s.results);
   const updateSource = useSourcesStore((s) => s.updateSource);
 
   // Inline edit state
@@ -135,6 +137,8 @@ export function SourceSelector() {
           return (
             <div
               key={source.id}
+              role="button"
+              tabIndex={0}
               className={[
                 'group flex items-center shrink-0 h-6 rounded border transition-colors cursor-pointer select-none',
                 isActive
@@ -150,9 +154,23 @@ export function SourceSelector() {
                   inputRef.current?.select();
                 });
               }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setActiveSourceId(source.id);
+                }
+              }}
               aria-label={`Select source ${source.name}`}
               aria-current={isActive ? 'true' : undefined}
             >
+              {/* Validation status badge */}
+              <span aria-hidden="true" className="pl-1.5 text-xs opacity-60">
+                {validationResults[source.id] !== undefined
+                  ? (validationResults[source.id]?.length ?? 0) === 0
+                    ? '✓'
+                    : '✗'
+                  : '○'}
+              </span>
               {/* Name area */}
               <span className="px-2.5 text-sm font-medium">
                 {isEditing ? (
@@ -188,7 +206,7 @@ export function SourceSelector() {
         <button
           onClick={handleAddSource}
           className="flex items-center gap-1 shrink-0 text-sm px-2 py-0.5 rounded border border-dashed border-source/50 text-source hover:border-source hover:bg-source/5 transition-colors"
-          aria-label="Add source"
+          aria-label="Add new source"
           data-tour="add-source"
         >
           <PlusIcon size={12} />
