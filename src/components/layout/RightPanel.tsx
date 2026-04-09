@@ -1,4 +1,10 @@
-import { useState, useEffect, Suspense, lazy, type RefObject } from 'react';
+import React, {
+  useState,
+  useEffect,
+  Suspense,
+  lazy,
+  type RefObject,
+} from 'react';
 import { SidebarSimpleIcon } from '@phosphor-icons/react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
@@ -19,9 +25,21 @@ const SourcePanel = lazy(() =>
     default: m.SourcePanel,
   })),
 );
-import { MappingPanel } from '@/components/panels/MappingPanel';
-import { OutputPanel } from '@/components/panels/OutputPanel';
-import { ValidationPanel } from '@/components/panels/ValidationPanel';
+const MappingPanel = lazy(() =>
+  import('@/components/panels/MappingPanel').then((m) => ({
+    default: m.MappingPanel,
+  })),
+);
+const OutputPanel = lazy(() =>
+  import('@/components/panels/OutputPanel').then((m) => ({
+    default: m.OutputPanel,
+  })),
+);
+const ValidationPanel = lazy(() =>
+  import('@/components/panels/ValidationPanel').then((m) => ({
+    default: m.ValidationPanel,
+  })),
+);
 import { StatusBar } from '@/components/layout/StatusBar';
 import type { SaveStatus } from '@/hooks/useAutoSave';
 
@@ -239,13 +257,37 @@ export function RightPanel({
                 </Suspense>
               </TabsContent>
               <TabsContent value="MAP" className="h-full m-0">
-                <MappingPanel />
+                <Suspense
+                  fallback={
+                    <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
+                      Loading…
+                    </div>
+                  }
+                >
+                  <MappingPanel />
+                </Suspense>
               </TabsContent>
               <TabsContent value="OUTPUT" className="h-full m-0">
-                <OutputPanel />
+                <Suspense
+                  fallback={
+                    <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
+                      Loading…
+                    </div>
+                  }
+                >
+                  <OutputPanel />
+                </Suspense>
               </TabsContent>
               <TabsContent value="VALIDATE" className="h-full m-0">
-                <ValidationPanel />
+                <Suspense
+                  fallback={
+                    <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
+                      Loading…
+                    </div>
+                  }
+                >
+                  <ValidationPanel />
+                </Suspense>
               </TabsContent>
             </div>
           </Tabs>
