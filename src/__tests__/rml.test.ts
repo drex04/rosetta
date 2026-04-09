@@ -341,4 +341,78 @@ describe('generateRml', () => {
     expect(result).toContain('http://example.org/');
     expect(result).not.toContain('_:');
   });
+
+  it('resolves rml:reference from schemaNode label — two classes sharing a property suffix do not collide', () => {
+    // Regression: previously localName() on ex:Person/name and ex:Vehicle/name
+    // both produced "name", silently emitting duplicate references.
+    const source = makeSource({
+      id: 'src1',
+      name: 'fleet',
+      rawData:
+        '{"people":[{"personName":"A"}],"vehicles":[{"vehicleName":"V"}]}',
+      schemaNodes: [
+        {
+          id: 'nodeP',
+          type: 'sourceNode',
+          position: { x: 0, y: 0 },
+          data: {
+            uri: 'http://example.org/Person',
+            label: 'Person',
+            prefix: 'http://example.org/',
+            properties: [
+              {
+                uri: 'http://example.org/Person/name',
+                label: 'personName',
+                range: 'xsd:string',
+                kind: 'datatype',
+              },
+            ],
+          },
+        },
+        {
+          id: 'nodeV',
+          type: 'sourceNode',
+          position: { x: 0, y: 0 },
+          data: {
+            uri: 'http://example.org/Vehicle',
+            label: 'Vehicle',
+            prefix: 'http://example.org/',
+            properties: [
+              {
+                uri: 'http://example.org/Vehicle/name',
+                label: 'vehicleName',
+                range: 'xsd:string',
+                kind: 'datatype',
+              },
+            ],
+          },
+        },
+      ],
+    });
+    const personMap: Mapping = {
+      id: 'm1',
+      sourceId: 'src1',
+      sourceClassUri: 'http://example.org/Person',
+      sourcePropUri: 'http://example.org/Person/name',
+      targetClassUri: 'http://nato.int/Person',
+      targetPropUri: 'http://nato.int/fullName',
+      sourceHandle: 'prop_name',
+      targetHandle: 'target_prop_fullName',
+      kind: 'direct',
+    };
+    const vehicleMap: Mapping = {
+      ...personMap,
+      id: 'm2',
+      sourceClassUri: 'http://example.org/Vehicle',
+      sourcePropUri: 'http://example.org/Vehicle/name',
+      targetClassUri: 'http://nato.int/Vehicle',
+      targetPropUri: 'http://nato.int/callsign',
+    };
+    const result = generateRml([source], { src1: [personMap, vehicleMap] });
+
+    expect(result).toContain('rml:reference "personName"');
+    expect(result).toContain('rml:reference "vehicleName"');
+    // Must NOT fall back to the colliding localName "name"
+    expect(result).not.toContain('rml:reference "name"');
+  });
 });

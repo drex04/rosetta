@@ -1,7 +1,5 @@
 import * as N3 from 'n3';
 import SHACLValidator from 'rdf-validate-shacl';
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore — no type declarations for this internal path
 import defaultEnv from 'rdf-validate-shacl/src/defaultEnv.js';
 
 export const ShaclFactory = defaultEnv;
@@ -23,13 +21,10 @@ export async function validateWithShacl(
   const SH_PROPERTY = 'http://www.w3.org/ns/shacl#property';
 
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const validator = new SHACLValidator(shapesStore as any, {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      factory: ShaclFactory as any,
+    const validator = new SHACLValidator(shapesStore, {
+      factory: ShaclFactory,
     });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const report = await validator.validate(dataStore as any);
+    const report = await validator.validate(dataStore);
 
     if (report.conforms) return [];
 
