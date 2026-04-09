@@ -78,7 +78,9 @@ describe('MappingPanel — formula kind', () => {
     expect(
       screen.getByRole('button', { name: /^Formula$/i }),
     ).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /^RML$/i })).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /^RML$/i }),
+    ).not.toBeInTheDocument();
     unmount();
 
     // Direct kind — tier toggle NOT present
@@ -199,17 +201,18 @@ describe('MappingPanel — formula kind', () => {
     ).toBeInTheDocument();
   });
 
-  it('7. RML tier shows font-mono Turtle pane', async () => {
+  it('7. RML tab is not present in formula tier', async () => {
     setupStore({ kind: 'formula' });
     render(<MappingPanel />);
 
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: /^RML$/i }));
-    });
-
-    // The RML pane is a div with font-mono class
-    const rmlDivs = document.querySelectorAll('.font-mono');
-    expect(rmlDivs.length).toBeGreaterThan(0);
+    // RML tab was removed — only Form and Formula tabs should exist
+    expect(
+      screen.queryByRole('button', { name: /^RML$/i }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Form$/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /^Formula$/i }),
+    ).toBeInTheDocument();
   });
 
   it('8. Tier resets to Form when a different mapping is selected', async () => {

@@ -22,16 +22,7 @@ export function MappingEdge({
     | undefined) ?? {};
   const groupOrder = groupOrderRaw ?? 0;
 
-  const KIND_LABEL: Record<string, string> = {
-    direct: 'direct',
-    template: 'tmpl',
-    constant: 'const',
-    typecast: 'cast',
-    language: 'lang',
-    join: 'join',
-    sparql: 'sparql',
-  };
-  const kindLabel = kind ? (KIND_LABEL[kind] ?? kind) : null;
+  const kindLabel = kind ?? null;
 
   // Apply vertical offset for grouped edges to prevent overlap
   const offsetY = groupId ? (groupOrder - 0.5) * 6 : 0;

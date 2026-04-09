@@ -100,4 +100,43 @@ export async function loadExampleProject(): Promise<void> {
       }
     }
   }
+
+  // Pre-seed Germany mappings
+  // breite/laenge are nested under `position` → Position class node
+  // geschwindigkeit_kmh and zeitstempel are direct on ErkannteZiele
+  const erkannteZieleNode = resultB.nodes.find(
+    (n) => n.data.uri === 'http://src_germany_#ErkannteZiele',
+  );
+  const positionNode = resultB.nodes.find(
+    (n) => n.data.uri === 'http://src_germany_#Position',
+  );
+
+  if (airTrackNode) {
+    const germanyMappings: Array<[typeof erkannteZieleNode, string, string]> = [
+      [positionNode, 'breite', 'latitude'],
+      [positionNode, 'laenge', 'longitude'],
+      [erkannteZieleNode, 'zeitstempel', 'timestamp'],
+      [erkannteZieleNode, 'geschwindigkeit_kmh', 'speedKts'],
+    ];
+
+    for (const [srcNode, srcLabel, tgtLabel] of germanyMappings) {
+      if (!srcNode) continue;
+      const srcProp = srcNode.data.properties.find((p) => p.label === srcLabel);
+      const tgtProp = airTrackNode.data.properties.find(
+        (p) => p.label === tgtLabel,
+      );
+      if (srcProp && tgtProp) {
+        useMappingStore.getState().addMapping({
+          sourceId: idB,
+          sourceClassUri: srcNode.data.uri,
+          sourcePropUri: srcProp.uri,
+          targetClassUri: airTrackNode.data.uri,
+          targetPropUri: tgtProp.uri,
+          sourceHandle: `prop_${srcLabel}`,
+          targetHandle: `target_prop_${tgtLabel}`,
+          kind: 'direct',
+        });
+      }
+    }
+  }
 }

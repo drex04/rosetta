@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { CheckIcon } from '@phosphor-icons/react';
 import { useOntologyStore } from '@/store/ontologyStore';
 import { useMappingStore } from '@/store/mappingStore';
@@ -38,6 +39,7 @@ export function EdgeContextMenu({ menu, onClose }: Props) {
   const updateEdge = useOntologyStore((s) => s.updateEdge);
   const removeEdge = useOntologyStore((s) => s.removeEdge);
   const ontologyEdges = useOntologyStore((s) => s.edges);
+  const [pendingLabel, setPendingLabel] = useState<string | null>(null);
 
   return (
     <>
@@ -62,7 +64,10 @@ export function EdgeContextMenu({ menu, onClose }: Props) {
                   key={kind}
                   className="w-full text-left px-3 py-1.5 hover:bg-muted cursor-pointer flex items-center gap-2 capitalize"
                   onClick={() => {
-                    updateMapping(menu.edgeId, { kind: kind as MappingKind });
+                    updateMapping(
+                      (menu.edgeData as { mappingId: string }).mappingId,
+                      { kind: kind as MappingKind },
+                    );
                     onClose();
                   }}
                 >
@@ -79,7 +84,9 @@ export function EdgeContextMenu({ menu, onClose }: Props) {
             <button
               className="w-full text-left px-3 py-1.5 hover:bg-destructive/10 cursor-pointer flex items-center gap-2 text-destructive"
               onClick={() => {
-                removeMapping(menu.edgeId);
+                removeMapping(
+                  (menu.edgeData as { mappingId: string }).mappingId,
+                );
                 onClose();
               }}
             >
@@ -90,34 +97,78 @@ export function EdgeContextMenu({ menu, onClose }: Props) {
 
         {menu.edgeType === 'subclassEdge' && (
           <>
-            <button
-              className="w-full text-left px-3 py-1.5 hover:bg-muted cursor-pointer flex items-center gap-2"
-              onClick={() => {
-                const ontoEdge = ontologyEdges.find(
-                  (e) => e.id === menu.edgeId,
-                );
-                const targetId = ontoEdge?.target ?? '';
-                const { nodes } = useOntologyStore.getState();
-                const targetNode = nodes.find((n) => n.id === targetId);
-                const targetLabel =
-                  (targetNode?.data.label as string | undefined) ?? '';
-                const suggestedLabel = targetLabel
-                  ? `has${targetLabel.charAt(0).toUpperCase()}${targetLabel.slice(1)}`
-                  : 'hasRelation';
-                const input = window.prompt(
-                  'Relationship name:',
-                  suggestedLabel,
-                );
-                if (!input || !input.trim()) return;
-                updateEdge(menu.edgeId, {
-                  type: 'objectPropertyEdge',
-                  label: input.trim(),
-                });
-                onClose();
-              }}
-            >
-              Change to Object Property
-            </button>
+            {pendingLabel === null ? (
+              <button
+                className="w-full text-left px-3 py-1.5 hover:bg-muted cursor-pointer flex items-center gap-2"
+                onClick={() => {
+                  const ontoEdge = ontologyEdges.find(
+                    (e) => e.id === menu.edgeId,
+                  );
+                  const targetId = ontoEdge?.target ?? '';
+                  const { nodes } = useOntologyStore.getState();
+                  const targetNode = nodes.find((n) => n.id === targetId);
+                  const targetLabel =
+                    (targetNode?.data.label as string | undefined) ?? '';
+                  const suggested = targetLabel
+                    ? `has${targetLabel.charAt(0).toUpperCase()}${targetLabel.slice(1)}`
+                    : 'hasRelation';
+                  setPendingLabel(suggested);
+                }}
+              >
+                Change to Object Property
+              </button>
+            ) : (
+              <div className="px-3 py-2 flex flex-col gap-1.5">
+                <span className="text-xs text-muted-foreground">
+                  Relationship name
+                </span>
+                <input
+                  autoFocus
+                  className="w-full rounded border border-border bg-background px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                  value={pendingLabel}
+                  onChange={(e) => setPendingLabel(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && pendingLabel.trim()) {
+                      updateEdge(menu.edgeId, {
+                        type: 'objectPropertyEdge',
+                        data: {
+                          ...menu.edgeData,
+                          label: pendingLabel.trim(),
+                        } as any,
+                      });
+                      onClose();
+                    } else if (e.key === 'Escape') {
+                      setPendingLabel(null);
+                    }
+                  }}
+                />
+                <div className="flex gap-1 justify-end">
+                  <button
+                    className="px-2 py-0.5 text-xs rounded hover:bg-muted"
+                    onClick={() => setPendingLabel(null)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className="px-2 py-0.5 text-xs rounded bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                    disabled={!pendingLabel.trim()}
+                    onClick={() => {
+                      if (!pendingLabel.trim()) return;
+                      updateEdge(menu.edgeId, {
+                        type: 'objectPropertyEdge',
+                        data: {
+                          ...menu.edgeData,
+                          label: pendingLabel.trim(),
+                        } as any,
+                      });
+                      onClose();
+                    }}
+                  >
+                    Apply
+                  </button>
+                </div>
+              </div>
+            )}
             <div className="border-t border-border my-1" />
             <button
               className="w-full text-left px-3 py-1.5 hover:bg-destructive/10 cursor-pointer flex items-center gap-2 text-destructive"
@@ -136,7 +187,10 @@ export function EdgeContextMenu({ menu, onClose }: Props) {
             <button
               className="w-full text-left px-3 py-1.5 hover:bg-muted cursor-pointer flex items-center gap-2"
               onClick={() => {
-                updateEdge(menu.edgeId, { type: 'subclassEdge', label: '' });
+                updateEdge(menu.edgeId, {
+                  type: 'subclassEdge',
+                  data: { ...menu.edgeData, label: '' } as any,
+                });
                 onClose();
               }}
             >
