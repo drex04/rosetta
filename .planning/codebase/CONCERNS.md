@@ -1,94 +1,95 @@
 # Codebase Concerns
 
-**Analysis Date:** 2026-04-06
+**Analysis Date:** 2026-04-09
 
 ## Tech Debt
 
-**OntologyCanvas god component:**
-- Issue: `src/components/canvas/OntologyCanvas.tsx` (1102 lines) owns all canvas UI state, all store subscriptions, context menus, edge picker, group prompt, and node callbacks in one component.
-- Files: `src/components/canvas/OntologyCanvas.tsx`
-- Impact: Hard to test, slow to review; any canvas-related change risks unintended side effects.
-- Fix approach: Extract context menus, edge picker dialog, and group prompt into sibling components with lifted state via `useReducer` or a local canvas UI store.
+**IDB persistence recovery race condition:**
+- Issue: `useAutoSave` uses `hydratedRef` to prevent autosave during IDB restore, but hydration is async and completes in useEffect without coordination with store subscriptions. If store changes fire before `hydratedRef.current = true`, seed data could persist before user's saved project is restored.
+- Files: `src/hooks/useAutoSave.ts` lines 67-77, 138-140
+- Impact: Race window is 0-100ms in practice but not formally eliminated. Long-term: stale data in IDB.
+- Fix approach: Add an explicit `hydrationComplete` action to each store; only enable subscriptions after all stores report hydration done. Or wrap restore logic in a Zustand batch operation.
 
-**Bidirectional canvas↔code sync:**
-- Issue: Sync between CodeMirror Turtle editor and canvas requires `isUpdatingFrom*` guard flags to prevent circular store updates. Missing a flag in a new path silently causes infinite loops.
-- Files: `src/components/panels/TurtleEditorPanel.tsx`, `src/store/ontologyStore.ts`
-- Impact: Adding any new cross-panel sync without the guard breaks the app.
-- Fix approach: Centralize sync logic into a single `useBidirectionalSync` hook with the guard encapsulated.
+**Mapping store undo stack never garbage-collected:**
+- Issue: `_undoStack` in mappingStore persists all removed mapping batches indefinitely; no size limit or expiration.
+- Files: `src/store/mappingStore.ts` lines 95-96, 348-390
+- Impact: Long editing sessions could accumulate megabytes of undo history in memory and IDB.
+- Fix approach: Cap `_undoStack` to last 20 removals, or add a `clearUndoStack()` action called after project save.
 
-**`useAutoSave` fire-and-forget void:**
-- Issue: Hydration in `useAutoSave.ts` calls `void parseTurtle(...)` inside a `.then()` — if the async chain throws after `hydratedRef.current = true`, the user's data may partially restore without an error banner.
-- Files: `src/hooks/useAutoSave.ts` lines 81–98
-- Impact: Silent partial hydration; user sees blank canvas with no error.
-- Fix approach: Await `parseTurtle` inside the outer `async` body and propagate errors to `setSaveStatus('error')`.
+**Formula validation happens only at export:**
+- Issue: `formulaExpression` is parsed and validated only when generating RML in `src/lib/rmlExecute.ts`. Syntax errors only surface after clicking "Export" — no real-time UI feedback.
+- Files: `src/lib/rmlExecute.ts` lines 38-49, `src/lib/formulaParser.ts` lines 1-354
+- Impact: Users cannot validate formulas until export; invalid formulas corrupt RML output.
+- Fix approach: Add a `useEffect` hook that validates all formula mappings on change; surface errors in the editor panel. Pre-parse formulas on mount to catch stale data from IDB.
+
+---
 
 ## Known Fragile Areas
 
-**RightPanel layout modes:**
-- Why fragile: Three distinct CSS modes (collapsed strip `w-10`, mobile overlay `z-20`, desktop resizable) switch on `window.innerWidth < 640` checked imperatively — no reactive listener.
-- File: `src/components/layout/RightPanel.tsx`
-- Safe modification: Add a `useEffect` with `resize` listener if adding responsive behavior; do not add new conditional widths without testing all three modes.
+**Bidirectional canvas↔editor sync with manual guard flags:**
+- Why fragile: Two-way subscription with `isUpdatingFrom*` flags (lines 12-26 in useOntologySync) can deadlock if parser errors occur mid-sync or if canvasToTurtle takes >100ms. Missing a guard in a new sync path silently causes infinite loops.
+- Files: `src/hooks/useOntologySync.ts` lines 16-26, 65-100
+- Safe modification: Test all canvas mutations + concurrent editor changes. Never skip the `isUpdatingFromEditor` guard during canvas→editor path. If adding async work in canvasToTurtle, increase debounce beyond 100ms and audit all call sites.
 
-**`localName` utility:**
-- Why fragile: Handle matching in mapping edges depends on `localName` from `src/lib/rdf.ts`. If re-implemented elsewhere it silently breaks URI→handle resolution.
-- File: `src/lib/rdf.ts`
-- Safe modification: Always import from `src/lib/rdf.ts`; never inline a local version.
+**Property URI matching via schema node labels:**
+- Why fragile: `resolveSourceReference` in `src/lib/rml.ts` relies on PropertyData's `label` field (source column name). If a source is re-ingested and JSON keys change, mappings built on old labels point to the wrong keys in RML output.
+- Files: `src/lib/rml.ts` lines 131-147, `src/lib/jsonToSchema.ts` line 66
+- Safe modification: Validate label round-trip in tests (jsonToSchema → rml → back to JSON). Never remove labels from PropertyData. Consider storing original source column name separately from label.
 
-**Source URI prefix uniqueness:**
-- Why fragile: Each source derives its URI prefix from source name. Duplicate source names produce identical prefixes, causing RDF triple collisions.
-- File: `src/store/sourcesStore.ts`
-- Safe modification: Enforce uniqueness in `addSource` — either block duplicate names or append a disambiguating suffix.
+**OntologyCanvas god component (1100+ lines):**
+- Why fragile: Owns all canvas UI state, store subscriptions, context menus, edge picker, group prompt, and node callbacks in one component. Changes to any feature risk unintended side effects.
+- Files: `src/components/canvas/OntologyCanvas.tsx` lines 1-200+
+- Safe modification: Extract context menus and edge picker into sibling components. Keep canvas-level state small; delegate to stores where possible.
 
-**IDB type guards:**
-- Why fragile: `isValidMappings` / `isValidGroups` in `useAutoSave.ts` check only `id`, `strategy`, `targetClassUri`, `targetPropUri`. New required fields on `Mapping` or `MappingGroup` will silently pass guard and hydrate with `undefined` values.
-- File: `src/hooks/useAutoSave.ts` lines 20–57
-- Safe modification: Update both guards whenever fields are added to `Mapping` or `MappingGroup` in `src/types/index.ts`.
+---
 
 ## Performance Bottlenecks
 
-**Comunica in-browser SPARQL over large datasets:**
-- Problem: Comunica runs SPARQL against an in-memory N3.Store. Large ontology files (e.g. C2SIM RDF files now in `src/data/`) will be slow — no streaming, no indexes beyond N3.
-- Files: `src/lib/rdf.ts`, `src/data/C2SIM.rdf`, `src/data/C2SIM_LOX.rdf`, `src/data/C2SIM_SMX.rdf`
-- Cause: N3.Store holds all triples in memory; Comunica iterates full store per query.
+**Large JSON/XML schema inference is synchronous:**
+- Problem: `jsonToSchema` and `inferIterator` walk entire JSON object tree without yielding; large files (>10MB) freeze the UI thread.
+- Files: `src/lib/jsonToSchema.ts` lines 51-100, `src/lib/rml.ts` lines 24-49
+- Cause: No chunking, no Web Worker, no async iteration. Circular reference detection via WeakSet is O(n) per node.
 
-## Dead Code
+**Comunica SPARQL queries block on large ontologies:**
+- Problem: Validation shapes + ontology mutations trigger SPARQL CONSTRUCT queries that materialize full result set before returning.
+- Files: `src/lib/shacl/validator.ts`, validation store subscriptions
+- Cause: In-browser Comunica engine is not optimized for large graphs; no query optimizer or indexing beyond N3.
 
-**`ScrollBar` export:**
-- Location: `src/components/ui/scroll-area.tsx` line 48
-- Safe to remove: Yes — not imported anywhere; shadcn component export not used in this codebase.
-
-**`RDF_TYPE` constant:**
-- Location: `src/lib/shacl/constructExecutor.ts` line 8
-- Safe to remove: Yes — local constant not referenced outside the file.
-
-**`ShaclFactory` export:**
-- Location: `src/lib/shacl/validator.ts` line 7
-- Safe to remove: Yes — not imported elsewhere.
-
-**`ParseResult` type:**
-- Location: `src/lib/formulaParser.ts` line 13
-- Safe to remove: Yes — exported type with no external consumers found.
-
-**`@radix-ui/react-tooltip` dependency:**
-- Location: `package.json`
-- Safe to remove: Yes — not imported in source; likely a leftover from shadcn init.
+---
 
 ## Test Coverage Gaps
 
-**IDB hydration paths:**
-- What's not tested: Partial restore failures (e.g. valid ontology + malformed mappings), and the `parseTurtle` error branch in `useAutoSave`.
-- Risk: Silent data loss on IDB schema drift after a refactor.
-- Priority: High
+**RML formula mapping round-trip:**
+- What's not tested: Formula expressions through full RML generation → execution pipeline. Currently only parser/evaluator tested in isolation (formulaParser.test.ts).
+- Risk: A formula valid in formulaParser but invalid in FnO predicate structure could silently produce malformed RML or fail at runtime.
+- Priority: High — formulas are a user-facing feature.
 
-**Formula parser / group strategies:**
-- What's not tested: `src/lib/formulaParser.ts` formula evaluation and MappingGroup strategy rendering (concat, template, formula) have no unit tests.
-- Risk: Formula regression silently breaks CONSTRUCT output.
-- Priority: High
+**IDB restore with corrupted or malformed data:**
+- What's not tested: Restore of mappings with missing required fields (sourceId, id, kind). Type guards in useAutoSave lines 21-57 are permissive; they check only `id` field, not shape validation.
+- Risk: Corrupted IDB data causes silent failures; `selectedMappingId` could point to nonexistent mapping. No user-visible error.
+- Priority: High — persistent state data loss is unrecoverable.
 
-**Canvas sync guard:**
-- What's not tested: Bidirectional Turtle↔canvas sync under rapid edits; no test verifies the `isUpdatingFrom*` guard prevents loops.
+**Circular reference handling in source ingestion:**
+- What's not tested: jsonToSchema with actual circular object graphs (parent → child → parent). Current code detects and silently suppresses edges.
+- Risk: User loses properties without UI feedback that they were dropped due to circular refs.
+- Priority: Medium — users may not notice missing properties in generated schema.
+
+**Bidirectional sync guard under rapid edits:**
+- What's not tested: Turtle editor + canvas mutations firing simultaneously; guard flags under stress.
 - Risk: Circular update loops in new sync paths.
 - Priority: Medium
 
 ---
-*Concerns audit: 2026-04-06*
+
+## Security & Stability Notes
+
+**Formula parser is safe (no eval):**
+- File: `src/lib/formulaParser.ts` — hand-rolled tokenizer + recursive descent, produces AST only. No security issues.
+
+**RML execution delegates to @comake/rmlmapper-js:**
+- Issue: No TypeScript declarations; library may throw uncaught errors. Error handling in executeAllRml is basic (lines 71-74).
+- Files: `src/lib/rmlExecute.ts` lines 64-66, 71-74
+
+---
+
+*Concerns audit: 2026-04-09*
