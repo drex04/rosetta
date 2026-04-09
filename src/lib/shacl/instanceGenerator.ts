@@ -1,6 +1,7 @@
 import * as N3 from 'n3';
 import type { SourceNodeData } from '../../types';
 import { toPascalCase, xsdRangeShort } from '@/lib/stringUtils';
+import { localName } from '@/lib/rdf';
 
 const RDF_TYPE = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type';
 const XSD = 'http://www.w3.org/2001/XMLSchema#';
@@ -9,8 +10,10 @@ const { namedNode, blankNode, literal, quad, defaultGraph } = N3.DataFactory;
 
 function typedLiteral(value: unknown): N3.Literal {
   const range = xsdRangeShort(value);
-  const localName = range.slice('xsd:'.length);
-  const datatypeUri = XSD + localName;
+  // range may be "xsd:string" (prefixed) — localName() handles this via ':' fallback.
+  const datatypeUri = range.startsWith('xsd:')
+    ? XSD + range.slice('xsd:'.length)
+    : XSD + localName(range);
   return literal(String(value), namedNode(datatypeUri));
 }
 

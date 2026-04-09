@@ -28,9 +28,7 @@ export function executeConstruct(
       );
 
       for (const val of objects) {
-        const target = blankNode(
-          subject.value.replace(/[^a-zA-Z0-9]/g, '_') + '_target',
-        );
+        const target = blankNode();
 
         result.addQuad(
           quad(

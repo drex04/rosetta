@@ -341,6 +341,9 @@ export function generateRml(
           lines.push(`    rr:objectMap [ rr:object "${val}"^^<${dtype}> ] ;`);
           lines.push(`  ] ;`);
         } else if (mapping.kind === 'language') {
+          // TODO: localName() collides when two classes share a property
+          // suffix (e.g. ex:Person/name and ex:Vehicle/name both → "name").
+          // Needs a source-schema lookup to resolve the actual JSON key.
           const ref = localName(mapping.sourcePropUri);
           const lang = mapping.languageTag ?? 'en';
           lines.push(`  rr:predicateObjectMap [`);

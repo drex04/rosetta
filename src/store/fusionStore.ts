@@ -39,7 +39,12 @@ export const useFusionStore = create<FusionState>()((set, get) => ({
       });
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : 'Fusion failed';
-      set({ loading: false, error: message });
+      set({
+        loading: false,
+        error: message,
+        stale: false,
+        lastRun: Date.now(),
+      });
     }
   },
 

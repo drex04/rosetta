@@ -32,29 +32,43 @@ export function useOntologySync() {
     // Selector: stable key derived from node/edge identity (not positions).
     // Positions can change on drag but we don't want to re-serialize for those
     // — those go through onCanvasChange which is called by React Flow directly.
-    const selector = (s: { nodes: OntologyNode[]; edges: OntologyEdge[] }) =>
-      s.nodes
-        .map(
-          (n) =>
-            n.id +
-            '|' +
-            n.data.label +
-            '|' +
-            n.data.properties.map((p) => p.uri).join(','),
-        )
-        .join(';') +
-      '::' +
-      s.edges.map((e) => e.id).join(';');
+    // Structural-equality check over node/edge identity (not positions).
+    // Avoids per-tick O(n×m) string allocation.
+    const structurallyEqual = (
+      a: { nodes: OntologyNode[]; edges: OntologyEdge[] },
+      b: { nodes: OntologyNode[]; edges: OntologyEdge[] },
+    ): boolean => {
+      if (a.nodes.length !== b.nodes.length) return false;
+      if (a.edges.length !== b.edges.length) return false;
+      for (let i = 0; i < a.nodes.length; i++) {
+        const an = a.nodes[i]!;
+        const bn = b.nodes[i]!;
+        if (an.id !== bn.id || an.data.label !== bn.data.label) return false;
+        const ap = an.data.properties;
+        const bp = bn.data.properties;
+        if (ap.length !== bp.length) return false;
+        for (let j = 0; j < ap.length; j++) {
+          if (ap[j]!.uri !== bp[j]!.uri) return false;
+        }
+      }
+      for (let i = 0; i < a.edges.length; i++) {
+        if (a.edges[i]!.id !== b.edges[i]!.id) return false;
+      }
+      return true;
+    };
 
-    let lastKey = selector(useOntologyStore.getState());
+    let lastSnapshot = {
+      nodes: useOntologyStore.getState().nodes,
+      edges: useOntologyStore.getState().edges,
+    };
 
     const unsubscribe = useOntologyStore.subscribe((state) => {
       // Skip if editor is currently driving the update (prevents circular loop)
       if (isUpdatingFromEditor.current) return;
 
-      const newKey = selector(state);
-      if (newKey === lastKey) return;
-      lastKey = newKey;
+      const next = { nodes: state.nodes, edges: state.edges };
+      if (structurallyEqual(lastSnapshot, next)) return;
+      lastSnapshot = next;
 
       // Mark editor as pending-sync (read-only window)
       isCanvasSyncPending.current = true;

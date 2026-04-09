@@ -43,9 +43,9 @@ export async function executeAllRml(
         errors.push((e as Error).message);
       }
     }
-    const detail = errors.length > 0 ? ` — ${errors[0]}` : '';
+    if (errors.length === 0) continue;
     warnings.push(
-      `"${sourceName}": ${count} formula mapping${count > 1 ? 's' : ''}${detail}`,
+      `"${sourceName}": ${count} formula mapping${count > 1 ? 's' : ''} — ${errors[0]}`,
     );
   }
 
