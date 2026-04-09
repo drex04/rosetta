@@ -293,3 +293,46 @@ describe('useValidationStore — runValidation success', () => {
     );
   });
 });
+
+describe('useValidationStore — resetShapesToAuto', () => {
+  it('updates userShapesTurtle from generateShapesTurtle result', async () => {
+    const node = {
+      id: 'n1',
+      type: 'classNode' as const,
+      position: { x: 0, y: 0 },
+      data: {
+        uri: 'http://example.org/Person',
+        label: 'Person',
+        properties: [],
+      },
+    };
+    await useValidationStore.getState().resetShapesToAuto([node as any]);
+    expect(useValidationStore.getState().userShapesTurtle).toContain('sh:');
+  });
+
+  it('sets userShapesTurtle to empty string when no nodes have URIs', async () => {
+    await useValidationStore.getState().resetShapesToAuto([]);
+    expect(useValidationStore.getState().userShapesTurtle).toBe('');
+  });
+});
+
+describe('useValidationStore — hydrate', () => {
+  it('sets userShapesTurtle when given a string', () => {
+    useValidationStore
+      .getState()
+      .hydrate({
+        userShapesTurtle: '@prefix sh: <http://www.w3.org/ns/shacl#> .',
+      });
+    expect(useValidationStore.getState().userShapesTurtle).toBe(
+      '@prefix sh: <http://www.w3.org/ns/shacl#> .',
+    );
+  });
+
+  it('leaves userShapesTurtle unchanged when hydrate value is not a string', () => {
+    useValidationStore.setState({ userShapesTurtle: 'original' });
+    useValidationStore
+      .getState()
+      .hydrate({ userShapesTurtle: undefined as unknown as string });
+    expect(useValidationStore.getState().userShapesTurtle).toBe('original');
+  });
+});

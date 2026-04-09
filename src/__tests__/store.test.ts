@@ -55,6 +55,61 @@ describe('useOntologyStore', () => {
       '@prefix ex: <http://example.org/> .',
     );
   });
+
+  it('loadTurtle sets parseError on invalid Turtle', async () => {
+    await useOntologyStore.getState().loadTurtle('this is not valid turtle!!!');
+    expect(useOntologyStore.getState().parseError).toBeTruthy();
+  });
+
+  it('loadTurtle sets nodes/edges and clears parseError on valid Turtle', async () => {
+    const validTurtle = `
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix ex: <http://example.org/> .
+ex:Track a owl:Class .
+`;
+    await useOntologyStore.getState().loadTurtle(validTurtle);
+    expect(useOntologyStore.getState().parseError).toBeNull();
+    expect(useOntologyStore.getState().nodes.length).toBeGreaterThan(0);
+  });
+
+  it('addEdge appends an edge', () => {
+    const edge = {
+      id: 'e1',
+      source: 'n1',
+      target: 'n2',
+      type: 'subclassEdge' as const,
+      data: { predicate: 'rdfs:subClassOf' as const },
+    } as OntologyEdge;
+    useOntologyStore.getState().addEdge(edge);
+    expect(useOntologyStore.getState().edges).toHaveLength(1);
+  });
+
+  it('removeEdge removes by id', () => {
+    const edge = {
+      id: 'e1',
+      source: 'n1',
+      target: 'n2',
+      type: 'subclassEdge' as const,
+      data: { predicate: 'rdfs:subClassOf' as const },
+    } as OntologyEdge;
+    useOntologyStore.getState().addEdge(edge);
+    useOntologyStore.getState().removeEdge('e1');
+    expect(useOntologyStore.getState().edges).toHaveLength(0);
+  });
+
+  it('updateEdge patches edge fields', () => {
+    const edge = {
+      id: 'e1',
+      source: 'n1',
+      target: 'n2',
+      type: 'subclassEdge' as const,
+      data: { predicate: 'rdfs:subClassOf' as const },
+    } as OntologyEdge;
+    useOntologyStore.getState().addEdge(edge);
+    useOntologyStore.getState().updateEdge('e1', { source: 'n99' });
+    expect(useOntologyStore.getState().edges[0]!.source).toBe('n99');
+  });
 });
 
 describe('useSourcesStore', () => {
@@ -164,6 +219,26 @@ describe('useSourcesStore', () => {
     useSourcesStore.getState().removeSource('does-not-exist');
     expect(useSourcesStore.getState().sources).toHaveLength(1);
   });
+
+  it('addSource deduplicates names by appending a counter', () => {
+    const makeSource = (id: string, name: string): Source => ({
+      id,
+      name,
+      order: 0,
+      rawData: '{}',
+      dataFormat: 'json',
+      schemaNodes: [],
+      schemaEdges: [],
+      parseError: null,
+    });
+    useSourcesStore.getState().addSource(makeSource('s1', 'Norway'));
+    useSourcesStore.getState().addSource(makeSource('s2', 'Norway'));
+    useSourcesStore.getState().addSource(makeSource('s3', 'Norway'));
+    const names = useSourcesStore.getState().sources.map((s) => s.name);
+    expect(names).toContain('Norway');
+    expect(names).toContain('Norway 2');
+    expect(names).toContain('Norway 3');
+  });
 });
 
 describe('useUiStore', () => {
@@ -186,5 +261,20 @@ describe('useUiStore', () => {
     useUiStore.getState().setActiveRightTab('MAP');
     useUiStore.getState().setActiveRightTab('SOURCE');
     expect(useUiStore.getState().activeRightTab).toBe('SOURCE');
+  });
+
+  it('tourRunning defaults to false', () => {
+    expect(useUiStore.getState().tourRunning).toBe(false);
+  });
+
+  it('setTourRunning sets tourRunning to true', () => {
+    useUiStore.getState().setTourRunning(true);
+    expect(useUiStore.getState().tourRunning).toBe(true);
+  });
+
+  it('setTourRunning resets tourRunning to false', () => {
+    useUiStore.getState().setTourRunning(true);
+    useUiStore.getState().setTourRunning(false);
+    expect(useUiStore.getState().tourRunning).toBe(false);
   });
 });

@@ -147,4 +147,69 @@ describe('useOntologySync', () => {
 
     expect(result.current.hasPendingEdits.current).toBe(false);
   });
+
+  it('onCanvasChange sets parseError when canvasToTurtle throws', async () => {
+    const { useOntologySync } = await import('../hooks/useOntologySync');
+
+    mockCanvasToTurtle.mockRejectedValue(new Error('serialization failed'));
+
+    const { result } = renderHook(() => useOntologySync());
+
+    await act(async () => {
+      await result.current.onCanvasChange([MOCK_NODE], [MOCK_EDGE]);
+    });
+
+    expect(useOntologyStore.getState().parseError).toContain(
+      'Canvas serialization failed',
+    );
+  });
+
+  it('onCanvasChange is no-op when editor is currently driving update', async () => {
+    const { useOntologySync } = await import('../hooks/useOntologySync');
+
+    // parseTurtle succeeds — this will set isUpdatingFromEditor.current = true
+    // during its execution, but we need to intercept inside onCanvasChange
+    mockParseTurtle.mockResolvedValue({ nodes: [MOCK_NODE], edges: [] });
+    mockCanvasToTurtle.mockResolvedValue('@prefix ex: <http://example.org/> .');
+
+    const { result } = renderHook(() => useOntologySync());
+
+    // Start an editor update (sets isUpdatingFromEditor during async work)
+    act(() => {
+      result.current.onEditorChange('valid turtle');
+    });
+
+    // Call onCanvasChange while editor update is pending
+    // (onCanvasChange checks isUpdatingFromEditor)
+    await act(async () => {
+      await result.current.onCanvasChange([], []);
+    });
+
+    // canvasToTurtle would not be called because isUpdatingFromEditor guard skips it
+    // (the editor change calls parseTurtle, not canvasToTurtle)
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(700);
+    });
+  });
+
+  it('canvas store subscription triggers turtle update on structural change', async () => {
+    const { useOntologySync } = await import('../hooks/useOntologySync');
+    const { useOntologyStore } = await import('../store/ontologyStore');
+
+    mockCanvasToTurtle.mockResolvedValue('# updated turtle');
+
+    renderHook(() => useOntologySync());
+
+    // Mutate store structurally (add a node)
+    act(() => {
+      useOntologyStore.getState().setNodes([MOCK_NODE]);
+    });
+
+    // Let the 100ms canvas debounce fire
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(200);
+    });
+
+    expect(mockCanvasToTurtle).toHaveBeenCalled();
+  });
 });

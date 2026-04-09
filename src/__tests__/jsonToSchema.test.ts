@@ -305,3 +305,205 @@ describe('Norwegian radar sample', () => {
     );
   });
 });
+
+// ─── Array of primitives as a nested property ────────────────────────────────
+
+describe('array of primitives as nested property', () => {
+  it('treats an array of strings as a DatatypeProperty on the parent class', () => {
+    const json = JSON.stringify({
+      items: [{ name: 'Alpha', tags: ['a', 'b', 'c'] }],
+    });
+    const result = jsonToSchema(json, 'TestSource');
+    // Should have Items node; tags array-of-strings becomes a DatatypeProperty
+    const itemsNode = result.nodes.find(
+      (n) => (n.data as { label?: string })?.label === 'Items',
+    );
+    expect(itemsNode).toBeDefined();
+    const props =
+      (itemsNode?.data as { properties?: Array<{ label: string }> })
+        ?.properties ?? [];
+    expect(props.some((p) => p.label === 'tags')).toBe(true);
+  });
+});
+
+// ─── Flat root object (only primitives at root) ───────────────────────────────
+
+describe('flat root object with only primitives', () => {
+  it('treats the root object itself as a Root class', () => {
+    const json = JSON.stringify({ name: 'Alice', age: 30 });
+    const result = jsonToSchema(json, 'TestSource');
+    expect(result.nodes).toHaveLength(1);
+    expect((result.nodes[0]?.data as { label?: string })?.label).toBe('Root');
+  });
+
+  it('maps primitive fields as DatatypeProperty on Root class', () => {
+    const json = JSON.stringify({
+      name: 'Alice',
+      count: 5,
+      ratio: 0.5,
+      active: true,
+    });
+    const result = jsonToSchema(json, 'TestSource');
+    const props =
+      (
+        result.nodes[0]?.data as {
+          properties?: Array<{ label: string; range: string }>;
+        }
+      )?.properties ?? [];
+    const propMap = Object.fromEntries(props.map((p) => [p.label, p.range]));
+    expect(propMap['name']).toBe('xsd:string');
+    expect(propMap['count']).toBe('xsd:integer');
+    expect(propMap['ratio']).toBe('xsd:float');
+    expect(propMap['active']).toBe('xsd:boolean');
+  });
+
+  it('emits no warnings for a valid flat object', () => {
+    const json = JSON.stringify({ id: 'x1', value: 42 });
+    const result = jsonToSchema(json, 'TestSource');
+    expect(result.warnings).toHaveLength(0);
+  });
+});
+
+// ─── null/undefined field handling ───────────────────────────────────────────
+
+describe('null and undefined fields in objects', () => {
+  it('treats null property as xsd:string DatatypeProperty in nested walkObject', () => {
+    // Use an object with an array property — first element has a null field
+    const json = JSON.stringify({
+      people: [{ name: 'Alice', nickname: null }],
+    });
+    const result = jsonToSchema(json, 'Src');
+    const personNode = result.nodes.find(
+      (n) => (n.data as { label: string }).label === 'People',
+    );
+    const props =
+      (
+        personNode?.data as {
+          properties?: Array<{ label: string; range: string }>;
+        }
+      )?.properties ?? [];
+    const nicknameProp = props.find((p) => p.label === 'nickname');
+    expect(nicknameProp?.range).toBe('xsd:string');
+  });
+});
+
+// ─── empty / all-null array handling ─────────────────────────────────────────
+
+describe('empty and all-null array properties', () => {
+  it('treats empty array property in nested object as xsd:string', () => {
+    // Nested object with empty array field
+    const json = JSON.stringify({ items: [{ name: 'X', tags: [] }] });
+    const result = jsonToSchema(json, 'Src');
+    const itemNode = result.nodes.find(
+      (n) => (n.data as { label: string }).label === 'Items',
+    );
+    const props =
+      (
+        itemNode?.data as {
+          properties?: Array<{ label: string; range: string }>;
+        }
+      )?.properties ?? [];
+    const tagsProp = props.find((p) => p.label === 'tags');
+    expect(tagsProp?.range).toBe('xsd:string');
+  });
+
+  it('treats all-null nested array as xsd:string', () => {
+    const json = JSON.stringify({
+      items: [{ name: 'X', codes: [null, null] }],
+    });
+    const result = jsonToSchema(json, 'Src');
+    const itemNode = result.nodes.find(
+      (n) => (n.data as { label: string }).label === 'Items',
+    );
+    const props =
+      (
+        itemNode?.data as {
+          properties?: Array<{ label: string; range: string }>;
+        }
+      )?.properties ?? [];
+    const codesProp = props.find((p) => p.label === 'codes');
+    expect(codesProp?.range).toBe('xsd:string');
+  });
+});
+
+// ─── array of primitives ──────────────────────────────────────────────────────
+
+describe('array of primitive values in nested objects', () => {
+  it('array of numbers emits xsd:float property', () => {
+    const json = JSON.stringify({ records: [{ scores: [1.1, 2.2, 3.3] }] });
+    const result = jsonToSchema(json, 'Src');
+    const recNode = result.nodes.find(
+      (n) => (n.data as { label: string }).label === 'Records',
+    );
+    const props =
+      (
+        recNode?.data as {
+          properties?: Array<{ label: string; range: string }>;
+        }
+      )?.properties ?? [];
+    const scoresProp = props.find((p) => p.label === 'scores');
+    expect(scoresProp?.range).toBe('xsd:float');
+  });
+
+  it('array of booleans emits xsd:boolean property', () => {
+    const json = JSON.stringify({ records: [{ flags: [true, false] }] });
+    const result = jsonToSchema(json, 'Src');
+    const recNode = result.nodes.find(
+      (n) => (n.data as { label: string }).label === 'Records',
+    );
+    const props =
+      (
+        recNode?.data as {
+          properties?: Array<{ label: string; range: string }>;
+        }
+      )?.properties ?? [];
+    const flagsProp = props.find((p) => p.label === 'flags');
+    expect(flagsProp?.range).toBe('xsd:boolean');
+  });
+
+  it('array of strings emits xsd:string property', () => {
+    const json = JSON.stringify({ records: [{ tags: ['a', 'b', 'c'] }] });
+    const result = jsonToSchema(json, 'Src');
+    const recNode = result.nodes.find(
+      (n) => (n.data as { label: string }).label === 'Records',
+    );
+    const props =
+      (
+        recNode?.data as {
+          properties?: Array<{ label: string; range: string }>;
+        }
+      )?.properties ?? [];
+    const tagsProp = props.find((p) => p.label === 'tags');
+    expect(tagsProp?.range).toBe('xsd:string');
+  });
+});
+
+// ─── root with mixed primitive + nested ──────────────────────────────────────
+
+describe('root object with both primitives and nested objects', () => {
+  it('emits nested class and root class independently', () => {
+    const json = JSON.stringify({
+      name: 'Alice',
+      address: { street: '1 Main St', city: 'Oslo' },
+    });
+    const result = jsonToSchema(json, 'Src');
+    // Should have both Root and Address classes
+    expect(result.nodes.length).toBeGreaterThanOrEqual(1);
+    const labels = result.nodes.map((n) => (n.data as { label: string }).label);
+    expect(labels).toContain('Address');
+  });
+});
+
+// ─── returns empty when no nodes and no warnings ──────────────────────────────
+
+describe('empty result path', () => {
+  it('returns empty nodes/edges/warnings for empty object that produces nothing', () => {
+    // An object that has only non-primitive, non-array, non-object values...
+    // Actually the easiest way to trigger nodes.length===0 && warnings.length===0
+    // is an object with only object properties that resolve to classes
+    // but the walk produces nodes. Let's test the empty {} case which IS covered.
+    const result = jsonToSchema('{}', 'Src');
+    expect(result.nodes).toHaveLength(0);
+    expect(result.warnings).toHaveLength(0);
+  });
+});

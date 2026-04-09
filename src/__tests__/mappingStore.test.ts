@@ -136,12 +136,10 @@ describe('useMappingStore — updateMapping', () => {
       .getState()
       .addMapping(makeBase({ sourcePropUri: 'http://example.org/speed' }));
 
-    useMappingStore
-      .getState()
-      .updateMapping(id1, {
-        kind: 'formula',
-        formulaExpression: 'UPPER(source.name)',
-      });
+    useMappingStore.getState().updateMapping(id1, {
+      kind: 'formula',
+      formulaExpression: 'UPPER(source.name)',
+    });
 
     const list = useMappingStore.getState().mappings['src-1']!;
     const updated = list.find((m) => m.id === id1)!;
@@ -341,6 +339,64 @@ describe('useMappingStore — removeInvalidMappings + undoLastRemoval (stack)', 
   });
 });
 
+describe('useMappingStore — createGroup and updateGroup', () => {
+  it('createGroup with coalesce strategy stores a coalesce group', () => {
+    const id1 = useMappingStore.getState().addMapping(makeBase());
+    useMappingStore.getState().createGroup('src-1', [id1], 'coalesce');
+    const groups = useMappingStore.getState().groups['src-1']!;
+    expect(groups).toHaveLength(1);
+    expect(groups[0]!.strategy).toBe('coalesce');
+  });
+
+  it('createGroup with template strategy stores a template group', () => {
+    const id1 = useMappingStore.getState().addMapping(makeBase());
+    useMappingStore.getState().createGroup('src-1', [id1], 'template');
+    const groups = useMappingStore.getState().groups['src-1']!;
+    expect(groups[0]!.strategy).toBe('template');
+  });
+
+  it('updateGroup changes a concat group to coalesce', () => {
+    const id1 = useMappingStore.getState().addMapping(makeBase());
+    const groupId = useMappingStore
+      .getState()
+      .createGroup('src-1', [id1], 'concat');
+    useMappingStore.getState().updateGroup(groupId, { strategy: 'coalesce' });
+    const groups = useMappingStore.getState().groups['src-1']!;
+    expect(groups[0]!.strategy).toBe('coalesce');
+  });
+
+  it('updateGroup changes a concat group to template (adds templatePattern)', () => {
+    const id1 = useMappingStore.getState().addMapping(makeBase());
+    const groupId = useMappingStore
+      .getState()
+      .createGroup('src-1', [id1], 'concat');
+    useMappingStore.getState().updateGroup(groupId, { strategy: 'template' });
+    const groups = useMappingStore.getState().groups['src-1']!;
+    expect(groups[0]!.strategy).toBe('template');
+  });
+
+  it('updateGroup changes a coalesce group back to concat', () => {
+    const id1 = useMappingStore.getState().addMapping(makeBase());
+    const groupId = useMappingStore
+      .getState()
+      .createGroup('src-1', [id1], 'coalesce');
+    useMappingStore.getState().updateGroup(groupId, { strategy: 'concat' });
+    const groups = useMappingStore.getState().groups['src-1']!;
+    expect(groups[0]!.strategy).toBe('concat');
+  });
+
+  it('updateGroup updates separator without changing strategy', () => {
+    const id1 = useMappingStore.getState().addMapping(makeBase());
+    const groupId = useMappingStore
+      .getState()
+      .createGroup('src-1', [id1], 'concat');
+    useMappingStore.getState().updateGroup(groupId, { separator: ',' });
+    const groups = useMappingStore.getState().groups['src-1']!;
+    expect(groups[0]!.separator).toBe(',');
+    expect(groups[0]!.strategy).toBe('concat');
+  });
+});
+
 describe('useMappingStore — hydrate', () => {
   it('replaces all existing mappings', () => {
     // Add a mapping first so there is pre-existing state
@@ -413,16 +469,14 @@ describe('useMappingStore — hydrate', () => {
       sparqlConstruct: 'CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }',
     };
 
-    useMappingStore
-      .getState()
-      .hydrate(
-        {},
-        {
-          'src-1': [
-            legacyGroup as unknown as import('@/types/index').MappingGroup,
-          ],
-        },
-      );
+    useMappingStore.getState().hydrate(
+      {},
+      {
+        'src-1': [
+          legacyGroup as unknown as import('@/types/index').MappingGroup,
+        ],
+      },
+    );
 
     const groups = useMappingStore.getState().groups['src-1']!;
     expect(groups).toHaveLength(1);

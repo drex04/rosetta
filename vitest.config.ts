@@ -14,5 +14,17 @@ export default defineConfig({
     setupFiles: ['./src/__tests__/setup.ts'],
     globals: true,
     exclude: ['e2e/**', 'node_modules/**', '.claude/**'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text-summary', 'json-summary'],
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: [
+        'src/__tests__/**',
+        'src/main.tsx',
+        'src/vite-env.d.ts',
+        'src/**/*.d.ts',
+      ],
+      thresholds: { lines: 70, functions: 70, statements: 70, branches: 70 },
+    },
   },
 });

@@ -130,6 +130,68 @@ describe('generateYarrrml', () => {
     expect(result).toContain('grel:valueParameter2');
   });
 
+  it('CONCAT with 3+ args chains left-associatively (nested concat blocks)', () => {
+    const source = makeSource();
+    const mapping = makeMapping({
+      kind: 'formula',
+      formulaExpression: 'CONCAT(source.a, source.b, source.c)',
+    });
+    const result = generateYarrrml([source], { src1: [mapping] });
+
+    expect(result).toContain('function: grel:string_concat');
+    expect(result).toContain('parameters:');
+    // The chained result should have at least one nested parameter block
+    expect(result).toContain('grel:valueParameter');
+  });
+
+  it('nested function call (UPPER(LOWER(...))) emits nested parameter block', () => {
+    const source = makeSource();
+    const mapping = makeMapping({
+      kind: 'formula',
+      formulaExpression: 'UPPER(LOWER(source.name))',
+    });
+    const result = generateYarrrml([source], { src1: [mapping] });
+
+    expect(result).toContain('function: grel:toUpperCase');
+    expect(result).toContain('parameter: grel:valueParameter');
+    expect(result).toContain('function: grel:toLowerCase');
+  });
+
+  it('formula with literal arg emits quoted literal in parameters', () => {
+    const source = makeSource();
+    const mapping = makeMapping({
+      kind: 'formula',
+      formulaExpression: 'REPLACE(source.name, "old", "new")',
+    });
+    const result = generateYarrrml([source], { src1: [mapping] });
+
+    expect(result).toContain('function: grel:string_replace');
+    expect(result).toContain('"old"');
+    expect(result).toContain('"new"');
+  });
+
+  it('source with empty rawData is skipped', () => {
+    const source = makeSource({ rawData: '   ' });
+    const mapping = makeMapping();
+    const result = generateYarrrml([source], { src1: [mapping] });
+
+    expect(result).not.toContain('Map:');
+    expect(result).not.toContain('sources:');
+  });
+
+  it('buildSubjectTemplate uses first prop when no id/key prop exists', () => {
+    const source = makeSource();
+    // sourcePropUri local name 'name' has neither 'id' nor 'key'
+    const mapping = makeMapping({
+      sourcePropUri: 'http://example.org/name',
+      sourceHandle: 'prop_name',
+    });
+    const result = generateYarrrml([source], { src1: [mapping] });
+
+    // Subject template should use 'name' (first prop) as the template variable
+    expect(result).toContain('{name}');
+  });
+
   it('7. yarrrml.ts does not import js-yaml', async () => {
     const fs = await import('fs');
     const path = await import('path');

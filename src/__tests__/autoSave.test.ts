@@ -176,4 +176,165 @@ describe('useAutoSave', () => {
 
     expect(result.current.saveStatus).toBe('error');
   });
+
+  it('restores sources, mappings, groups, validation shapes, and activeRightTab from IDB', async () => {
+    const sourceA = {
+      id: 'src-a',
+      name: 'Norway',
+      order: 0,
+      rawData: '{}',
+      dataFormat: 'json' as const,
+      schemaNodes: [],
+      schemaEdges: [],
+      parseError: null,
+    };
+    const savedFile: ProjectFile = {
+      version: 1,
+      ontology: { turtleSource: MOCK_TURTLE, nodePositions: {} },
+      sources: [sourceA],
+      activeSourceId: 'src-a',
+      mappings: {
+        'src-a': [
+          {
+            id: 'm1',
+            sourceId: 'src-a',
+            sourceClassUri: 'http://ex.org/A',
+            sourcePropUri: 'http://ex.org/a',
+            targetClassUri: 'http://ex.org/B',
+            targetPropUri: 'http://ex.org/b',
+            sourceHandle: 'prop_a',
+            targetHandle: 'target_prop_b',
+            kind: 'direct' as const,
+          },
+        ],
+      },
+      groups: {},
+      userShapesTurtle: '@prefix sh: <http://www.w3.org/ns/shacl#> .',
+      activeRightTab: 'MAPPING' as const,
+      timestamp: '2026-01-01T00:00:00.000Z',
+    };
+
+    mockGet.mockResolvedValue(savedFile);
+    mockSet.mockResolvedValue(undefined);
+    mockParseTurtle.mockResolvedValue({ nodes: [], edges: [] });
+
+    const { useSourcesStore } = await import('../store/sourcesStore');
+    const { useMappingStore } = await import('../store/mappingStore');
+    const { useValidationStore } = await import('../store/validationStore');
+    const { useUiStore } = await import('../store/uiStore');
+    const { useAutoSave } = await import('../hooks/useAutoSave');
+
+    await act(async () => {
+      renderHook(() => useAutoSave());
+      await vi.runAllTimersAsync();
+    });
+
+    const sourcesState = useSourcesStore.getState();
+    expect(sourcesState.sources).toHaveLength(1);
+    expect(sourcesState.activeSourceId).toBe('src-a');
+
+    const mappingState = useMappingStore.getState();
+    expect(mappingState.mappings['src-a']).toBeDefined();
+
+    const validationState = useValidationStore.getState();
+    expect(validationState.userShapesTurtle).toBe(
+      '@prefix sh: <http://www.w3.org/ns/shacl#> .',
+    );
+
+    const uiState = useUiStore.getState();
+    expect(uiState.activeRightTab).toBe('MAPPING');
+  });
+
+  it('skips dangling activeSourceId when saved source id is not in restored sources', async () => {
+    const sourceA = {
+      id: 'src-a',
+      name: 'Norway',
+      order: 0,
+      rawData: '{}',
+      dataFormat: 'json' as const,
+      schemaNodes: [],
+      schemaEdges: [],
+      parseError: null,
+    };
+    const savedFile: ProjectFile = {
+      version: 1,
+      ontology: { turtleSource: MOCK_TURTLE, nodePositions: {} },
+      sources: [sourceA],
+      activeSourceId: 'src-deleted',
+      mappings: {},
+      timestamp: '2026-01-01T00:00:00.000Z',
+    };
+
+    mockGet.mockResolvedValue(savedFile);
+    mockSet.mockResolvedValue(undefined);
+    mockParseTurtle.mockResolvedValue({ nodes: [], edges: [] });
+
+    const { useSourcesStore } = await import('../store/sourcesStore');
+    const { useAutoSave } = await import('../hooks/useAutoSave');
+
+    await act(async () => {
+      renderHook(() => useAutoSave());
+      await vi.runAllTimersAsync();
+    });
+
+    const { activeSourceId } = useSourcesStore.getState();
+    expect(activeSourceId).toBeNull();
+  });
+
+  it('logs warning and skips malformed mappings', async () => {
+    const savedFile: ProjectFile = {
+      version: 1,
+      ontology: { turtleSource: MOCK_TURTLE, nodePositions: {} },
+      sources: [],
+      // Not a valid mappings shape
+      mappings: 'bad-value' as any,
+      timestamp: '2026-01-01T00:00:00.000Z',
+    };
+
+    mockGet.mockResolvedValue(savedFile);
+    mockSet.mockResolvedValue(undefined);
+    mockParseTurtle.mockResolvedValue({ nodes: [], edges: [] });
+
+    const warnSpy = vi
+      .spyOn(console, 'warn')
+      .mockImplementation(() => undefined);
+    const { useAutoSave } = await import('../hooks/useAutoSave');
+
+    await act(async () => {
+      renderHook(() => useAutoSave());
+      await vi.runAllTimersAsync();
+    });
+
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Skipping malformed mappings'),
+    );
+    warnSpy.mockRestore();
+  });
+
+  it('beforeUnload: prevents navigation when saveStatus is saving', async () => {
+    mockGet.mockResolvedValue(undefined);
+    mockSet.mockResolvedValue(undefined);
+    mockParseTurtle.mockResolvedValue({ nodes: [], edges: [] });
+
+    const { useAutoSave } = await import('../hooks/useAutoSave');
+    const { result } = renderHook(() => useAutoSave());
+
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
+
+    // Trigger a store change to put saveStatus into 'saving'
+    act(() => {
+      useOntologyStore.getState().setTurtleSource(MOCK_TURTLE);
+    });
+
+    // saveStatus should now be 'saving' (debounce started but not resolved)
+    expect(result.current.saveStatus).toBe('saving');
+
+    // Verify beforeUnload handler calls preventDefault on saving
+    const event = new Event('beforeunload') as BeforeUnloadEvent;
+    const preventSpy = vi.spyOn(event, 'preventDefault');
+    window.dispatchEvent(event);
+    expect(preventSpy).toHaveBeenCalled();
+  });
 });
