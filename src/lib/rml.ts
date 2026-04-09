@@ -114,6 +114,38 @@ function deriveSubjectTemplate(
   return `${uriPrefix}{${varName}}`;
 }
 
+// ─── resolveSourceReference ───────────────────────────────────────────────────
+
+/**
+ * Resolve the `rml:reference` value for a source-side property.
+ *
+ * The reference must be the original JSON key / XML tag, not the local name
+ * of the property URI — otherwise two classes that share a property suffix
+ * (e.g. `ex:Person/name` and `ex:Vehicle/name`) silently collide to `"name"`.
+ *
+ * The ingestion layer (`jsonToSchema`, `xmlToSchema`) stores the original key
+ * as `PropertyData.label`, so we find the matching class node and return its
+ * property label. Falls back to `localName(propUri)` only when no schema
+ * match is found (e.g. mappings built before schema nodes existed).
+ */
+function resolveSourceReference(
+  schemaNodes: Source['schemaNodes'],
+  classUri: string,
+  propUri: string,
+): string {
+  const node = schemaNodes.find(
+    (n) => (n.data as { uri: string }).uri === classUri,
+  );
+  if (node) {
+    const props = (
+      node.data as { properties?: Array<{ uri: string; label: string }> }
+    ).properties;
+    const match = props?.find((p) => p.uri === propUri);
+    if (match && match.label) return match.label;
+  }
+  return localName(propUri);
+}
+
 // ─── emitFnOPOM ───────────────────────────────────────────────────────────────
 
 function turtleEscape(s: string): string {
@@ -341,10 +373,11 @@ export function generateRml(
           lines.push(`    rr:objectMap [ rr:object "${val}"^^<${dtype}> ] ;`);
           lines.push(`  ] ;`);
         } else if (mapping.kind === 'language') {
-          // TODO: localName() collides when two classes share a property
-          // suffix (e.g. ex:Person/name and ex:Vehicle/name both → "name").
-          // Needs a source-schema lookup to resolve the actual JSON key.
-          const ref = localName(mapping.sourcePropUri);
+          const ref = resolveSourceReference(
+            source.schemaNodes,
+            mapping.sourceClassUri,
+            mapping.sourcePropUri,
+          );
           const lang = mapping.languageTag ?? 'en';
           lines.push(`  rr:predicateObjectMap [`);
           lines.push(`    rr:predicate <${mapping.targetPropUri}> ;`);
@@ -353,7 +386,11 @@ export function generateRml(
           );
           lines.push(`  ] ;`);
         } else if (mapping.kind === 'typecast') {
-          const ref = localName(mapping.sourcePropUri);
+          const ref = resolveSourceReference(
+            source.schemaNodes,
+            mapping.sourceClassUri,
+            mapping.sourcePropUri,
+          );
           const dtype =
             mapping.targetDatatype ?? 'http://www.w3.org/2001/XMLSchema#string';
           lines.push(`  rr:predicateObjectMap [`);
@@ -364,7 +401,11 @@ export function generateRml(
           lines.push(`  ] ;`);
         } else {
           // direct, template, or anything else
-          const ref = localName(mapping.sourcePropUri);
+          const ref = resolveSourceReference(
+            source.schemaNodes,
+            mapping.sourceClassUri,
+            mapping.sourcePropUri,
+          );
           lines.push(`  rr:predicateObjectMap [`);
           lines.push(`    rr:predicate <${mapping.targetPropUri}> ;`);
           lines.push(`    rr:objectMap [ rml:reference "${ref}" ] ;`);

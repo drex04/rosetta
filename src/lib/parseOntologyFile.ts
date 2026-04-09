@@ -10,12 +10,30 @@ export async function parseOntologyFile(file: File): Promise<string> {
   }
 
   if (ext === 'jsonld') {
-    const doc: unknown = JSON.parse(text);
-    const nquads = await (
+    let doc: unknown;
+    try {
+      doc = JSON.parse(text);
+    } catch (e) {
+      throw new Error(
+        `Invalid JSON-LD: malformed JSON (${e instanceof Error ? e.message : String(e)})`,
+      );
+    }
+    if (!isValidJsonLdDoc(doc)) {
+      throw new Error(
+        'Invalid JSON-LD: expected a JSON object or array at the top level',
+      );
+    }
+    const toRDF = (
       jsonld as unknown as {
-        toRDF: (doc: unknown, opts: object) => Promise<string>;
+        toRDF: (doc: unknown, opts: object) => Promise<unknown>;
       }
-    ).toRDF(doc, { format: 'application/n-quads' });
+    ).toRDF;
+    const nquads = await toRDF(doc, { format: 'application/n-quads' });
+    if (typeof nquads !== 'string') {
+      throw new Error(
+        'Invalid JSON-LD: jsonld.toRDF did not return an N-Quads string',
+      );
+    }
     return await nquadsToTurtle(nquads);
   }
 
@@ -24,6 +42,14 @@ export async function parseOntologyFile(file: File): Promise<string> {
   }
 
   throw new Error(`Unsupported format: .${ext}. Use .ttl, .rdf, or .jsonld.`);
+}
+
+/**
+ * Runtime guard: a JSON-LD document must be a non-null object or an array.
+ * Top-level primitives (string, number, boolean, null) are not valid JSON-LD.
+ */
+function isValidJsonLdDoc(v: unknown): v is object | unknown[] {
+  return v !== null && typeof v === 'object';
 }
 
 function turtleToTurtle(text: string): Promise<string> {
