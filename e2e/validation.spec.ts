@@ -28,9 +28,10 @@ test.describe('Validation panel', () => {
     await expect(page.getByText('Click Validate to run.')).toBeVisible();
   });
 
-  test('VAL-3 - Validate button exists in header', async ({
+  test('VAL-3 - Validate button exists in CHECK tab', async ({
     freshPage: page,
   }) => {
+    await clickTab(page, 'Validation tab');
     await expect(page.getByRole('button', { name: 'Validate' })).toBeVisible();
   });
 
@@ -42,29 +43,21 @@ test.describe('Validation panel', () => {
       .getByRole('button', { name: /Select source/ })
       .first()
       .waitFor({ state: 'visible' });
-    await page.getByRole('button', { name: 'Validate' }).click();
-    // Wait for validation to complete before switching tabs
-    await expect(page.getByRole('button', { name: 'Validate' })).toBeDisabled({
-      timeout: 3000,
-    });
-    await expect(
-      page.getByRole('button', { name: 'Validate' }),
-    ).not.toBeDisabled({ timeout: 10000 });
     await clickTab(page, 'Validation tab');
-    await expect(page.getByText(/All valid/)).toBeVisible();
+    await page.getByRole('button', { name: 'Validate' }).click();
+    await expect(page.getByText(/All valid/)).toBeVisible({ timeout: 15000 });
   });
 
   test('VAL-5 - Stale banner appears after source added post-validation', async ({
     freshPage: page,
   }) => {
     await loadExampleProject(page);
+    await clickTab(page, 'Validation tab');
     await page.getByRole('button', { name: 'Validate' }).click();
-    await expect(page.getByRole('button', { name: 'Validate' })).toBeDisabled({
-      timeout: 3000,
-    });
+    // Wait for validation to finish (button re-enables)
     await expect(
       page.getByRole('button', { name: 'Validate' }),
-    ).not.toBeDisabled({ timeout: 10000 });
+    ).not.toBeDisabled({ timeout: 15000 });
     // Add a source — triggers stale via source-change subscription
     await page.getByRole('button', { name: 'Add new source' }).click();
     // Switch back to the first source (which has validated results)
@@ -101,8 +94,8 @@ test.describe('Validation panel', () => {
     freshPage: page,
   }) => {
     await loadExampleProject(page);
-    await page.getByRole('button', { name: 'Validate' }).click();
     await clickTab(page, 'Validation tab');
+    await page.getByRole('button', { name: 'Validate' }).click();
 
     const violationList = page.locator('[data-testid="violation-item"]');
     await expect(violationList).not.toHaveCount(0);

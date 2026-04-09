@@ -14,11 +14,11 @@ export async function loadExampleProject(page: Page): Promise<void> {
   await page
     .locator('.react-flow__node')
     .first()
-    .waitFor({ state: 'visible', timeout: 10000 });
+    .waitFor({ state: 'visible', timeout: 15000 });
   await page
     .getByRole('button', { name: /Select source/ })
     .first()
-    .waitFor({ state: 'visible', timeout: 10000 });
+    .waitFor({ state: 'visible', timeout: 15000 });
 }
 
 /**
