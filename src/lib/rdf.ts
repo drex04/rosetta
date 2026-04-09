@@ -251,10 +251,8 @@ export async function parseTurtle(
         continue;
 
       // Must declare owl:onProperty pointing at a named node
-      const onPropQ = store
-        .match(bn, nn(OWL_ON_PROPERTY), null, null)
-        [Symbol.iterator]()
-        .next().value;
+      const onPropMatch = store.match(bn, nn(OWL_ON_PROPERTY), null, null);
+      const onPropQ = onPropMatch[Symbol.iterator]().next().value;
       if (!onPropQ || onPropQ.object.termType !== 'NamedNode') continue;
       const propUri = onPropQ.object.value;
       const propTerm = N3.DataFactory.namedNode(propUri) as unknown as N3.Term;
