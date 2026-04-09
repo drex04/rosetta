@@ -158,40 +158,46 @@ export function RightPanel({
               <TabsList variant="line" className="flex-1 gap-0">
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <TabsTrigger
-                      value="SOURCE"
-                      className="flex-1 tracking-wide text-sm"
-                      aria-label="Source tab"
-                      data-tour="load-tab"
-                    >
-                      LOAD
-                    </TabsTrigger>
+                    <span className="flex-1 flex">
+                      <TabsTrigger
+                        value="SOURCE"
+                        className="flex-1 tracking-wide text-sm"
+                        aria-label="Source tab"
+                        data-tour="load-tab"
+                      >
+                        LOAD
+                      </TabsTrigger>
+                    </span>
                   </TooltipTrigger>
                   <TooltipContent>Load and preview source data</TooltipContent>
                 </Tooltip>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <TabsTrigger
-                      value="ONTOLOGY"
-                      className="flex-1 tracking-wide text-sm"
-                      aria-label="Ontology tab"
-                      data-tour="ontology-tab"
-                    >
-                      BUILD
-                    </TabsTrigger>
+                    <span className="flex-1 flex">
+                      <TabsTrigger
+                        value="ONTOLOGY"
+                        className="flex-1 tracking-wide text-sm"
+                        aria-label="Ontology tab"
+                        data-tour="ontology-tab"
+                      >
+                        BUILD
+                      </TabsTrigger>
+                    </span>
                   </TooltipTrigger>
                   <TooltipContent>Edit the master OWL ontology</TooltipContent>
                 </Tooltip>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <TabsTrigger
-                      value="MAP"
-                      className="flex-1 tracking-wide text-sm"
-                      aria-label="Mapping tab"
-                      data-tour="map-tab"
-                    >
-                      MAP
-                    </TabsTrigger>
+                    <span className="flex-1 flex">
+                      <TabsTrigger
+                        value="MAP"
+                        className="flex-1 tracking-wide text-sm"
+                        aria-label="Mapping tab"
+                        data-tour="map-tab"
+                      >
+                        MAP
+                      </TabsTrigger>
+                    </span>
                   </TooltipTrigger>
                   <TooltipContent>
                     Create field mappings between sources and ontology
@@ -199,14 +205,16 @@ export function RightPanel({
                 </Tooltip>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <TabsTrigger
-                      value="OUTPUT"
-                      className="flex-1 tracking-wide text-sm"
-                      aria-label="Output tab"
-                      data-tour="output-tab"
-                    >
-                      FUSE
-                    </TabsTrigger>
+                    <span className="flex-1 flex">
+                      <TabsTrigger
+                        value="OUTPUT"
+                        className="flex-1 tracking-wide text-sm"
+                        aria-label="Output tab"
+                        data-tour="output-tab"
+                      >
+                        FUSE
+                      </TabsTrigger>
+                    </span>
                   </TooltipTrigger>
                   <TooltipContent>
                     Transform and fuse data sources
@@ -214,14 +222,16 @@ export function RightPanel({
                 </Tooltip>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <TabsTrigger
-                      value="VALIDATE"
-                      className="flex-1 tracking-wide text-sm"
-                      aria-label="SHACL validation tab"
-                      data-tour="validate-tab"
-                    >
-                      CHECK
-                    </TabsTrigger>
+                    <span className="flex-1 flex">
+                      <TabsTrigger
+                        value="VALIDATE"
+                        className="flex-1 tracking-wide text-sm"
+                        aria-label="SHACL validation tab"
+                        data-tour="validate-tab"
+                      >
+                        CHECK
+                      </TabsTrigger>
+                    </span>
                   </TooltipTrigger>
                   <TooltipContent>Run SHACL validation</TooltipContent>
                 </Tooltip>
