@@ -7,34 +7,22 @@ import { OntologyCanvas } from './components/canvas/OntologyCanvas';
 import { ConfirmDialog } from './components/ui/confirm-dialog';
 import { Toaster } from './components/ui/sonner';
 import { TooltipProvider } from './components/ui/tooltip';
-import {
-  useOntologyStore,
-  setInvalidateMappingsCallback,
-} from './store/ontologyStore';
+import { setInvalidateMappingsCallback } from './store/ontologyStore';
 import { useMappingStore } from './store/mappingStore';
-import {
-  subscribeValidationToMappings,
-  useValidationStore,
-} from './store/validationStore';
+import { subscribeValidationToMappings } from './store/validationStore';
 import { useUiStore } from './store/uiStore';
-import { useSourcesStore } from './store/sourcesStore';
 import { useOntologySync } from './hooks/useOntologySync';
 import { useSourceSync } from './hooks/useSourceSync';
 import { useAutoSave } from './hooks/useAutoSave';
 import { useInvalidateMappings } from './hooks/useInvalidateMappings';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { TourProvider } from './components/onboarding/TourProvider';
-import { OnboardingModal } from './components/onboarding/OnboardingModal';
 import { loadExampleProject } from './lib/exampleProject';
 import type { OntologyNode, OntologyEdge } from './types/index';
 
 function App() {
   useInvalidateMappings();
   const setTourRunning = useUiStore((s) => s.setTourRunning);
-  const [showModal, setShowModal] = useState(
-    () => !localStorage.getItem('rosetta-tour-seen'),
-  );
-  const [loadingExample, setLoadingExample] = useState(false);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   useKeyboardShortcuts({
     searchInputRef,
@@ -89,33 +77,17 @@ function App() {
   return (
     <ErrorBoundary>
       <TourProvider />
-      <OnboardingModal
-        open={showModal}
-        loading={loadingExample}
-        onLoadExample={async () => {
-          if (loadingExample) return;
-          setLoadingExample(true);
-          setShowModal(false);
-          try {
-            await loadExampleProject();
-            setTourRunning(true);
-          } catch (err) {
-            console.error('[loadExampleProject] failed:', err);
-          } finally {
-            setLoadingExample(false);
-          }
-        }}
-        onStartFresh={() => {
-          useOntologyStore.getState().reset();
-          useSourcesStore.getState().reset();
-          useMappingStore.getState().reset();
-          useValidationStore.getState().reset();
-          localStorage.setItem('rosetta-tour-seen', '1');
-          setShowModal(false);
-        }}
-      />
       <TooltipProvider delayDuration={500}>
-        <AppLayout>
+        <AppLayout
+          onGetStarted={async () => {
+            try {
+              await loadExampleProject();
+              setTourRunning(true);
+            } catch (err) {
+              console.error('[loadExampleProject] failed:', err);
+            }
+          }}
+        >
           <div className="flex flex-col flex-1 min-h-0">
             <SourceSelector />
             <div className="flex flex-1 overflow-hidden">

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 interface AboutDialogProps {
   open: boolean;
   onClose: () => void;
+  onGetStarted?: () => void;
 }
 
 // ── SVG Visuals ──────────────────────────────────────────────────────────────
@@ -610,7 +611,7 @@ const SLIDES = [
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function AboutDialog({ open, onClose }: AboutDialogProps) {
+export function AboutDialog({ open, onClose, onGetStarted }: AboutDialogProps) {
   const [slideIndex, setSlideIndex] = useState(0);
   const [animState, setAnimState] = useState<'enter' | 'exit'>('enter');
 
@@ -730,9 +731,14 @@ export function AboutDialog({ open, onClose }: AboutDialogProps) {
                   variant="default"
                   size="sm"
                   className="bg-teal-600 hover:bg-teal-700"
-                  onClick={() =>
-                    isLast ? onClose() : animateToSlide(slideIndex + 1)
-                  }
+                  onClick={() => {
+                    if (isLast) {
+                      onGetStarted?.();
+                      onClose();
+                    } else {
+                      animateToSlide(slideIndex + 1);
+                    }
+                  }}
                 >
                   {isLast ? 'Get Started' : 'Next'}
                 </Button>

@@ -4,9 +4,10 @@ import { AboutDialog } from '@/components/ui/about-dialog';
 
 interface AppLayoutProps {
   children: React.ReactNode;
+  onGetStarted?: () => void;
 }
 
-export function AppLayout({ children }: AppLayoutProps) {
+export function AppLayout({ children, onGetStarted }: AppLayoutProps) {
   const [aboutOpen, setAboutOpen] = useState(
     () => !localStorage.getItem('rosetta-onboarding-v1'),
   );
@@ -20,7 +21,11 @@ export function AppLayout({ children }: AppLayoutProps) {
     <div className="flex flex-col h-dvh overflow-hidden">
       <Header onAboutClick={() => setAboutOpen(true)} />
       {children}
-      <AboutDialog open={aboutOpen} onClose={handleAboutClose} />
+      <AboutDialog
+        open={aboutOpen}
+        onClose={handleAboutClose}
+        onGetStarted={onGetStarted}
+      />
     </div>
   );
 }

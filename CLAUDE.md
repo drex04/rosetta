@@ -16,7 +16,20 @@ Fall back to `Read` only when you need the full file for editing. Fall back to `
 
 ## Tech Stack
 
-React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui (preset: bcivVKZU), Zustand, React Flow (@xyflow/react), N3.js, Comunica, jsonld, rdf-validate-shacl, CodeMirror 6, YASGUI, idb-keyval, react-joyride
+React 19, TypeScript 5.9, Vite 8, Tailwind CSS 4, shadcn/ui (preset: bcivVKZU), Zustand 5, React Flow (@xyflow/react 12), N3.js 2, Comunica, jsonld 9, rdf-validate-shacl 0.6, CodeMirror 6, YASGUI, idb-keyval 6, react-joyride 3
+
+## Library Versions & API Notes
+
+Always check actual installed versions before using library docs — training data may reflect an older major version.
+
+| Library       | Version | Key gotcha                                                                                                                                      |
+| ------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| react-joyride | 3.0.2   | Use `skipBeacon` (not `disableBeacon` — v2 API, silently ignored in v3). TypeScript types may omit it; extend with `& { skipBeacon?: boolean }` |
+| tailwindcss   | 4.2.2   | CSS-first config — no `tailwind.config.js`. All v3 JS-config docs are wrong. Utilities and theme tokens work differently                        |
+| zustand       | 5.0.12  | `subscribeWithSelector` middleware API changed in v5; vanilla store creation uses `createStore` not `create`                                    |
+| react         | 19.2.4  | React 19, not 18. StrictMode double-invokes effects in dev. `use()` hook available                                                              |
+| @xyflow/react | 12.10.2 | Package renamed from `reactflow` — imports are `@xyflow/react`, not `reactflow`                                                                 |
+| vite          | 8.0.5   | v8 config API; check vite docs for current plugin and build options                                                                             |
 
 ## Commands
 
@@ -73,3 +86,4 @@ Design tokens and aesthetic direction in `.planning/DESIGN.md`.
 - `hydrate` actions must reset related selection state (e.g. `selectedMappingId: null`) to prevent stale pointers after reload
 - Always import `localName` from `src/lib/rdf.ts` — never re-implement; divergence silently breaks handle matching
 - Playwright MCP must use `chromium` (not `chrome`) — this is a Linux ARM64 host where Chrome is unavailable
+- react-joyride v3 uses `skipBeacon: true` per step (not `disableBeacon` — that was v2 and is silently ignored); joyride shows beacon by default until target element is in DOM
