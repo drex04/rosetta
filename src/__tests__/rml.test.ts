@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   inferIterator,
+  inferXmlIterator,
   generateRml,
   rmlSourceKey,
   emitFnOPOM,
@@ -34,6 +35,14 @@ describe('inferIterator', () => {
 
   it('returns $ for JSON number (number guard)', () => {
     expect(inferIterator('42')).toBe('$');
+  });
+});
+
+describe('inferXmlIterator', () => {
+  it('returns repeating child iterator when XML has repeated records', () => {
+    expect(inferXmlIterator('<tracks><track/><track/></tracks>')).toBe(
+      '/tracks/track',
+    );
   });
 });
 
@@ -207,7 +216,7 @@ describe('generateRml', () => {
     expect(result).toContain('ql:JSONPath');
   });
 
-  it('emits ql:XPath and rml:iterator "/*" for xml source', () => {
+  it('emits ql:XPath and an inferred iterator for xml source', () => {
     const source = makeSource({
       id: 'src1',
       name: 'tracks',
@@ -219,7 +228,7 @@ describe('generateRml', () => {
 
     expect(result).toContain('rml:source "tracks.xml"');
     expect(result).toContain('ql:XPath');
-    expect(result).toContain('rml:iterator "/*"');
+    expect(result).toContain('rml:iterator "/tracks/track"');
     expect(result).not.toContain('ql:JSONPath');
   });
 

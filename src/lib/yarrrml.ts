@@ -143,6 +143,7 @@ export function generateYarrrml(
       : inferIterator(source.rawData);
     const ext = isXml ? 'xml' : 'json';
     const refFormulation = isXml ? 'xpath' : 'jsonpath';
+    const referenceSuffix = `~${refFormulation}`;
     const safeName = source.name.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
     const uriPrefix = `http://src_${safeName}_#`;
 
@@ -194,20 +195,20 @@ export function generateYarrrml(
           const prop = localName(m.sourcePropUri);
           const lang = m.languageTag ?? 'en';
           block.push(
-            `      - ["<${m.targetPropUri}>", "${escapeYamlString(prop)}~jsonpath", "lang=${lang}"]`,
+            `      - ["<${m.targetPropUri}>", "${escapeYamlString(prop)}${referenceSuffix}", "lang=${lang}"]`,
           );
         } else if (m.kind === 'typecast') {
           const prop = localName(m.sourcePropUri);
           const dtype =
             m.targetDatatype ?? 'http://www.w3.org/2001/XMLSchema#string';
           block.push(
-            `      - ["<${m.targetPropUri}>", "${escapeYamlString(prop)}~jsonpath", "datatype=<${dtype}>"]`,
+            `      - ["<${m.targetPropUri}>", "${escapeYamlString(prop)}${referenceSuffix}", "datatype=<${dtype}>"]`,
           );
         } else {
           // direct | template
           const prop = localName(m.sourcePropUri);
           block.push(
-            `      - ["<${m.targetPropUri}>", "${escapeYamlString(prop)}~jsonpath"]`,
+            `      - ["<${m.targetPropUri}>", "${escapeYamlString(prop)}${referenceSuffix}"]`,
           );
         }
       }

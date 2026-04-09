@@ -6,6 +6,7 @@ import type { Mapping } from '@/types/index';
 // rml.ts is built in parallel; we stub it here so tests remain self-contained.
 vi.mock('@/lib/rml', () => ({
   inferIterator: () => '$[*]',
+  inferXmlIterator: () => '/tracks/track',
 }));
 
 // Import after mock is registered
@@ -87,6 +88,19 @@ describe('generateYarrrml', () => {
     const result = generateYarrrml([source], { src1: [mapping] });
 
     expect(result).toContain('datatype=');
+  });
+
+  it('uses xpath references for xml sources', () => {
+    const source = makeSource({
+      rawData: '<tracks><track><trackId>T1</trackId></track></tracks>',
+      dataFormat: 'xml',
+    });
+    const mapping = makeMapping({ kind: 'direct' });
+    const result = generateYarrrml([source], { src1: [mapping] });
+
+    expect(result).toContain('RadarData.xml~xpath');
+    expect(result).toContain('trackId~xpath');
+    expect(result).not.toContain('trackId~jsonpath');
   });
 
   it('6. kind === constant → po entry does NOT start with a leading space before <', () => {

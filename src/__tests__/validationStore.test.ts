@@ -23,6 +23,7 @@ beforeEach(() => {
     error: null,
     lastRun: null,
     highlightedCanvasNodeId: null,
+    userShapesTurtle: '',
   });
   useMappingStore.setState({ mappings: {}, selectedMappingId: null });
   useSourcesStore.setState({ sources: [], activeSourceId: null });
@@ -43,13 +44,14 @@ describe('useValidationStore — setStale', () => {
 });
 
 describe('useValidationStore — reset', () => {
-  it('clears results, stale, and highlightedCanvasNodeId', () => {
+  it('clears results, stale, highlightedCanvasNodeId, and custom shapes', () => {
     useValidationStore.setState({
       results: { 'src-1': [] },
       stale: true,
       highlightedCanvasNodeId: 'node-42',
       error: 'some error',
       lastRun: 12345,
+      userShapesTurtle: '@prefix sh: <http://www.w3.org/ns/shacl#> .',
     });
 
     useValidationStore.getState().reset();
@@ -61,6 +63,7 @@ describe('useValidationStore — reset', () => {
     expect(state.error).toBeNull();
     expect(state.lastRun).toBeNull();
     expect(state.loading).toBe(false);
+    expect(state.userShapesTurtle).toBe('');
   });
 });
 

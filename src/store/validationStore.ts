@@ -81,6 +81,7 @@ export const useValidationStore = create<ValidationState>()((set, get) => ({
       error: null,
       lastRun: null,
       highlightedCanvasNodeId: null,
+      userShapesTurtle: '',
     }),
 
   setHighlightedCanvasNodeId: (id) => set({ highlightedCanvasNodeId: id }),
