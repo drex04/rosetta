@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { CheckIcon } from '@phosphor-icons/react';
 import { useOntologyStore } from '@/store/ontologyStore';
 import { useMappingStore } from '@/store/mappingStore';
+import type { ObjectPropertyEdgeData, SubclassEdgeData } from '@/types';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -134,7 +135,7 @@ export function EdgeContextMenu({ menu, onClose }: Props) {
                         data: {
                           ...menu.edgeData,
                           label: pendingLabel.trim(),
-                        } as any,
+                        } as ObjectPropertyEdgeData & Record<string, unknown>,
                       });
                       onClose();
                     } else if (e.key === 'Escape') {
@@ -159,7 +160,7 @@ export function EdgeContextMenu({ menu, onClose }: Props) {
                         data: {
                           ...menu.edgeData,
                           label: pendingLabel.trim(),
-                        } as any,
+                        } as ObjectPropertyEdgeData & Record<string, unknown>,
                       });
                       onClose();
                     }}
@@ -189,7 +190,10 @@ export function EdgeContextMenu({ menu, onClose }: Props) {
               onClick={() => {
                 updateEdge(menu.edgeId, {
                   type: 'subclassEdge',
-                  data: { ...menu.edgeData, label: '' } as any,
+                  data: {
+                    ...menu.edgeData,
+                    label: '',
+                  } as unknown as SubclassEdgeData & Record<string, unknown>,
                 });
                 onClose();
               }}
