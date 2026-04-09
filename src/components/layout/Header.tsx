@@ -21,7 +21,6 @@ import {
   UploadSimpleIcon,
   DownloadSimpleIcon,
   GithubLogoIcon,
-  CompassIcon,
 } from '@phosphor-icons/react';
 import { del } from 'idb-keyval';
 import { useOntologyStore, SEED_TURTLE } from '@/store/ontologyStore';
@@ -322,6 +321,7 @@ export function Header({ onAboutClick }: HeaderProps) {
                   size="sm"
                   className="text-slate-300 hover:text-white hover:bg-slate-700"
                   aria-label="Project menu"
+                  data-tour="project-menu"
                 >
                   <FolderSimpleIcon size={13} />
                   <span className="hidden sm:inline">Project</span>
@@ -390,28 +390,14 @@ export function Header({ onAboutClick }: HeaderProps) {
                 variant="ghost"
                 size="sm"
                 className="text-slate-300 hover:text-white hover:bg-slate-700"
-                aria-label="Take the tour"
+                aria-label="Get help"
                 onClick={() => setTourRunning(true)}
-              >
-                <CompassIcon size={13} />
-                <span className="hidden sm:inline">Tour</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Take the tour</TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-slate-300 hover:text-white hover:bg-slate-700"
-                aria-label="Open help"
               >
                 <QuestionIcon size={13} />
                 <span className="hidden sm:inline">Help</span>
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Open help documentation</TooltipContent>
+            <TooltipContent>Take the tour</TooltipContent>
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>

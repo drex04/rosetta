@@ -12,6 +12,6 @@ interface UiState {
 export const useUiStore = create<UiState>()((set) => ({
   activeRightTab: 'SOURCE',
   setActiveRightTab: (activeRightTab) => set({ activeRightTab }),
-  tourRunning: !localStorage.getItem('rosetta-tour-seen'),
+  tourRunning: false,
   setTourRunning: (tourRunning) => set({ tourRunning }),
 }));

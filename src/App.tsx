@@ -10,19 +10,26 @@ import { TooltipProvider } from './components/ui/tooltip';
 import { useOntologyStore } from './store/ontologyStore';
 import { useMappingStore } from './store/mappingStore';
 import { subscribeValidationToMappings } from './store/validationStore';
+import { useUiStore } from './store/uiStore';
 import { useOntologySync } from './hooks/useOntologySync';
 import { useSourceSync } from './hooks/useSourceSync';
 import { useAutoSave } from './hooks/useAutoSave';
 import { useInvalidateMappings } from './hooks/useInvalidateMappings';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { TourProvider } from './components/onboarding/TourProvider';
+import { OnboardingModal } from './components/onboarding/OnboardingModal';
+import { loadExampleProject } from './lib/exampleProject';
 import type { OntologyNode, OntologyEdge } from './types/index';
 
 function App() {
   useInvalidateMappings();
-  const openSearchRef = useRef<(() => void) | null>(null);
+  const setTourRunning = useUiStore((s) => s.setTourRunning);
+  const [showModal, setShowModal] = useState(
+    () => !localStorage.getItem('rosetta-tour-seen'),
+  );
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
   useKeyboardShortcuts({
-    onOpenSearch: () => openSearchRef.current?.(),
+    searchInputRef,
     onDelete: () => {}, // React Flow handles Delete key natively for selected nodes/edges
   });
   const {
@@ -75,6 +82,15 @@ function App() {
   return (
     <ErrorBoundary>
       <TourProvider />
+      <OnboardingModal
+        open={showModal}
+        onLoadExample={async () => {
+          await loadExampleProject();
+          setShowModal(false);
+          setTourRunning(true);
+        }}
+        onStartFresh={() => setShowModal(false)}
+      />
       <TooltipProvider delayDuration={500}>
         <AppLayout>
           <div className="flex flex-col flex-1 min-h-0">
@@ -84,7 +100,7 @@ function App() {
                 <div className="flex-1 relative" data-tour="canvas">
                   <OntologyCanvas
                     onCanvasChange={handleCanvasChange}
-                    onOpenSearchRef={openSearchRef}
+                    searchInputRef={searchInputRef}
                   />
                 </div>
               </ErrorBoundary>
