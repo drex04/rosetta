@@ -102,6 +102,35 @@ describe('executeAllRml', () => {
   });
 });
 
+describe('executeAllRml — formula warning gating', () => {
+  it('does NOT emit a formula warning when all formulas parse cleanly', async () => {
+    const source = makeSource({
+      id: 's1',
+      name: 'Src',
+      rawData: '{"items":[]}',
+      dataFormat: 'json',
+    });
+    const mapping: Mapping = {
+      id: 'm1',
+      sourceId: 's1',
+      sourceClassUri: 'http://ex.org/Item',
+      sourcePropUri: 'http://ex.org/name',
+      targetClassUri: 'http://tgt.org/Thing',
+      targetPropUri: 'http://tgt.org/label',
+      kind: 'formula',
+      formulaExpression: 'UPPER("hi")',
+      sourceHandle: '',
+      targetHandle: '',
+    } as Mapping;
+
+    const result = await executeAllRml([source], { s1: [mapping] });
+    const formulaWarnings = result.warnings.filter((w) =>
+      w.includes('formula mapping'),
+    );
+    expect(formulaWarnings).toEqual([]);
+  });
+});
+
 describe('rmlSourceKey', () => {
   it('returns .json extension for json sources', () => {
     const source = makeSource({ name: 'MySource', dataFormat: 'json' });
