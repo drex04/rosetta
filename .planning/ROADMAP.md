@@ -75,6 +75,11 @@
 **Requirements:** (housekeeping — no new REQ IDs)
 **Exit criteria:** "Start Fresh" clears all stores; tour auto-starts without beacon; edge context menu kind/type changes work; ObjectProperty edge labels persist; mapping edge labels are unabbreviated; MAP tab has no RML tier; delete X is visually destructive; FormBuilder funcType survives tab switches; example project seeds Germany mappings.
 
+## Phase 17: HN Launch
+**Goal:** Polish Rosetta for public release — professional README, Open Graph/Twitter social meta tags, SVG social preview image, and GitHub repo metadata.
+**Requirements:** (housekeeping — no new REQ IDs)
+**Exit criteria:** `index.html` has full OG + Twitter card meta tags with the deployed URL; `public/og-image.svg` renders a 1200×630 social card; `README.md` exists with hero, features, demo link, screenshot, tech stack, and local dev instructions; GitHub repo has description, relevant topics, and homepage URL set.
+
 ## Phase 13: Onboarding & Demo
 **Goal:** Interactive tour, contextual tooltips, keyboard shortcuts, undo/redo, and error handling polish. Also: migrate `uiStore` to the IDB snapshot pattern for consistency, implement formula execution in the RML runner, and code-split the bundle to reduce the initial load below 1MB gzipped.
 **Requirements:** REQ-68, REQ-71, REQ-74, REQ-76, REQ-77
