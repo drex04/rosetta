@@ -191,9 +191,10 @@ Everything else — canvas, mapping panel, source panel, Turtle editor, RML/YARR
 
 | Module                                           | Type          | Purpose                                                                                                       |
 | ------------------------------------------------ | ------------- | ------------------------------------------------------------------------------------------------------------- |
-| `src/store/aiStore.ts`                           | Zustand store | AI suggestions, chat history, session feedback, prompt templates, connection settings                         |
+| `src/store/aiStore.ts`                           | Zustand store | AI suggestions, chat history, session feedback, prompt templates, connection settings, cached DSL             |
 | `src/lib/inference.ts`                           | Utility       | OpenAI-compatible chat completions client; handles request construction, cancellation, timeout, error mapping |
-| `src/lib/promptEngine.ts`                        | Utility       | Template loading, variable substitution, preview generation                                                   |
+| `src/lib/ontologyDSL.ts`                         | Utility       | Compiler: Turtle → compact OntologyDSL format for token-efficient prompts (decompiler deferred to v3)         |
+| `src/lib/promptEngine.ts`                        | Utility       | Template loading, variable substitution (calls ontologyDSL compiler for `{{ontology_summary}}`)               |
 | `src/lib/parseAiResponse.ts`                     | Utility       | Parse structured JSON from model response; validate against ontology; produce typed suggestion objects        |
 | `src/data/prompts/`                              | Static assets | Default prompt template files (JSON)                                                                          |
 | `src/components/panels/AiPanel.tsx`              | Component     | Chat interface (new right-panel tab)                                                                          |
@@ -332,21 +333,15 @@ function buildPromptContext(
   aiStore: AiState,
   overrides?: Partial<PromptContext>,
 ): PromptContext;
-
-function generateOntologySummary(turtleSource: string): string; // condensed class/property listing for prompt efficiency
 ```
 
-The `generateOntologySummary` function is important — sending the full Turtle source to the model may exceed context limits for large ontologies. The summary function extracts class names, property names, types, and hierarchy into a compact structured format that uses roughly 20% of the tokens Turtle would require while preserving enough semantics for mapping reasoning. Output format:
+The `{{ontology_summary}}` variable is resolved by calling `turtleToOntologyDSL()` from the OntologyDSL compiler (`src/lib/ontologyDSL.ts`). This compiles the user's Turtle source into a token-efficient internal DSL that uses roughly 40% of the tokens Turtle would require while preserving class names, property names and types, hierarchy, object property relationships, and comments. The DSL uses prefixed names (e.g., `c2sim:Platform`) so the model can reference ontology concepts in its responses using the same identifiers. See the OntologyDSL Compiler Spec for the full format specification.
 
-```
-Classes:
-  Platform [props: identifier(string), type(string), affiliation(string)]
-  Track [props: number(int), quality(float), status(string)]
-    → subClassOf: Entity
-  Position [props: latitude(float), longitude(float), altitude(float)]
-```
+The compiled DSL output is cached in `aiStore` and invalidated when `ontologyStore.turtleSource` changes. This avoids re-parsing and re-compiling on every prompt construction.
 
-The `{{ontology_summary}}` variable uses this compact format (default for mapping prompts). The `{{ontology_turtle}}` variable provides the full Turtle source for prompts that need it (e.g., chat questions about RDF syntax).
+The `{{ontology_turtle}}` variable provides the raw Turtle source for prompts that need full RDF syntax (e.g., chat questions about Turtle syntax).
+
+Note: only the compiler direction (Turtle → DSL) is implemented in v2. The decompiler (DSL → Turtle) is deferred until there is a use case for the model suggesting new ontology concepts that need to be merged back into the user's ontology.
 
 ### 6.5 Response Parser (parseAiResponse.ts)
 
@@ -490,7 +485,8 @@ These v1 issues should be addressed during v2 where they intersect with new work
 
 - `aiStore` with connection settings, prompt template management, and IDB persistence
 - `inference.ts` client (OpenAI-compatible, with timeout, cancellation, error handling)
-- `promptEngine.ts` with variable substitution and ontology summary generation
+- `ontologyDSL.ts` compiler: `turtleToOntologyDSL` only (decompiler deferred — not needed until model suggests new ontology concepts)
+- `promptEngine.ts` with variable substitution, ontology DSL compilation with caching, and cache invalidation on ontology changes
 - Model Settings dialog with presets and connection test
 - Header connection indicator
 - Set up CI pipeline (tech debt)
