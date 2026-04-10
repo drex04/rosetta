@@ -20,13 +20,12 @@ All processing runs in the browser. Nothing is sent to a server.
 - **Visual OWL/RDFS ontology editor** — drag-and-drop class nodes, object/data property edges, bidirectional Turtle code editor ↔ canvas sync
 - **Multi-source JSON/XML import** — auto-generates RDFS schemas from raw data; each source gets its own canvas layer
 - **Visual mapping editor** — drag mapping edges between source and master nodes; supports `direct`, `template`, `constant`, `typecast`, `language`, `formula`, and `sparql` mapping kinds
-- **SPARQL CONSTRUCT** — auto-generated queries per mapping; editable with syntax highlighting and live lint
 - **SHACL validation** — author shapes in a Turtle editor, run validation, see per-violation details with node navigation
 - **RML/YARRRML export** — download production-ready mapping files for use in ETL pipelines (RMLmapper, Carml, etc.)
 - **Transform & Fuse** — execute all mappings via RMLmapper-js, merge into a single RDF graph, export as JSON-LD
 - **IndexedDB persistence** — auto-saves your project; export/import as `.onto-mapper.json`
 - **Interactive onboarding tour** — guided walkthrough for first-time users
-- **Sample project** — NATO air defense radar integration (two nations, two schemas, one ontology)
+- **Sample project** — NATO air defense radar integration (three nations, three schemas, one ontology)
 
 ## Tech Stack
 
@@ -34,10 +33,10 @@ All processing runs in the browser. Nothing is sent to a server.
 | ----------- | ------------------------------------------------------------------- |
 | UI          | React 19, TypeScript, Vite, Tailwind CSS 4, shadcn/ui               |
 | Canvas      | @xyflow/react (React Flow) v12                                      |
-| RDF         | N3.js (parse/serialize), jsonld (JSON-LD), Comunica (SPARQL engine) |
+| RDF         | N3.js (parse/serialize), jsonld (JSON-LD), Comunica                 |
 | Validation  | rdf-validate-shacl                                                  |
 | Transform   | @comake/rmlmapper-js                                                |
-| Editors     | CodeMirror 6 (Turtle, JSON), YASGUI (SPARQL)                        |
+| Editors     | CodeMirror 6 (Turtle, JSON)                                         |
 | Persistence | idb-keyval (IndexedDB)                                              |
 
 ## Running locally
@@ -64,7 +63,7 @@ or any static host.
 ## Background
 
 This project is a learning tool for exploring Semantic Web technologies (OWL,
-RDF, SPARQL, SHACL, RML) in the context of a realistic NATO defense interoperability
+RDF, SHACL, RML) in the context of a realistic NATO defense interoperability
 scenario. It was built to demonstrate that the full Linked Data pipeline —
 from raw heterogeneous schemas to a fused, validated RDF graph — can run
 entirely client-side.
