@@ -160,20 +160,18 @@ The DSL achieves roughly 60% token reduction vs. Turtle for typical ontologies. 
 export function turtleToOntologyDSL(turtle: string): string;
 
 /**
- * Decompile OntologyDSL back to valid Turtle.
- * Used when the model suggests new ontology concepts that need
- * to be merged into the user's ontology.
- *
- * @param dsl - OntologyDSL string
- * @returns Valid Turtle source string
+ * [DEFERRED TO v3] Decompile OntologyDSL back to valid Turtle.
+ * Not needed until the model suggests new ontology concepts that
+ * need to be merged into the user's ontology. Included here for
+ * future reference only.
  */
-export function ontologyDSLToTurtle(dsl: string): string;
+// export function ontologyDSLToTurtle(dsl: string): string;
 
 /**
- * Parse OntologyDSL into a structured intermediate representation.
- * Useful for validation and inspection without full Turtle generation.
+ * [DEFERRED TO v3] Parse OntologyDSL into a structured intermediate
+ * representation. Only needed if the decompiler is implemented.
  */
-export function parseOntologyDSL(dsl: string): OntologyDSLDocument;
+// export function parseOntologyDSL(dsl: string): OntologyDSLDocument;
 
 // ── Types ──
 
@@ -222,7 +220,9 @@ interface DSLObjectProperty {
 7. For each class, emit class header + properties + relationships
 ```
 
-### 2.3 Decompilation Algorithm (ontologyDSLToTurtle)
+### 2.3 Decompilation Algorithm (ontologyDSLToTurtle) — DEFERRED TO v3
+
+Included for future reference. Not implemented in v2 — only needed if the model suggests new ontology concepts that need to be merged back into the user's Turtle source.
 
 ```
 1. Parse DSL line by line
@@ -273,17 +273,21 @@ The DSL output should be cached in the `aiStore` and invalidated when the ontolo
 
 ## 4. Test Cases
 
-### 4.1 Round-Trip Fidelity
+### 4.1 Compilation Correctness
 
 ```
 For each test ontology:
   dsl = turtleToOntologyDSL(turtle)
-  reconstructed = ontologyDSLToTurtle(dsl)
-  parse both with N3.js
-  assert: same classes, same properties, same hierarchy, same types
+  parse turtle with N3.js → extract classes, properties, hierarchy
+  parse dsl text → extract class names, property names, types, hierarchy
+  assert: same classes present in both
+  assert: same properties under each class
+  assert: same hierarchy relationships
+  assert: same XSD type mappings
+  assert: comments preserved
 ```
 
-Note: exact Turtle string equality is NOT expected (whitespace, ordering, prefix style may differ). Semantic equivalence of the parsed quad stores is the test.
+Note: round-trip testing (DSL → Turtle → DSL) is deferred until the decompiler is implemented in v3.
 
 ### 4.2 Test Ontologies
 
