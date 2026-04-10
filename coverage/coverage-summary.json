@@ -1,0 +1,429 @@
+{
+  "total": {
+    "lines": { "total": 3140, "covered": 2044, "skipped": 0, "pct": 65.09 },
+    "statements": { "total": 3545, "covered": 2269, "skipped": 0, "pct": 64 },
+    "functions": { "total": 870, "covered": 489, "skipped": 0, "pct": 56.2 },
+    "branches": { "total": 2013, "covered": 1000, "skipped": 0, "pct": 49.67 },
+    "branchesTrue": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 }
+  },
+  "/home/ubuntu/dev/rosetta/src/App.tsx": {
+    "lines": { "total": 34, "covered": 16, "skipped": 0, "pct": 47.05 },
+    "functions": { "total": 12, "covered": 5, "skipped": 0, "pct": 41.66 },
+    "statements": { "total": 37, "covered": 18, "skipped": 0, "pct": 48.64 },
+    "branches": { "total": 8, "covered": 0, "skipped": 0, "pct": 0 }
+  },
+  "/home/ubuntu/dev/rosetta/src/components/ErrorBoundary.tsx": {
+    "lines": { "total": 8, "covered": 8, "skipped": 0, "pct": 100 },
+    "functions": { "total": 4, "covered": 4, "skipped": 0, "pct": 100 },
+    "statements": { "total": 9, "covered": 9, "skipped": 0, "pct": 100 },
+    "branches": { "total": 6, "covered": 5, "skipped": 0, "pct": 83.33 }
+  },
+  "/home/ubuntu/dev/rosetta/src/components/canvas/AddPropertyDialog.tsx": {
+    "lines": { "total": 23, "covered": 1, "skipped": 0, "pct": 4.34 },
+    "functions": { "total": 9, "covered": 0, "skipped": 0, "pct": 0 },
+    "statements": { "total": 25, "covered": 1, "skipped": 0, "pct": 4 },
+    "branches": { "total": 12, "covered": 0, "skipped": 0, "pct": 0 }
+  },
+  "/home/ubuntu/dev/rosetta/src/components/canvas/CanvasContextMenu.tsx": {
+    "lines": { "total": 6, "covered": 6, "skipped": 0, "pct": 100 },
+    "functions": { "total": 4, "covered": 4, "skipped": 0, "pct": 100 },
+    "statements": { "total": 7, "covered": 7, "skipped": 0, "pct": 100 },
+    "branches": { "total": 4, "covered": 3, "skipped": 0, "pct": 75 }
+  },
+  "/home/ubuntu/dev/rosetta/src/components/canvas/EdgeContextMenu.tsx": {
+    "lines": { "total": 44, "covered": 1, "skipped": 0, "pct": 2.27 },
+    "functions": { "total": 21, "covered": 0, "skipped": 0, "pct": 0 },
+    "statements": { "total": 53, "covered": 1, "skipped": 0, "pct": 1.88 },
+    "branches": { "total": 24, "covered": 0, "skipped": 0, "pct": 0 }
+  },
+  "/home/ubuntu/dev/rosetta/src/components/canvas/NodeContextMenu.tsx": {
+    "lines": { "total": 13, "covered": 13, "skipped": 0, "pct": 100 },
+    "functions": { "total": 5, "covered": 5, "skipped": 0, "pct": 100 },
+    "statements": { "total": 14, "covered": 14, "skipped": 0, "pct": 100 },
+    "branches": { "total": 6, "covered": 5, "skipped": 0, "pct": 83.33 }
+  },
+  "/home/ubuntu/dev/rosetta/src/components/canvas/OntologyCanvas.tsx": {
+    "lines": { "total": 400, "covered": 83, "skipped": 0, "pct": 20.75 },
+    "functions": { "total": 130, "covered": 30, "skipped": 0, "pct": 23.07 },
+    "statements": { "total": 462, "covered": 105, "skipped": 0, "pct": 22.72 },
+    "branches": { "total": 293, "covered": 20, "skipped": 0, "pct": 6.82 }
+  },
+  "/home/ubuntu/dev/rosetta/src/components/edges/EdgeLabel.tsx": {
+    "lines": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 },
+    "functions": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 },
+    "statements": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 },
+    "branches": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 }
+  },
+  "/home/ubuntu/dev/rosetta/src/components/edges/MappingEdge.tsx": {
+    "lines": { "total": 6, "covered": 6, "skipped": 0, "pct": 100 },
+    "functions": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 },
+    "statements": { "total": 6, "covered": 6, "skipped": 0, "pct": 100 },
+    "branches": { "total": 19, "covered": 19, "skipped": 0, "pct": 100 }
+  },
+  "/home/ubuntu/dev/rosetta/src/components/edges/ObjectPropertyEdge.tsx": {
+    "lines": { "total": 2, "covered": 2, "skipped": 0, "pct": 100 },
+    "functions": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 },
+    "statements": { "total": 2, "covered": 2, "skipped": 0, "pct": 100 },
+    "branches": { "total": 2, "covered": 1, "skipped": 0, "pct": 50 }
+  },
+  "/home/ubuntu/dev/rosetta/src/components/edges/SubclassEdge.tsx": {
+    "lines": { "total": 2, "covered": 2, "skipped": 0, "pct": 100 },
+    "functions": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 },
+    "statements": { "total": 2, "covered": 2, "skipped": 0, "pct": 100 },
+    "branches": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 }
+  },
+  "/home/ubuntu/dev/rosetta/src/components/edges/shared.ts": {
+    "lines": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 },
+    "functions": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 },
+    "statements": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 },
+    "branches": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 }
+  },
+  "/home/ubuntu/dev/rosetta/src/components/layout/AppLayout.tsx": {
+    "lines": { "total": 7, "covered": 4, "skipped": 0, "pct": 57.14 },
+    "functions": { "total": 4, "covered": 2, "skipped": 0, "pct": 50 },
+    "statements": { "total": 7, "covered": 4, "skipped": 0, "pct": 57.14 },
+    "branches": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 }
+  },
+  "/home/ubuntu/dev/rosetta/src/components/layout/Header.tsx": {
+    "lines": { "total": 103, "covered": 10, "skipped": 0, "pct": 9.7 },
+    "functions": { "total": 30, "covered": 7, "skipped": 0, "pct": 23.33 },
+    "statements": { "total": 116, "covered": 16, "skipped": 0, "pct": 13.79 },
+    "branches": { "total": 61, "covered": 1, "skipped": 0, "pct": 1.63 }
+  },
+  "/home/ubuntu/dev/rosetta/src/components/layout/RightPanel.tsx": {
+    "lines": { "total": 51, "covered": 25, "skipped": 0, "pct": 49.01 },
+    "functions": { "total": 28, "covered": 10, "skipped": 0, "pct": 35.71 },
+    "statements": { "total": 59, "covered": 32, "skipped": 0, "pct": 54.23 },
+    "branches": { "total": 10, "covered": 7, "skipped": 0, "pct": 70 }
+  },
+  "/home/ubuntu/dev/rosetta/src/components/layout/SourceSelector.tsx": {
+    "lines": { "total": 69, "covered": 14, "skipped": 0, "pct": 20.28 },
+    "functions": { "total": 26, "covered": 8, "skipped": 0, "pct": 30.76 },
+    "statements": { "total": 77, "covered": 20, "skipped": 0, "pct": 25.97 },
+    "branches": { "total": 22, "covered": 2, "skipped": 0, "pct": 9.09 }
+  },
+  "/home/ubuntu/dev/rosetta/src/components/layout/StatusBar.tsx": {
+    "lines": { "total": 9, "covered": 5, "skipped": 0, "pct": 55.55 },
+    "functions": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 },
+    "statements": { "total": 9, "covered": 5, "skipped": 0, "pct": 55.55 },
+    "branches": { "total": 15, "covered": 9, "skipped": 0, "pct": 60 }
+  },
+  "/home/ubuntu/dev/rosetta/src/components/nodes/ClassNode.tsx": {
+    "lines": { "total": 88, "covered": 40, "skipped": 0, "pct": 45.45 },
+    "functions": { "total": 25, "covered": 10, "skipped": 0, "pct": 40 },
+    "statements": { "total": 95, "covered": 44, "skipped": 0, "pct": 46.31 },
+    "branches": { "total": 64, "covered": 29, "skipped": 0, "pct": 45.31 }
+  },
+  "/home/ubuntu/dev/rosetta/src/components/nodes/SourceNode.tsx": {
+    "lines": { "total": 53, "covered": 31, "skipped": 0, "pct": 58.49 },
+    "functions": { "total": 14, "covered": 8, "skipped": 0, "pct": 57.14 },
+    "statements": { "total": 56, "covered": 33, "skipped": 0, "pct": 58.92 },
+    "branches": { "total": 38, "covered": 20, "skipped": 0, "pct": 52.63 }
+  },
+  "/home/ubuntu/dev/rosetta/src/components/onboarding/OnboardingModal.tsx": {
+    "lines": { "total": 3, "covered": 0, "skipped": 0, "pct": 0 },
+    "functions": { "total": 3, "covered": 0, "skipped": 0, "pct": 0 },
+    "statements": { "total": 3, "covered": 0, "skipped": 0, "pct": 0 },
+    "branches": { "total": 2, "covered": 0, "skipped": 0, "pct": 0 }
+  },
+  "/home/ubuntu/dev/rosetta/src/components/onboarding/TourProvider.tsx": {
+    "lines": { "total": 27, "covered": 11, "skipped": 0, "pct": 40.74 },
+    "functions": { "total": 8, "covered": 5, "skipped": 0, "pct": 62.5 },
+    "statements": { "total": 32, "covered": 14, "skipped": 0, "pct": 43.75 },
+    "branches": { "total": 18, "covered": 3, "skipped": 0, "pct": 16.66 }
+  },
+  "/home/ubuntu/dev/rosetta/src/components/onboarding/tourSteps.ts": {
+    "lines": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 },
+    "functions": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 },
+    "statements": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 },
+    "branches": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 }
+  },
+  "/home/ubuntu/dev/rosetta/src/components/panels/MappingPanel.tsx": {
+    "lines": { "total": 157, "covered": 90, "skipped": 0, "pct": 57.32 },
+    "functions": { "total": 63, "covered": 30, "skipped": 0, "pct": 47.61 },
+    "statements": { "total": 184, "covered": 104, "skipped": 0, "pct": 56.52 },
+    "branches": { "total": 207, "covered": 107, "skipped": 0, "pct": 51.69 }
+  },
+  "/home/ubuntu/dev/rosetta/src/components/panels/OutputPanel.tsx": {
+    "lines": { "total": 50, "covered": 0, "skipped": 0, "pct": 0 },
+    "functions": { "total": 28, "covered": 0, "skipped": 0, "pct": 0 },
+    "statements": { "total": 63, "covered": 0, "skipped": 0, "pct": 0 },
+    "branches": { "total": 40, "covered": 0, "skipped": 0, "pct": 0 }
+  },
+  "/home/ubuntu/dev/rosetta/src/components/panels/SourcePanel.tsx": {
+    "lines": { "total": 128, "covered": 0, "skipped": 0, "pct": 0 },
+    "functions": { "total": 31, "covered": 0, "skipped": 0, "pct": 0 },
+    "statements": { "total": 144, "covered": 0, "skipped": 0, "pct": 0 },
+    "branches": { "total": 110, "covered": 0, "skipped": 0, "pct": 0 }
+  },
+  "/home/ubuntu/dev/rosetta/src/components/panels/TurtleEditorPanel.tsx": {
+    "lines": { "total": 45, "covered": 24, "skipped": 0, "pct": 53.33 },
+    "functions": { "total": 9, "covered": 4, "skipped": 0, "pct": 44.44 },
+    "statements": { "total": 53, "covered": 25, "skipped": 0, "pct": 47.16 },
+    "branches": { "total": 34, "covered": 18, "skipped": 0, "pct": 52.94 }
+  },
+  "/home/ubuntu/dev/rosetta/src/components/panels/ValidationPanel.tsx": {
+    "lines": { "total": 46, "covered": 0, "skipped": 0, "pct": 0 },
+    "functions": { "total": 25, "covered": 0, "skipped": 0, "pct": 0 },
+    "statements": { "total": 59, "covered": 0, "skipped": 0, "pct": 0 },
+    "branches": { "total": 44, "covered": 0, "skipped": 0, "pct": 0 }
+  },
+  "/home/ubuntu/dev/rosetta/src/components/ui/about-dialog.tsx": {
+    "lines": { "total": 33, "covered": 14, "skipped": 0, "pct": 42.42 },
+    "functions": { "total": 16, "covered": 4, "skipped": 0, "pct": 25 },
+    "statements": { "total": 34, "covered": 14, "skipped": 0, "pct": 41.17 },
+    "branches": { "total": 22, "covered": 10, "skipped": 0, "pct": 45.45 }
+  },
+  "/home/ubuntu/dev/rosetta/src/components/ui/accordion.tsx": {
+    "lines": { "total": 10, "covered": 7, "skipped": 0, "pct": 70 },
+    "functions": { "total": 3, "covered": 0, "skipped": 0, "pct": 0 },
+    "statements": { "total": 10, "covered": 7, "skipped": 0, "pct": 70 },
+    "branches": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 }
+  },
+  "/home/ubuntu/dev/rosetta/src/components/ui/alert.tsx": {
+    "lines": { "total": 10, "covered": 9, "skipped": 0, "pct": 90 },
+    "functions": { "total": 3, "covered": 2, "skipped": 0, "pct": 66.66 },
+    "statements": { "total": 10, "covered": 9, "skipped": 0, "pct": 90 },
+    "branches": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 }
+  },
+  "/home/ubuntu/dev/rosetta/src/components/ui/button.tsx": {
+    "lines": { "total": 5, "covered": 5, "skipped": 0, "pct": 100 },
+    "functions": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 },
+    "statements": { "total": 5, "covered": 5, "skipped": 0, "pct": 100 },
+    "branches": { "total": 3, "covered": 2, "skipped": 0, "pct": 66.66 }
+  },
+  "/home/ubuntu/dev/rosetta/src/components/ui/confirm-dialog.tsx": {
+    "lines": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 },
+    "functions": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 },
+    "statements": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 },
+    "branches": { "total": 2, "covered": 2, "skipped": 0, "pct": 100 }
+  },
+  "/home/ubuntu/dev/rosetta/src/components/ui/dropdown-menu.tsx": {
+    "lines": { "total": 30, "covered": 22, "skipped": 0, "pct": 73.33 },
+    "functions": { "total": 9, "covered": 1, "skipped": 0, "pct": 11.11 },
+    "statements": { "total": 30, "covered": 22, "skipped": 0, "pct": 73.33 },
+    "branches": { "total": 7, "covered": 1, "skipped": 0, "pct": 14.28 }
+  },
+  "/home/ubuntu/dev/rosetta/src/components/ui/scroll-area.tsx": {
+    "lines": { "total": 7, "covered": 0, "skipped": 0, "pct": 0 },
+    "functions": { "total": 2, "covered": 0, "skipped": 0, "pct": 0 },
+    "statements": { "total": 7, "covered": 0, "skipped": 0, "pct": 0 },
+    "branches": { "total": 5, "covered": 0, "skipped": 0, "pct": 0 }
+  },
+  "/home/ubuntu/dev/rosetta/src/components/ui/sonner.tsx": {
+    "lines": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 },
+    "functions": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 },
+    "statements": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 },
+    "branches": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 }
+  },
+  "/home/ubuntu/dev/rosetta/src/components/ui/tabs.tsx": {
+    "lines": { "total": 7, "covered": 7, "skipped": 0, "pct": 100 },
+    "functions": { "total": 4, "covered": 4, "skipped": 0, "pct": 100 },
+    "statements": { "total": 7, "covered": 7, "skipped": 0, "pct": 100 },
+    "branches": { "total": 5, "covered": 3, "skipped": 0, "pct": 60 }
+  },
+  "/home/ubuntu/dev/rosetta/src/components/ui/tooltip.tsx": {
+    "lines": { "total": 6, "covered": 6, "skipped": 0, "pct": 100 },
+    "functions": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 },
+    "statements": { "total": 6, "covered": 6, "skipped": 0, "pct": 100 },
+    "branches": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 }
+  },
+  "/home/ubuntu/dev/rosetta/src/hooks/useAutoSave.ts": {
+    "lines": { "total": 90, "covered": 85, "skipped": 0, "pct": 94.44 },
+    "functions": { "total": 26, "covered": 23, "skipped": 0, "pct": 88.46 },
+    "statements": { "total": 96, "covered": 91, "skipped": 0, "pct": 94.79 },
+    "branches": { "total": 55, "covered": 41, "skipped": 0, "pct": 74.54 }
+  },
+  "/home/ubuntu/dev/rosetta/src/hooks/useCanvasData.ts": {
+    "lines": { "total": 28, "covered": 28, "skipped": 0, "pct": 100 },
+    "functions": { "total": 17, "covered": 17, "skipped": 0, "pct": 100 },
+    "statements": { "total": 37, "covered": 36, "skipped": 0, "pct": 97.29 },
+    "branches": { "total": 12, "covered": 11, "skipped": 0, "pct": 91.66 }
+  },
+  "/home/ubuntu/dev/rosetta/src/hooks/useInvalidateMappings.ts": {
+    "lines": { "total": 20, "covered": 20, "skipped": 0, "pct": 100 },
+    "functions": { "total": 6, "covered": 6, "skipped": 0, "pct": 100 },
+    "statements": { "total": 21, "covered": 21, "skipped": 0, "pct": 100 },
+    "branches": { "total": 8, "covered": 6, "skipped": 0, "pct": 75 }
+  },
+  "/home/ubuntu/dev/rosetta/src/hooks/useKeyboardShortcuts.ts": {
+    "lines": { "total": 13, "covered": 13, "skipped": 0, "pct": 100 },
+    "functions": { "total": 4, "covered": 4, "skipped": 0, "pct": 100 },
+    "statements": { "total": 14, "covered": 14, "skipped": 0, "pct": 100 },
+    "branches": { "total": 14, "covered": 13, "skipped": 0, "pct": 92.85 }
+  },
+  "/home/ubuntu/dev/rosetta/src/hooks/useOntologySync.ts": {
+    "lines": { "total": 87, "covered": 79, "skipped": 0, "pct": 90.8 },
+    "functions": { "total": 15, "covered": 14, "skipped": 0, "pct": 93.33 },
+    "statements": { "total": 102, "covered": 86, "skipped": 0, "pct": 84.31 },
+    "branches": { "total": 40, "covered": 24, "skipped": 0, "pct": 60 }
+  },
+  "/home/ubuntu/dev/rosetta/src/hooks/useSourceSync.ts": {
+    "lines": { "total": 11, "covered": 10, "skipped": 0, "pct": 90.9 },
+    "functions": { "total": 3, "covered": 3, "skipped": 0, "pct": 100 },
+    "statements": { "total": 14, "covered": 11, "skipped": 0, "pct": 78.57 },
+    "branches": { "total": 8, "covered": 3, "skipped": 0, "pct": 37.5 }
+  },
+  "/home/ubuntu/dev/rosetta/src/lib/codemirror-theme.ts": {
+    "lines": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 },
+    "functions": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 },
+    "statements": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 },
+    "branches": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 }
+  },
+  "/home/ubuntu/dev/rosetta/src/lib/detectFormat.ts": {
+    "lines": { "total": 16, "covered": 16, "skipped": 0, "pct": 100 },
+    "functions": { "total": 2, "covered": 2, "skipped": 0, "pct": 100 },
+    "statements": { "total": 23, "covered": 23, "skipped": 0, "pct": 100 },
+    "branches": { "total": 20, "covered": 20, "skipped": 0, "pct": 100 }
+  },
+  "/home/ubuntu/dev/rosetta/src/lib/exampleProject.ts": {
+    "lines": { "total": 39, "covered": 23, "skipped": 0, "pct": 58.97 },
+    "functions": { "total": 9, "covered": 5, "skipped": 0, "pct": 55.55 },
+    "statements": { "total": 41, "covered": 23, "skipped": 0, "pct": 56.09 },
+    "branches": { "total": 16, "covered": 4, "skipped": 0, "pct": 25 }
+  },
+  "/home/ubuntu/dev/rosetta/src/lib/formulaParser.ts": {
+    "lines": { "total": 145, "covered": 141, "skipped": 0, "pct": 97.24 },
+    "functions": { "total": 16, "covered": 16, "skipped": 0, "pct": 100 },
+    "statements": { "total": 148, "covered": 143, "skipped": 0, "pct": 96.62 },
+    "branches": { "total": 79, "covered": 72, "skipped": 0, "pct": 91.13 }
+  },
+  "/home/ubuntu/dev/rosetta/src/lib/jsonToSchema.ts": {
+    "lines": { "total": 99, "covered": 85, "skipped": 0, "pct": 85.85 },
+    "functions": { "total": 9, "covered": 9, "skipped": 0, "pct": 100 },
+    "statements": { "total": 102, "covered": 86, "skipped": 0, "pct": 84.31 },
+    "branches": { "total": 65, "covered": 55, "skipped": 0, "pct": 84.61 }
+  },
+  "/home/ubuntu/dev/rosetta/src/lib/layout.ts": {
+    "lines": { "total": 57, "covered": 53, "skipped": 0, "pct": 92.98 },
+    "functions": { "total": 7, "covered": 7, "skipped": 0, "pct": 100 },
+    "statements": { "total": 66, "covered": 59, "skipped": 0, "pct": 89.39 },
+    "branches": { "total": 30, "covered": 23, "skipped": 0, "pct": 76.66 }
+  },
+  "/home/ubuntu/dev/rosetta/src/lib/mappingHelpers.ts": {
+    "lines": { "total": 4, "covered": 4, "skipped": 0, "pct": 100 },
+    "functions": { "total": 2, "covered": 2, "skipped": 0, "pct": 100 },
+    "statements": { "total": 6, "covered": 6, "skipped": 0, "pct": 100 },
+    "branches": { "total": 2, "covered": 2, "skipped": 0, "pct": 100 }
+  },
+  "/home/ubuntu/dev/rosetta/src/lib/parseOntologyFile.ts": {
+    "lines": { "total": 56, "covered": 53, "skipped": 0, "pct": 94.64 },
+    "functions": { "total": 19, "covered": 19, "skipped": 0, "pct": 100 },
+    "statements": { "total": 63, "covered": 60, "skipped": 0, "pct": 95.23 },
+    "branches": { "total": 30, "covered": 23, "skipped": 0, "pct": 76.66 }
+  },
+  "/home/ubuntu/dev/rosetta/src/lib/rdf.ts": {
+    "lines": { "total": 226, "covered": 223, "skipped": 0, "pct": 98.67 },
+    "functions": { "total": 25, "covered": 25, "skipped": 0, "pct": 100 },
+    "statements": { "total": 252, "covered": 239, "skipped": 0, "pct": 94.84 },
+    "branches": { "total": 123, "covered": 100, "skipped": 0, "pct": 81.3 }
+  },
+  "/home/ubuntu/dev/rosetta/src/lib/rml.ts": {
+    "lines": { "total": 150, "covered": 147, "skipped": 0, "pct": 98 },
+    "functions": { "total": 16, "covered": 16, "skipped": 0, "pct": 100 },
+    "statements": { "total": 166, "covered": 158, "skipped": 0, "pct": 95.18 },
+    "branches": { "total": 80, "covered": 65, "skipped": 0, "pct": 81.25 }
+  },
+  "/home/ubuntu/dev/rosetta/src/lib/rmlExecute.ts": {
+    "lines": { "total": 31, "covered": 29, "skipped": 0, "pct": 93.54 },
+    "functions": { "total": 5, "covered": 5, "skipped": 0, "pct": 100 },
+    "statements": { "total": 36, "covered": 33, "skipped": 0, "pct": 91.66 },
+    "branches": { "total": 20, "covered": 14, "skipped": 0, "pct": 70 }
+  },
+  "/home/ubuntu/dev/rosetta/src/lib/stringUtils.ts": {
+    "lines": { "total": 6, "covered": 6, "skipped": 0, "pct": 100 },
+    "functions": { "total": 2, "covered": 2, "skipped": 0, "pct": 100 },
+    "statements": { "total": 8, "covered": 8, "skipped": 0, "pct": 100 },
+    "branches": { "total": 6, "covered": 6, "skipped": 0, "pct": 100 }
+  },
+  "/home/ubuntu/dev/rosetta/src/lib/utils.ts": {
+    "lines": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 },
+    "functions": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 },
+    "statements": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 },
+    "branches": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 }
+  },
+  "/home/ubuntu/dev/rosetta/src/lib/xmlToSchema.ts": {
+    "lines": { "total": 65, "covered": 63, "skipped": 0, "pct": 96.92 },
+    "functions": { "total": 7, "covered": 7, "skipped": 0, "pct": 100 },
+    "statements": { "total": 76, "covered": 73, "skipped": 0, "pct": 96.05 },
+    "branches": { "total": 34, "covered": 27, "skipped": 0, "pct": 79.41 }
+  },
+  "/home/ubuntu/dev/rosetta/src/lib/yarrrml.ts": {
+    "lines": { "total": 97, "covered": 96, "skipped": 0, "pct": 98.96 },
+    "functions": { "total": 7, "covered": 7, "skipped": 0, "pct": 100 },
+    "statements": { "total": 105, "covered": 102, "skipped": 0, "pct": 97.14 },
+    "branches": { "total": 52, "covered": 40, "skipped": 0, "pct": 76.92 }
+  },
+  "/home/ubuntu/dev/rosetta/src/lib/shacl/constructExecutor.ts": {
+    "lines": { "total": 12, "covered": 12, "skipped": 0, "pct": 100 },
+    "functions": { "total": 1, "covered": 1, "skipped": 0, "pct": 100 },
+    "statements": { "total": 12, "covered": 12, "skipped": 0, "pct": 100 },
+    "branches": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 }
+  },
+  "/home/ubuntu/dev/rosetta/src/lib/shacl/index.ts": {
+    "lines": { "total": 23, "covered": 22, "skipped": 0, "pct": 95.65 },
+    "functions": { "total": 4, "covered": 4, "skipped": 0, "pct": 100 },
+    "statements": { "total": 25, "covered": 24, "skipped": 0, "pct": 96 },
+    "branches": { "total": 14, "covered": 12, "skipped": 0, "pct": 85.71 }
+  },
+  "/home/ubuntu/dev/rosetta/src/lib/shacl/instanceGenerator.ts": {
+    "lines": { "total": 67, "covered": 60, "skipped": 0, "pct": 89.55 },
+    "functions": { "total": 8, "covered": 8, "skipped": 0, "pct": 100 },
+    "statements": { "total": 79, "covered": 66, "skipped": 0, "pct": 83.54 },
+    "branches": { "total": 49, "covered": 33, "skipped": 0, "pct": 67.34 }
+  },
+  "/home/ubuntu/dev/rosetta/src/lib/shacl/shapesGenerator.ts": {
+    "lines": { "total": 39, "covered": 39, "skipped": 0, "pct": 100 },
+    "functions": { "total": 7, "covered": 7, "skipped": 0, "pct": 100 },
+    "statements": { "total": 45, "covered": 43, "skipped": 0, "pct": 95.55 },
+    "branches": { "total": 12, "covered": 8, "skipped": 0, "pct": 66.66 }
+  },
+  "/home/ubuntu/dev/rosetta/src/lib/shacl/validator.ts": {
+    "lines": { "total": 21, "covered": 20, "skipped": 0, "pct": 95.23 },
+    "functions": { "total": 2, "covered": 2, "skipped": 0, "pct": 100 },
+    "statements": { "total": 22, "covered": 21, "skipped": 0, "pct": 95.45 },
+    "branches": { "total": 24, "covered": 15, "skipped": 0, "pct": 62.5 }
+  },
+  "/home/ubuntu/dev/rosetta/src/store/fusionStore.ts": {
+    "lines": { "total": 14, "covered": 14, "skipped": 0, "pct": 100 },
+    "functions": { "total": 6, "covered": 6, "skipped": 0, "pct": 100 },
+    "statements": { "total": 16, "covered": 16, "skipped": 0, "pct": 100 },
+    "branches": { "total": 4, "covered": 4, "skipped": 0, "pct": 100 }
+  },
+  "/home/ubuntu/dev/rosetta/src/store/mappingStore.ts": {
+    "lines": { "total": 122, "covered": 121, "skipped": 0, "pct": 99.18 },
+    "functions": { "total": 42, "covered": 42, "skipped": 0, "pct": 100 },
+    "statements": { "total": 136, "covered": 134, "skipped": 0, "pct": 98.52 },
+    "branches": { "total": 70, "covered": 62, "skipped": 0, "pct": 88.57 }
+  },
+  "/home/ubuntu/dev/rosetta/src/store/ontologyStore.ts": {
+    "lines": { "total": 47, "covered": 47, "skipped": 0, "pct": 100 },
+    "functions": { "total": 43, "covered": 43, "skipped": 0, "pct": 100 },
+    "statements": { "total": 67, "covered": 65, "skipped": 0, "pct": 97.01 },
+    "branches": { "total": 30, "covered": 23, "skipped": 0, "pct": 76.66 }
+  },
+  "/home/ubuntu/dev/rosetta/src/store/sourcesStore.ts": {
+    "lines": { "total": 30, "covered": 30, "skipped": 0, "pct": 100 },
+    "functions": { "total": 18, "covered": 18, "skipped": 0, "pct": 100 },
+    "statements": { "total": 38, "covered": 38, "skipped": 0, "pct": 100 },
+    "branches": { "total": 22, "covered": 16, "skipped": 0, "pct": 72.72 }
+  },
+  "/home/ubuntu/dev/rosetta/src/store/uiStore.ts": {
+    "lines": { "total": 3, "covered": 3, "skipped": 0, "pct": 100 },
+    "functions": { "total": 3, "covered": 3, "skipped": 0, "pct": 100 },
+    "statements": { "total": 4, "covered": 4, "skipped": 0, "pct": 100 },
+    "branches": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 }
+  },
+  "/home/ubuntu/dev/rosetta/src/store/validationStore.ts": {
+    "lines": { "total": 33, "covered": 33, "skipped": 0, "pct": 100 },
+    "functions": { "total": 13, "covered": 13, "skipped": 0, "pct": 100 },
+    "statements": { "total": 35, "covered": 35, "skipped": 0, "pct": 100 },
+    "branches": { "total": 10, "covered": 10, "skipped": 0, "pct": 100 }
+  },
+  "/home/ubuntu/dev/rosetta/src/types/index.ts": {
+    "lines": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 },
+    "functions": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 },
+    "statements": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 },
+    "branches": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 }
+  }
+}
