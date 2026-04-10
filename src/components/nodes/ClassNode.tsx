@@ -218,6 +218,11 @@ export function ClassNode({ id, data }: NodeProps<OntologyNode>) {
                 <div
                   className="flex gap-1 items-center nodrag w-full"
                   onMouseDown={(e) => e.stopPropagation()}
+                  onBlur={(e) => {
+                    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                      commitProp();
+                    }
+                  }}
                 >
                   <input
                     autoFocus
@@ -231,13 +236,11 @@ export function ClassNode({ id, data }: NodeProps<OntologyNode>) {
                         setPropError('');
                       }
                     }}
-                    onBlur={() => commitProp()}
                   />
                   <select
                     className="bg-background border border-master/40 rounded px-1 py-0.5 text-sm"
                     value={draftPropType}
                     onChange={(e) => setDraftPropType(e.target.value)}
-                    onBlur={() => commitProp()}
                   >
                     {[
                       'xsd:string',

@@ -105,6 +105,18 @@ export function shortenRange(range: string): string {
   return localName(range);
 }
 
+/** Expand a prefixed datatype (e.g. "xsd:string") to its full URI. */
+export function expandDataType(dataType: string): string {
+  const colon = dataType.indexOf(':');
+  if (colon === -1) return dataType;
+  const alias = dataType.slice(0, colon);
+  const local = dataType.slice(colon + 1);
+  for (const [ns, a] of STANDARD_NAMESPACES) {
+    if (a === alias) return `${ns}${local}`;
+  }
+  return dataType;
+}
+
 // ─── Store query helpers ──────────────────────────────────────────────────────
 
 function firstLiteral(

@@ -5,7 +5,7 @@ import type {
   PropertyData,
   ClassData,
 } from '@/types/index';
-import { parseTurtle } from '@/lib/rdf';
+import { parseTurtle, expandDataType } from '@/lib/rdf';
 import sampleOntologyTtl from '@/data/sample-ontology.ttl?raw';
 
 // ─── Seed ontology ────────────────────────────────────────────────────────────
@@ -185,6 +185,10 @@ export const useOntologyStore = create<OntologyState>((set, get) => ({
     if (!node) return;
     const prop = node.data.properties.find((p) => p.uri === propertyUri);
     if (!prop) return;
+    const resolvedPatch =
+      patch.dataType !== undefined
+        ? { ...patch, range: expandDataType(patch.dataType) }
+        : patch;
     set((s) => ({
       nodes: s.nodes.map((n) =>
         n.id === nodeId
@@ -193,7 +197,7 @@ export const useOntologyStore = create<OntologyState>((set, get) => ({
               data: {
                 ...n.data,
                 properties: n.data.properties.map((p) =>
-                  p.uri === propertyUri ? { ...p, ...patch } : p,
+                  p.uri === propertyUri ? { ...p, ...resolvedPatch } : p,
                 ),
               },
             }
